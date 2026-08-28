@@ -18,7 +18,11 @@ to `<role>.toml.retired-v0.6.0`, the old Sol consultation role to
 `sol-advisor.toml.retired-v1.0.0`, and the obsolete neutral role to
 `advisor.toml.retired-v1.0.1`. It preflights every path before mutation, is
 idempotent, refuses symlinks/nonregular files/modified content/collisions/dual paths,
-and never edits Codex configuration.
+and never edits Codex configuration. An exact Advisor 1.1.0 upgrade recoverably
+retires the prior model-pinned roles to `advisor-terra.toml.retired-v1.1.0` and
+`advisor-sol.toml.retired-v1.1.0`, then installs the risk-described 1.2.0 roles at
+their original active paths. Exact retired-only interrupted states resume safely;
+modified, dual, or colliding states refuse all mutation.
 
 ## Root and advisor records
 
@@ -31,11 +35,18 @@ reason: <one task-specific sentence>
 question: <bounded decision question, or none>
 ```
 
-For a consult, verify both exact installed roles, select the role from the
-parent-model policy, then use one schema only:
+For a consult, verify both exact installed roles, select the role from decision
+risk, then use one schema only:
 
-- Luna, Spark, or lower parent: `advisor-terra`, pinned `gpt-5.6-terra`, high.
-- Terra, Sol, or unknown parent: `advisor-sol`, pinned `gpt-5.6-sol`, high.
+- Standard: `advisor-terra`, pinned `gpt-5.6-terra`, high. This default covers
+  material architecture, interface, data-model, compatibility, cross-boundary,
+  competing-diagnosis, and generic advisor requests.
+- Specialist: `advisor-sol`, pinned `gpt-5.6-sol`, high, only for an unresolved
+  security or trust boundary, an irreversible migration or data-loss decision,
+  or a credible unresolved High-severity disagreement.
+
+Security adjacency and project importance alone do not qualify for Specialist.
+A borderline role choice uses Standard. The parent model is irrelevant.
 
 ```text
 # host schema v2
@@ -67,7 +78,7 @@ is never authoritative.
 ## Runtime evidence
 
 Public spawn metadata is primary. A completed `spawn_agent` event must establish one
-receiver agent and thread, the exact policy-selected `advisor-terra`/`gpt-5.6-terra`
+receiver agent and thread, the exact decision-risk-selected `advisor-terra`/`gpt-5.6-terra`
 or `advisor-sol`/`gpt-5.6-sol` pair, effort `high`,
 and a receiver thread distinct from the root `thread.started` identifier. Invocation
 flags and the installed role establish the read-only sandbox. For fields omitted by

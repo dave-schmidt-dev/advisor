@@ -28,10 +28,16 @@ General quality is not a decision question.
 
 1. Run the companion installer in check mode and verify that installed
    `advisor-terra` and `advisor-sol` TOMLs byte-match both shipped roles.
-2. Select the role from the parent model: Luna, Spark, or lower uses
-   `agent_type: advisor-terra`, pinned to `gpt-5.6-terra` / `high`; Terra, Sol,
-   and unknown parents use `agent_type: advisor-sol`, pinned to `gpt-5.6-sol` /
-   `high`. Selection is policy, not model-authored advice.
+2. Classify the decision risk. Standard consultation uses
+   `agent_type: advisor-terra`, pinned to `gpt-5.6-terra` / `high`. This is the
+   default for material architecture, interface, data-model, compatibility,
+   cross-boundary, competing-diagnosis, and explicit generic advisor requests.
+   Specialist consultation uses `agent_type: advisor-sol`, pinned to
+   `gpt-5.6-sol` / `high`, only for an unresolved security or trust boundary, an
+   irreversible migration or data-loss decision, or a credible unresolved High-severity disagreement.
+   Security adjacency or project importance alone
+   does not qualify. A borderline role choice uses `advisor-terra`. The parent
+   model is irrelevant, so Terra may advise Luna.
 3. Spawn exactly one selected role. Do not pass a model or effort override because
    live Codex may ignore it; the installed role is the enforcement boundary. With
    host schema v2 use `fork_turns: none`; with v1 use `fork_context: false`.

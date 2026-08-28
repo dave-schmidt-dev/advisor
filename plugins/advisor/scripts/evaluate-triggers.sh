@@ -36,8 +36,9 @@ validate_feature_state() {
 select_advisor_role() {
   normalized=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
   case "$normalized" in
-    *luna*|*spark*) printf '%s\n' advisor-terra ;;
-    *) printf '%s\n' advisor-sol ;;
+    standard) printf '%s\n' advisor-terra ;;
+    specialist) printf '%s\n' advisor-sol ;;
+    *) return 1 ;;
   esac
 }
 
@@ -136,9 +137,9 @@ PY
 
 # Private deterministic test path for the static verifier. It invokes the same
 # fail-closed parser used by --run without starting Codex or touching live state.
-if [ "${ADVISOR_SELECT_FOR_PARENT+x}" = x ]; then
+if [ "${ADVISOR_SELECT_FOR_RISK+x}" = x ]; then
   [ "$#" -eq 0 ] || fail "model-selection fixture accepts no arguments"
-  selected_role=$(select_advisor_role "$ADVISOR_SELECT_FOR_PARENT")
+  selected_role=$(select_advisor_role "$ADVISOR_SELECT_FOR_RISK")
   printf '%s %s\n' "$selected_role" "$(model_for_role "$selected_role")"
   exit
 fi
@@ -192,11 +193,12 @@ if re.search(r'(?i)(api[_-]?key|authorization|bearer|password|token)["\s:]+[^"\s
     raise SystemExit("result contains a secret-like field or value")
 fixtures = json.loads(fixture_path.read_text(encoding="utf-8"))["cases"]
 expected = {c["id"]: c for c in fixtures}
-def selected_pair(parent):
-    value = str(parent).lower()
-    if "luna" in value or "spark" in value:
+def selected_pair(risk):
+    if risk == "standard":
         return "advisor-terra", "gpt-5.6-terra"
-    return "advisor-sol", "gpt-5.6-sol"
+    if risk == "specialist":
+        return "advisor-sol", "gpt-5.6-sol"
+    raise SystemExit("invalid fixture risk")
 if data.get("status") == "unavailable":
     if not allow:
         raise SystemExit("typed unavailable result requires --allow-unavailable")
@@ -251,9 +253,11 @@ for schema in schemas:
         for trial in trials:
             route = trial.get("route")
             roles = trial.get("roles")
-            expected_role, expected_model = selected_pair(trial.get("parent_model", "unknown"))
+            expected_role, expected_model = selected_pair(fixture.get("risk"))
+            if trial.get("risk") != fixture.get("risk"):
+                raise SystemExit(f"invalid decision-risk classification: {case['id']}")
             if trial.get("selected_role") != expected_role or trial.get("selected_model") != expected_model:
-                raise SystemExit(f"invalid parent-role/model selection: {case['id']}")
+                raise SystemExit(f"invalid decision-risk role/model selection: {case['id']}")
             if route == "consult":
                 if trial.get("advisor_count") != 1 or roles != [expected_role] or trial.get("freshness") != "distinct_receiver_thread":
                     raise SystemExit(f"invalid consultation identity/freshness: {case['id']}")
@@ -370,19 +374,18 @@ setup_schema() {
 }
 
 run_trial() {
-  schema=$1 feature=$2 id=$3 expected=$4 attempt=$5 prompt_text=$6
+  schema=$1 feature=$2 id=$3 expected=$4 risk=$5 attempt=$6 prompt_text=$7
   [ "$sessions_run" -lt 40 ] || fail "pooled 40-session cap reached"
   sessions_run=$((sessions_run + 1))
   project=$work/project-$schema
   runtime_home=$work/runtime-$schema
-  parent_model=${ADVISOR_EVAL_PARENT_MODEL-unknown}
-  selected_role=$(select_advisor_role "$parent_model")
+  selected_role=$(select_advisor_role "$risk") || write_unavailable runtime_evidence_unavailable
   selected_model=$(model_for_role "$selected_role")
   case "$feature" in true) feature_switch=--enable ;; false) feature_switch=--disable ;; esac
   raw=$work/raw-$schema-$id-$attempt.jsonl
   evidence=$work/evidence-$schema-$id-$attempt.json
   progress "$schema: session $sessions_run/40, case $id, trial $attempt"
-  eval_prompt="Classify this task under the installed Advisor consultation contract. Emit the required ADVISOR DECISION before any implementation. Do not implement. Parent model is $parent_model; apply the shipped role-selection policy. If consulting, spawn exactly one $selected_role in a new thread; its installed profile pins $selected_model and high effort. Do not pass a model override. Finish with exactly one line: ADVISOR_EVAL route=consult|skip. TASK: $prompt_text"
+  eval_prompt="Classify this task under the installed Advisor consultation contract. Emit the required ADVISOR DECISION before any implementation. Do not implement. If consulting, choose advisor-terra for Standard material architecture/interface/data-model/compatibility/cross-boundary/competing-diagnosis or a generic advisor request. Choose advisor-sol only for unresolved security/trust boundaries, irreversible migration or data-loss decisions, or credible unresolved High-severity disagreement. Security adjacency or project importance alone does not qualify; borderline role choice uses advisor-terra. Parent model is irrelevant. Spawn exactly one selected role in a new thread; its installed profile pins model and high effort. Do not pass a model override. Finish with exactly one line: ADVISOR_EVAL route=consult|skip. TASK: $prompt_text"
   codex exec --json --ignore-user-config --ignore-rules --ephemeral "$feature_switch" multi_agent_v2 \
     -c "agents.advisor-terra.description=Advisor Terra read-only consultation" \
     -c "agents.advisor-terra.config_file=\"$runtime_home/agents/advisor-terra.toml\"" \
@@ -391,11 +394,11 @@ run_trial() {
     -c "shell_environment_policy.set={CODEX_HOME=\"$runtime_home\"}" \
     -C "$project" --sandbox read-only --skip-git-repo-check "$eval_prompt" </dev/null >"$raw" 2>/dev/null || write_unavailable runtime_evidence_unavailable
   parse_runtime_evidence "$raw" "$evidence" "$selected_role" "$selected_model" || write_unavailable runtime_evidence_unavailable
-  python3 - "$evidence" "$trials" "$schema" "$feature" "$id" "$expected" "$attempt" "$parent_model" "$selected_role" "$selected_model" <<'PY' || write_unavailable runtime_evidence_unavailable
+  python3 - "$evidence" "$trials" "$schema" "$feature" "$id" "$expected" "$risk" "$attempt" "$selected_role" "$selected_model" <<'PY' || write_unavailable runtime_evidence_unavailable
 import json, sys
-evidence, out, schema, feature, cid, expected, attempt, parent_model, selected_role, selected_model = sys.argv[1:]
+evidence, out, schema, feature, cid, expected, risk, attempt, selected_role, selected_model = sys.argv[1:]
 record = json.load(open(evidence, encoding="utf-8"))
-record.update({"schema":schema,"multi_agent_v2":feature=="true","id":cid,"expected":expected,"attempt":int(attempt),"parent_model":parent_model,"selected_role":selected_role,"selected_model":selected_model})
+record.update({"schema":schema,"multi_agent_v2":feature=="true","id":cid,"expected":expected,"risk":risk,"attempt":int(attempt),"selected_role":selected_role,"selected_model":selected_model})
 with open(out,"a",encoding="utf-8") as f: f.write(json.dumps(record,separators=(",",":"))+"\n")
 PY
 }
@@ -404,20 +407,20 @@ for spec in 'v1 false' 'v2 true'; do
   set -- $spec; schema=$1; feature=$2
   setup_schema "$schema" "$feature"
   base_cases=$work/base-$schema.tsv
-  jq -r '.cases[] | [.id,.class,.expected,.prompt] | @tsv' "$fixtures" >"$base_cases"
-  while IFS="$(printf '\t')" read -r id class expected prompt_text; do
-    run_trial "$schema" "$feature" "$id" "$expected" 1 "$prompt_text"
+  jq -r '.cases[] | [.id,.class,.expected,.risk,.prompt] | @tsv' "$fixtures" >"$base_cases"
+  while IFS="$(printf '\t')" read -r id class expected risk prompt_text; do
+    run_trial "$schema" "$feature" "$id" "$expected" "$risk" 1 "$prompt_text"
   done <"$base_cases"
   # Boundary mismatches alone receive exactly two reruns in this schema.
   reruns=$work/reruns-$schema.tsv
   jq -rs --arg s "$schema" --slurpfile f "$fixtures" '
     . as $trials | $f[0].cases[] | select(.class=="boundary") as $c |
     ($trials | map(select(.schema==$s and .id==$c.id))[0]) as $t |
-    select($t.route != $c.expected) | [$c.id,$c.expected,$c.prompt] | @tsv
+    select($t.route != $c.expected) | [$c.id,$c.expected,$c.risk,$c.prompt] | @tsv
   ' "$trials" >"$reruns"
-  while IFS="$(printf '\t')" read -r id expected prompt_text; do
-    run_trial "$schema" "$feature" "$id" "$expected" 2 "$prompt_text"
-    run_trial "$schema" "$feature" "$id" "$expected" 3 "$prompt_text"
+  while IFS="$(printf '\t')" read -r id expected risk prompt_text; do
+    run_trial "$schema" "$feature" "$id" "$expected" "$risk" 2 "$prompt_text"
+    run_trial "$schema" "$feature" "$id" "$expected" "$risk" 3 "$prompt_text"
   done <"$reruns"
 done
 
@@ -441,7 +444,7 @@ for name, feature in (("v1",False),("v2",True)):
         final=max(("consult","skip"),key=routes.count)
         if fixture["class"]=="boundary": boundary_ok += final==fixture["expected"]
         else: overall &= final==fixture["expected"]
-        cases.append({"id":fixture["id"],"final_route":final,"trials":[{k:t[k] for k in ("route","advisor_count","roles","freshness","model","effort","sandbox","parent_model","selected_role","selected_model")} for t in ts]})
+        cases.append({"id":fixture["id"],"final_route":final,"trials":[{k:t[k] for k in ("route","advisor_count","roles","freshness","model","effort","sandbox","risk","selected_role","selected_model")} for t in ts]})
     overall &= boundary_ok>=3
     schemas.append({"name":name,"multi_agent_v2":feature,"cases":cases})
 data={"status":"pass" if overall else "fail","redacted":True,"codex_version":version,"subscription_only":True,"overage_disabled":True,"session_cap":40,"sessions_run":int(count),"nonmutation":{"live_home":{"before":lb,"after":la,"unchanged":lb==la},"marketplace":{"before":mb,"after":ma,"unchanged":mb==ma}},"schemas":schemas}

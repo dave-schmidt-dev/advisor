@@ -1,6 +1,6 @@
 {
   "name": "advisor",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "One fresh, read-only consultation for material technical decisions.",
   "author": {
     "name": "David Schmidt / Zero Delta LLC (maintainer); Daniel McAteer (original author)"
@@ -16,7 +16,7 @@
   "interface": {
     "displayName": "Advisor",
     "shortDescription": "Read-only advice for material technical decisions.",
-    "longDescription": "Advisor implicitly matches material architecture, interface, data-model, compatibility, cross-boundary, diagnostic, security, privacy, authorization, migration, recovery, and irreversible-state decisions. The root declares consult or skip before implementation, selects one of two model-pinned read-only roles from the parent-model policy, verifies the exact completed spawn event, and records accept, modify, or reject. Luna and Spark parents use Advisor Terra; Terra, Sol, and unknown parents use Advisor Sol. Routine and borderline work skips consultation. Advice is non-authoritative, and the plugin never implements, routes work, or performs final review.",
+    "longDescription": "Advisor implicitly matches material architecture, interface, data-model, compatibility, cross-boundary, and competing-diagnosis decisions. The root declares consult or skip before implementation, selects one of two model-pinned read-only roles by decision risk, verifies the exact completed spawn event, and records accept, modify, or reject. Standard consultation and generic advisor requests use Advisor Terra. Advisor Sol is reserved for unresolved security or trust boundaries, irreversible migration or data-loss decisions, and credible unresolved High-severity disagreement. Security adjacency and project importance alone do not qualify for Specialist consultation; borderline role choices use Advisor Terra. Advice is non-authoritative, and the plugin never implements, routes work, or performs final review.",
     "developerName": "David Schmidt / Zero Delta LLC",
     "category": "Productivity",
     "capabilities": [

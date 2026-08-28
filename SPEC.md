@@ -8,14 +8,14 @@ technical decisions; it never implements, routes implementation, or performs
 final verification.
 
 The distributable plugin identity is `advisor`. Its single skill is `consultation`, and
-the current release version is `1.1.0`. Local development installs may add
+the current release version is `1.2.0`. Local development installs may add
 one `+codex.<cachebuster>` build suffix without changing that release identity.
 
 ## Outcome
 
 When a Codex task contains a material design or diagnostic decision, implicit
 skill matching causes the root to consult exactly one fresh advisor selected from
-the parent-model policy
+the decision-risk policy
 before the decision is finalized. Routine work does not spawn an advisor.
 
 The root owns the task, chooses whether advice is accepted, and records the
@@ -73,9 +73,14 @@ in repository evidence.
 
 1. Verify installed `advisor-terra` and `advisor-sol` custom roles exactly match
    both shipped profiles.
-2. Select the role from the parent: Luna, Spark, or lower uses `advisor-terra`,
-   pinned GPT-5.6 Terra / high; Terra, Sol, and unknown parents use `advisor-sol`,
-   pinned GPT-5.6 Sol / high.
+2. Select the role from decision risk. Standard consultation uses
+   `advisor-terra`, pinned GPT-5.6 Terra / high, for material architecture,
+   interface, data-model, compatibility, cross-boundary, competing-diagnosis,
+   and generic advisor requests. Specialist consultation uses `advisor-sol`,
+   pinned GPT-5.6 Sol / high, only for an unresolved security or trust boundary,
+   an irreversible migration or data-loss decision, or a credible unresolved
+   High-severity disagreement. Security adjacency and project importance alone
+   do not qualify; a borderline role choice uses Terra. Parent model is irrelevant.
 3. Spawn exactly one fresh subagent with the selected role and no model/effort
    override; live Codex may ignore per-spawn overrides, so the model-pinned role is
    the enforcement boundary. Use the
@@ -144,10 +149,14 @@ RISKS: <material residual risks, or none>
   implementation/review roles to `<role>.toml.retired-v0.6.0` and the historical
   consultation role to `sol-advisor.toml.retired-v1.0.0` and the obsolete neutral
   `advisor.toml` to `advisor.toml.retired-v1.0.1`, outside the `.toml` discovery
-  pattern. A later run treats an absent active role plus an exact retired file as
-  already migrated. Both paths existing, a mismatched retired file, or a modified,
-  unsafe, or conflicting active role stops migration. The installer must not edit
-  Codex config.
+  pattern. An exact 1.1.0 same-path upgrade must retire `advisor-terra.toml` and
+  `advisor-sol.toml` to their respective `.retired-v1.1.0` paths before installing
+  the risk-described 1.2.0 roles. A later run resumes an exact retired-only 1.1.0
+  state by installing the current role and accepts the exact current-plus-retired
+  state as already migrated. An old active role plus its retirement path, a
+  mismatched retired file, or a modified, unsafe, or conflicting active role stops
+  migration. Historical retired-only roles remain already migrated. The installer
+  must not edit Codex config.
 - Existing modified or unsafe agent destinations are never overwritten.
 - The byte-exact v0.6.0 retirement identities are:
   - Luna: `12fa9180a292876e6731bc325779123bcd931c3caa902fbf90d676a31833be84`
@@ -160,7 +169,7 @@ RISKS: <material residual risks, or none>
   `06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d`,
   used by the intermediate v0.3.0/v0.4.0/pre-revert v0.5.0 history. Unknown blobs
   still fail closed.
-- Plugin installation identity is `advisor`. Set version `1.1.0` and make
+- Plugin installation identity is `advisor`. Set version `1.2.0` and make
   the manifest author identify David Schmidt / Zero Delta LLC as the fork
   maintainer while crediting original author Daniel McAteer. Preserve Daniel
   McAteer's MIT copyright in `LICENSE`, add `NOTICE.md` with the upstream URL and
@@ -203,7 +212,7 @@ The repository verifier must prove:
 4. Retired `solo`, `delegate`, `audit`, `full`, Luna, Terra, and final-review
    contracts are absent from active plugin content.
 5. The advisor roles pin the exact Terra/high and Sol/high pairs and request
-   read-only sandboxing; static fixtures prove parent-role selection and exact spawn evidence.
+   read-only sandboxing; static fixtures prove decision-risk role selection and exact spawn evidence.
 6. The installer is fail-closed, idempotent, supports an isolated target, and
    refuses modified, symlinked, nonregular, unknown, or unsafe destinations.
 7. Upgrade fixtures prove byte-exact retired roles become recoverable inactive

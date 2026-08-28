@@ -41,7 +41,7 @@ sol=tomllib.loads(Path(sys.argv[4]).read_text())
 cases=json.loads(Path(sys.argv[5]).read_text())
 ui=Path(sys.argv[6]).read_text()
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or not re.fullmatch(r"1\.1\.0(?:\+codex\.[0-9A-Za-z.-]+)?",version): raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or not re.fullmatch(r"1\.2\.0(?:\+codex\.[0-9A-Za-z.-]+)?",version): raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if "David Schmidt / Zero Delta LLC" not in author_name or "Daniel McAteer" not in author_name: raise SystemExit("maintainer/original-author identity")
@@ -50,7 +50,7 @@ entry=market.get("plugins",[])
 if market.get("name")!="advisor" or market.get("interface",{}).get("displayName")!="Advisor": raise SystemExit("marketplace identity")
 if len(entry)!=1 or entry[0].get("name")!="advisor" or entry[0].get("source")!={"source":"local","path":"./plugins/advisor"}: raise SystemExit("marketplace source")
 if entry[0].get("policy")!={"installation":"AVAILABLE","authentication":"ON_INSTALL"} or not entry[0].get("category"): raise SystemExit("marketplace policy")
-pairs=((terra,{"name":"advisor-terra","model":"gpt-5.6-terra","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(sol,{"name":"advisor-sol","model":"gpt-5.6-sol","model_reasoning_effort":"high","sandbox_mode":"read-only"}))
+pairs=((terra,{"name":"advisor-terra","description":"Standard fresh, read-only advisor for material technical decisions and generic advisor requests.","model":"gpt-5.6-terra","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(sol,{"name":"advisor-sol","description":"Specialist fresh, read-only advisor for narrowly qualified unresolved critical decisions.","model":"gpt-5.6-sol","model_reasoning_effort":"high","sandbox_mode":"read-only"}))
 for role,pins in pairs:
     if any(role.get(k)!=v for k,v in pins.items()): raise SystemExit("role pins")
     if not all(isinstance(role.get(k),str) and role[k].strip() for k in ("description","developer_instructions")): raise SystemExit("role text")
@@ -59,6 +59,9 @@ if len(items)!=12 or len({c.get("id") for c in items})!=12: raise SystemExit("fi
 counts={k:sum(c.get("class")==k for c in items) for k in ("consult","skip","boundary")}
 if counts!={"consult":4,"skip":4,"boundary":4}: raise SystemExit(f"fixture classes {counts}")
 if any(c.get("expected") not in ("consult","skip") or not c.get("prompt") for c in items): raise SystemExit("fixture fields")
+risks={k:sum(c.get("risk")==k for c in items) for k in ("standard","specialist")}
+if risks!={"standard":10,"specialist":2}: raise SystemExit(f"fixture risk tiers {risks}")
+if {c["id"] for c in items if c.get("risk")=="specialist"}!={"consult-security","boundary-high-risk"}: raise SystemExit("specialist fixture scope")
 if "allow_implicit_invocation: true" not in ui or "interface:" not in ui or "policy:" not in ui: raise SystemExit("UI YAML contract")
 print("structured files valid")
 PY
@@ -73,7 +76,11 @@ for phrase in \
   grep -Fqi "$phrase" "$skill" || fail "skill description/contract omits: $phrase"
 done
 for phrase in 'ADVISOR DECISION' 'route: consult | skip' 'fork_turns: none' 'fork_context: false' \
-  'agent_type: advisor-terra' 'agent_type: advisor-sol' 'gpt-5.6-terra' 'gpt-5.6-sol' 'Luna' 'Spark' 'Terra' 'Sol' 'unknown parent' \
+  'agent_type: advisor-terra' 'agent_type: advisor-sol' 'gpt-5.6-terra' 'gpt-5.6-sol' \
+  'Standard consultation' 'Specialist consultation' 'generic advisor requests' \
+  'unresolved security or trust boundary' 'irreversible migration or data-loss decision' \
+  'credible unresolved High-severity disagreement' 'Security adjacency or project importance alone' \
+  'borderline role choice' 'model is irrelevant' \
   'DECISION' 'CONTEXT' 'OPTIONS' 'BOUNDARIES' 'REQUEST' \
   'ADVISOR RESPONSE' 'RECOMMENDATION:' 'WHY:' 'STRONGEST OBJECTION:' 'CHANGE MY MIND:' \
   'ACCEPTANCE CHECKS:' 'RISKS:' 'accept' 'modify' 'reject' 'advisor unavailable'; do
@@ -100,10 +107,12 @@ for digest in \
  06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d \
  77ed2f36bb149da5d9032230c3d6f5e5cd56b059b3fa5f59085249bba06e1f3a \
  0333acf0ef562bcfebd06009ac09bd1dd8cbc04c4cf28e08e9e049bd8bf202d2 \
- b0be4d07ef2958ad2dd01a4b11be6edff309063fe45d75e778aeac6dfce80363; do
+ b0be4d07ef2958ad2dd01a4b11be6edff309063fe45d75e778aeac6dfce80363 \
+ 95be7e69ee4d5350ea199a66280e180774309371fefcf1a2765f782ec1a670c0 \
+ 5ab78b10e1abd4b86d8adeb7d71aa6b4d1c79b1a44457d2c717f5a03cd360367; do
   grep -Fq "$digest" "$installer" || fail "missing historical digest: $digest"
 done
-pass "all v0.2, intermediate, v0.5, and v0.6 retirement fingerprints retained"
+pass "all historical and Advisor 1.1.0 upgrade fingerprints retained"
 
 tmp_base=${TMPDIR:-/tmp}; case "$tmp_base" in /*) ;; *) tmp_base=/tmp ;; esac
 tmp=$(mktemp -d "$tmp_base/advisor-verify.XXXXXX") || fail "cannot create fixture directory"
@@ -120,6 +129,45 @@ before=$(snapshot "$clean"); sh "$installer" --target-dir "$clean" >/dev/null; a
 [ "$before" = "$after" ] || fail "second install changed exact state"
 [ ! -e "$clean/config.toml" ] || fail "installer edited Codex config"
 pass "clean install, exact check, idempotency, and no config mutation"
+
+v110=$tmp/advisor-v110; mkdir "$v110"
+python3 - "$terra_role" "$sol_role" "$v110" <<'PY'
+from pathlib import Path
+import sys
+terra,sol,target=map(Path,sys.argv[1:])
+replacements={
+    terra:("Standard fresh, read-only advisor for material technical decisions and generic advisor requests.","Fresh, read-only GPT-5.6 Terra advisor for Luna, Spark, and lower-capability parents."),
+    sol:("Specialist fresh, read-only advisor for narrowly qualified unresolved critical decisions.","Fresh, read-only GPT-5.6 Sol advisor for Terra, Sol, and unknown parents."),
+}
+for source,(new,old) in replacements.items():
+    text=source.read_text(encoding="utf-8")
+    if text.count(new)!=1: raise SystemExit(f"current role description fixture mismatch: {source}")
+    target.joinpath(source.name).write_text(text.replace(new,old),encoding="utf-8")
+PY
+assert_v110_digest() {
+  file=$1 expected=$2
+  actual=$(shasum -a 256 "$file" | awk '{print $1}')
+  [ "$actual" = "$expected" ] || fail "Advisor 1.1.0 fixture digest mismatch: $file ($actual)"
+}
+assert_v110_digest "$v110/advisor-terra.toml" 95be7e69ee4d5350ea199a66280e180774309371fefcf1a2765f782ec1a670c0
+assert_v110_digest "$v110/advisor-sol.toml" 5ab78b10e1abd4b86d8adeb7d71aa6b4d1c79b1a44457d2c717f5a03cd360367
+if sh "$installer" --target-dir "$v110" --check >/dev/null 2>&1; then fail "check accepted active Advisor 1.1.0 roles"; fi
+sh "$installer" --target-dir "$v110" >/dev/null
+cmp -s "$terra_role" "$v110/advisor-terra.toml" || fail "Advisor 1.1.0 Terra upgrade did not install 1.2.0 exactly"
+cmp -s "$sol_role" "$v110/advisor-sol.toml" || fail "Advisor 1.1.0 Sol upgrade did not install 1.2.0 exactly"
+assert_v110_digest "$v110/advisor-terra.toml.retired-v1.1.0" 95be7e69ee4d5350ea199a66280e180774309371fefcf1a2765f782ec1a670c0
+assert_v110_digest "$v110/advisor-sol.toml.retired-v1.1.0" 5ab78b10e1abd4b86d8adeb7d71aa6b4d1c79b1a44457d2c717f5a03cd360367
+sh "$installer" --target-dir "$v110" --check >/dev/null
+before=$(snapshot "$v110"); sh "$installer" --target-dir "$v110" >/dev/null; after=$(snapshot "$v110")
+[ "$before" = "$after" ] || fail "Advisor 1.1.0 upgraded state is not idempotent"
+v110_interrupted=$tmp/advisor-v110-interrupted; mkdir "$v110_interrupted"
+cp "$v110/advisor-terra.toml.retired-v1.1.0" "$v110_interrupted/advisor-terra.toml.retired-v1.1.0"
+cp "$v110/advisor-sol.toml.retired-v1.1.0" "$v110_interrupted/advisor-sol.toml.retired-v1.1.0"
+sh "$installer" --target-dir "$v110_interrupted" >/dev/null
+cmp -s "$terra_role" "$v110_interrupted/advisor-terra.toml" || fail "retired-only Terra upgrade did not resume"
+cmp -s "$sol_role" "$v110_interrupted/advisor-sol.toml" || fail "retired-only Sol upgrade did not resume"
+sh "$installer" --target-dir "$v110_interrupted" --check >/dev/null
+pass "exact Advisor 1.1.0 same-path upgrade, recoverable retirement, and idempotency"
 
 # Exercise all three v0.6.0 historical role types using their original exact bytes.
 historical=$tmp/historical; mkdir "$historical"
@@ -198,7 +246,7 @@ exercise_retirement intermediate "$intermediate" sol-advisor-terra-implementer.t
 exercise_retirement through-v1.0.1 "$historical" advisor.toml sol-advisor.toml sol-advisor-luna-implementer.toml sol-advisor-terra-implementer.toml sol-advisor-sol-reviewer.toml
 pass "all historical digests retire dynamically and every vintage is second-run idempotent"
 
-for kind in modified symlink nonregular dual collision neutral-modified neutral-dual; do
+for kind in modified symlink nonregular dual collision neutral-modified neutral-dual v110-modified v110-dual v110-collision; do
   target=$tmp/refuse-$kind; mkdir "$target"
   case "$kind" in
     modified) printf 'unknown\n' >"$target/sol-advisor-luna-implementer.toml" ;;
@@ -208,12 +256,15 @@ for kind in modified symlink nonregular dual collision neutral-modified neutral-
     collision) printf 'unknown\n' >"$target/sol-advisor-luna-implementer.toml.retired-v0.6.0" ;;
     neutral-modified) printf 'unknown\n' >"$target/advisor.toml" ;;
     neutral-dual) cp "$historical/advisor.toml.retired-v1.0.1" "$target/advisor.toml"; cp "$historical/advisor.toml.retired-v1.0.1" "$target/advisor.toml.retired-v1.0.1" ;;
+    v110-modified) printf 'unknown\n' >"$target/advisor-terra.toml" ;;
+    v110-dual) cp "$v110/advisor-terra.toml.retired-v1.1.0" "$target/advisor-terra.toml"; cp "$v110/advisor-terra.toml.retired-v1.1.0" "$target/advisor-terra.toml.retired-v1.1.0" ;;
+    v110-collision) cp "$v110/advisor-terra.toml.retired-v1.1.0" "$target/advisor-terra.toml"; printf 'unknown\n' >"$target/advisor-terra.toml.retired-v1.1.0" ;;
   esac
   before=$(snapshot "$target")
   if sh "$installer" --target-dir "$target" >/dev/null 2>&1; then fail "installer accepted $kind state"; fi
   after=$(snapshot "$target"); [ "$before" = "$after" ] || fail "$kind refusal mutated target"
 done
-pass "modified, symlink, nonregular, dual-path, destination-collision, and obsolete-neutral refusal"
+pass "modified, symlink, nonregular, dual-path, destination-collision, obsolete-neutral, and 1.1.0 upgrade refusal"
 
 sessions=$tmp/sessions/2026/08/27; mkdir -p "$sessions"
 id=11111111-1111-7111-8111-111111111111
@@ -234,16 +285,15 @@ python3 - "$tmp/result.json" "$tmp/rerun-result.json" "$tmp/unnecessary-rerun-re
 import copy,json,sys
 result,rerun_result,unnecessary_result,threshold_pass_result,threshold_fail_result,fixtures=sys.argv[1:]; items=json.load(open(fixtures))["cases"]
 schemas=[]; n=0
-def trial(route,parent="unknown"):
-  terra="luna" in parent.lower() or "spark" in parent.lower()
-  selected_role="advisor-terra" if terra else "advisor-sol"
-  selected_model="gpt-5.6-terra" if terra else "gpt-5.6-sol"
-  return {"route":route,"advisor_count":1 if route=="consult" else 0,"roles":[selected_role] if route=="consult" else [],"freshness":"distinct_receiver_thread" if route=="consult" else "none","model":selected_model if route=="consult" else "none","effort":"high" if route=="consult" else "none","sandbox":"read-only" if route=="consult" else "none","parent_model":parent,"selected_role":selected_role,"selected_model":selected_model}
+def trial(route,risk="standard"):
+  selected_role="advisor-terra" if risk=="standard" else "advisor-sol"
+  selected_model="gpt-5.6-terra" if risk=="standard" else "gpt-5.6-sol"
+  return {"route":route,"advisor_count":1 if route=="consult" else 0,"roles":[selected_role] if route=="consult" else [],"freshness":"distinct_receiver_thread" if route=="consult" else "none","model":selected_model if route=="consult" else "none","effort":"high" if route=="consult" else "none","sandbox":"read-only" if route=="consult" else "none","risk":risk,"selected_role":selected_role,"selected_model":selected_model}
 for name,flag in (("v1",False),("v2",True)):
   cases=[]
   for c in items:
     route=c["expected"]; n+=1
-    cases.append({"id":c["id"],"final_route":route,"trials":[trial(route)]})
+    cases.append({"id":c["id"],"final_route":route,"trials":[trial(route,c["risk"])]})
   schemas.append({"name":name,"multi_agent_v2":flag,"cases":cases})
 data={"status":"pass","redacted":True,"subscription_only":True,"overage_disabled":True,"session_cap":40,"sessions_run":n,"nonmutation":{"live_home":{"before":"a","after":"a","unchanged":True},"marketplace":{"before":"b","after":"b","unchanged":True}},"schemas":schemas}
 json.dump(data,open(result,"w"),indent=2)
@@ -254,7 +304,7 @@ json.dump(data,open(result,"w"),indent=2)
 rerun=copy.deepcopy(data)
 for schema in rerun["schemas"]:
   case=next(c for c in schema["cases"] if c["id"]=="boundary-explicit-advisor")
-  case["trials"]=[trial("skip"),trial("consult"),trial("consult")]
+  case["trials"]=[trial("skip","standard"),trial("consult","standard"),trial("consult","standard")]
 rerun["sessions_run"] += 4
 json.dump(rerun,open(rerun_result,"w"),indent=2)
 
@@ -263,7 +313,7 @@ json.dump(rerun,open(rerun_result,"w"),indent=2)
 unnecessary=copy.deepcopy(rerun)
 for schema in unnecessary["schemas"]:
   case=next(c for c in schema["cases"] if c["id"]=="boundary-explicit-advisor")
-  case["trials"]=[trial("consult"),trial("skip"),trial("consult")]
+  case["trials"]=[trial("consult","standard"),trial("skip","standard"),trial("consult","standard")]
 json.dump(unnecessary,open(unnecessary_result,"w"),indent=2)
 
 # Hold trial counts, role identity, freshness, pins, and session accounting valid
@@ -273,14 +323,14 @@ threshold_pass=copy.deepcopy(data)
 for schema in threshold_pass["schemas"]:
   case=next(c for c in schema["cases"] if c["id"]=="boundary-no-delegation")
   case["final_route"]="consult"
-  case["trials"]=[trial("consult")]
+  case["trials"]=[trial("consult","standard")]
 json.dump(threshold_pass,open(threshold_pass_result,"w"),indent=2)
 
 threshold_fail=copy.deepcopy(threshold_pass)
 for schema in threshold_fail["schemas"]:
   case=next(c for c in schema["cases"] if c["id"]=="boundary-explicit-advisor")
   case["final_route"]="skip"
-  case["trials"]=[trial("skip")]
+  case["trials"]=[trial("skip","standard")]
 json.dump(threshold_fail,open(threshold_fail_result,"w"),indent=2)
 PY
 sh "$evaluator" --verify-result --result "$tmp/result.json" >/dev/null
@@ -405,12 +455,16 @@ if grep -Eq '11111111|22222222|PRIVATE PROMPT' "$tmp/valid-consult.json"; then f
 grep -Fq 'parse_runtime_evidence "$raw" "$evidence" "$selected_role" "$selected_model" || write_unavailable runtime_evidence_unavailable' "$evaluator" || fail "live path bypasses the tested runtime evidence parser"
 
 for policy_case in \
-  'gpt-5.6-luna:advisor-terra gpt-5.6-terra' 'GPT-5.6-LUNA:advisor-terra gpt-5.6-terra' \
-  'gpt-5.3-codex-spark:advisor-terra gpt-5.6-terra' 'GPT-5.3-CODEX-SPARK:advisor-terra gpt-5.6-terra' \
-  'gpt-5.6-terra:advisor-sol gpt-5.6-sol' 'gpt-5.6-sol:advisor-sol gpt-5.6-sol' 'unknown:advisor-sol gpt-5.6-sol'; do
-  parent=${policy_case%%:*}; wanted=${policy_case#*:}
-  actual=$(ADVISOR_SELECT_FOR_PARENT=$parent sh "$evaluator")
-  [ "$actual" = "$wanted" ] || fail "wrong advisor role/model selection for $parent"
+  'standard:advisor-terra gpt-5.6-terra' 'STANDARD:advisor-terra gpt-5.6-terra' \
+  'specialist:advisor-sol gpt-5.6-sol' 'SPECIALIST:advisor-sol gpt-5.6-sol'; do
+  risk=${policy_case%%:*}; wanted=${policy_case#*:}
+  actual=$(ADVISOR_SELECT_FOR_RISK=$risk sh "$evaluator")
+  [ "$actual" = "$wanted" ] || fail "wrong advisor role/model selection for $risk"
+done
+for invalid_risk in unknown security-adjacent important; do
+  if ADVISOR_SELECT_FOR_RISK=$invalid_risk sh "$evaluator" >/dev/null 2>&1; then
+    fail "advisor selection accepted unsupported risk: $invalid_risk"
+  fi
 done
 
 for exact_flag in \
@@ -471,4 +525,4 @@ pass "README, NOTICE, LICENSE, UI, and operations parity"
 
 sh -n "$script_dir"/*.sh
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.1.0 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.2.0 consultation-only static contract"

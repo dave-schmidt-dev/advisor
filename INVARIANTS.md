@@ -35,7 +35,7 @@ rationale: Eligible tasks consult exactly once, while routine and borderline tas
 area: ["plugins/advisor/agents/**", "plugins/advisor/scripts/evaluate-triggers.sh", "plugins/advisor/scripts/inspect-agent-runtime.sh"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
-rationale: A successful consultation requires the event-proven policy-selected model-pinned role/model pair, effort, freshness, and read-only isolation; missing evidence is unavailable.
+rationale: A successful consultation requires the event-proven decision-risk-selected model-pinned role/model pair, effort, freshness, and read-only isolation; Standard defaults to Terra, Specialist is narrowly limited to unresolved critical risks, and missing evidence is unavailable.
 
 ### INV-6 — Switchyard separation
 area: ["plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]

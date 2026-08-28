@@ -4,17 +4,18 @@
 set -eu
 fail() { printf '%s\n' "ERROR: $*" >&2; exit 1; }
 
-sessions_dir='' expected_model='' thread_id=''
+sessions_dir='' expected_role='' expected_model='' thread_id=''
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --sessions-dir) [ "$#" -ge 2 ] || fail "--sessions-dir requires DIR"; sessions_dir=$2; shift 2 ;;
+    --expected-role) [ "$#" -ge 2 ] || fail "--expected-role requires ROLE"; expected_role=$2; shift 2 ;;
     --expected-model) [ "$#" -ge 2 ] || fail "--expected-model requires MODEL"; expected_model=$2; shift 2 ;;
     --*) fail "unknown argument: $1" ;;
     *) [ -z "$thread_id" ] || fail "only one THREAD_ID is allowed"; thread_id=$1; shift ;;
   esac
 done
-[ -n "$thread_id" ] && [ -n "$expected_model" ] || fail "usage: inspect-agent-runtime.sh [--sessions-dir DIR] --expected-model MODEL THREAD_ID"
-case "$expected_model" in gpt-5.6-terra|gpt-5.6-sol) ;; *) fail "unsupported expected model" ;; esac
+[ -n "$thread_id" ] && [ -n "$expected_role" ] && [ -n "$expected_model" ] || fail "usage: inspect-agent-runtime.sh [--sessions-dir DIR] --expected-role ROLE --expected-model MODEL THREAD_ID"
+case "$expected_role:$expected_model" in advisor-terra:gpt-5.6-terra|advisor-sol:gpt-5.6-sol) ;; *) fail "unsupported expected role/model pair" ;; esac
 printf '%s\n' "$thread_id" | LC_ALL=C grep -Eq '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' || fail "THREAD_ID must be a lowercase UUID"
 if [ -z "$sessions_dir" ]; then
   if [ -n "${CODEX_HOME-}" ]; then sessions_dir=$CODEX_HOME/sessions
@@ -27,13 +28,13 @@ matches=$(find "$sessions_dir" -type f -name "rollout-*-$thread_id.jsonl" -print
 [ "$(printf '%s\n' "$matches" | awk 'NF {count++} END {print count+0}')" -eq 1 ] || fail "expected exactly one rollout match"
 rollout=$matches
 
-jq -ce -s --arg id "$thread_id" --arg expected_model "$expected_model" '
+jq -ce -s --arg id "$thread_id" --arg expected_role "$expected_role" --arg expected_model "$expected_model" '
   [ .[] | select(.type=="session_meta") | .payload ] as $s |
   [ .[] | select(.type=="turn_context") | .payload ] as $t |
   if ($s|length)!=1 or ($t|length)==0 then error("missing metadata") else
     [$t[].model] as $m | [$t[].effort] as $e |
     [$t[].sandbox_policy.type] as $b | [$t[].permission_profile.type] as $p |
-    if $s[0].id!=$id or $s[0].agent_role!="advisor" or
+    if $s[0].id!=$id or $s[0].agent_role!=$expected_role or
        ($m|unique)!=[$expected_model] or ($e|unique)!=["high"] or
        ($b|unique)!=["read-only"] or ($p|unique|length)!=1 or
        any($p[]; type!="string" or length==0)

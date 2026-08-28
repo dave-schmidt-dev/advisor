@@ -33,27 +33,32 @@ validate_feature_state() {
   '
 }
 
-select_advisor_model() {
+select_advisor_role() {
   normalized=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
   case "$normalized" in
-    *luna*|*spark*) printf '%s\n' gpt-5.6-terra ;;
-    *terra*|*sol*) printf '%s\n' gpt-5.6-sol ;;
-    *) printf '%s\n' gpt-5.6-sol ;;
+    *luna*|*spark*) printf '%s\n' advisor-terra ;;
+    *) printf '%s\n' advisor-sol ;;
   esac
+}
+
+model_for_role() {
+  case "$1" in advisor-terra) printf '%s\n' gpt-5.6-terra ;; advisor-sol) printf '%s\n' gpt-5.6-sol ;; *) return 1 ;; esac
 }
 
 parse_runtime_evidence() {
   raw_path=$1
   evidence_path=$2
-  expected_model=$3
-  python3 - "$raw_path" "$evidence_path" "$expected_model" <<'PY'
+  expected_role=$3
+  expected_model=$4
+  python3 - "$raw_path" "$evidence_path" "$expected_role" "$expected_model" <<'PY'
 import json, re, sys
 from pathlib import Path
 
 raw_path, evidence_path = map(Path, sys.argv[1:3])
-expected_model = sys.argv[3]
-if expected_model not in {"gpt-5.6-terra", "gpt-5.6-sol"}:
-    raise SystemExit("unsupported expected model")
+expected_role, expected_model = sys.argv[3:]
+valid_pairs = {"advisor-terra":"gpt-5.6-terra", "advisor-sol":"gpt-5.6-sol"}
+if valid_pairs.get(expected_role) != expected_model:
+    raise SystemExit("unsupported expected role/model pair")
 events = []
 for line in raw_path.read_text(encoding="utf-8", errors="replace").splitlines():
     if line.strip():
@@ -87,8 +92,9 @@ for _, item in collab:
     if item.get("tool") == "wait" and item.get("receiver_thread_ids") == []:
         raise SystemExit("empty wait is not runtime evidence")
 
-completed = [item for outer, item in collab if outer == "item.completed" and item.get("tool") == "spawn_agent"]
-all_spawns = [item for _, item in collab if item.get("tool") == "spawn_agent"]
+spawn_events = [(outer,item) for outer,item in collab if item.get("tool") == "spawn_agent"]
+completed = [item for outer, item in spawn_events if outer == "item.completed"]
+all_spawns = [item for _, item in spawn_events]
 if route == "skip":
     if all_spawns:
         raise SystemExit("skip spawned an advisor")
@@ -99,8 +105,11 @@ else:
     item = completed[0]
     completed_id = item.get("id")
     if isinstance(completed_id, str) and completed_id:
-        if any(event.get("id") != completed_id for event in all_spawns):
+        if any(spawn.get("id") != completed_id for spawn in all_spawns):
             raise SystemExit("consult contains more than one logical spawn")
+        lifecycle = [outer for outer, _ in spawn_events]
+        if any(outer not in {"item.started","item.completed"} for outer in lifecycle) or lifecycle.count("item.started") > 1 or lifecycle.count("item.completed") != 1:
+            raise SystemExit("duplicate or malformed spawn lifecycle")
     elif len(all_spawns) != 1:
         raise SystemExit("spawn lifecycle events lack a stable call identity")
     tids = item.get("receiver_thread_ids")
@@ -110,13 +119,13 @@ else:
     if not isinstance(agents, list) or len(agents) != 1 or not isinstance(agents[0], dict):
         raise SystemExit("invalid receiver agent evidence")
     agent = agents[0]
-    if agent.get("agent_role") != "advisor" or agent.get("thread_id") != tids[0]:
+    if agent.get("agent_role") != expected_role or agent.get("thread_id") != tids[0]:
         raise SystemExit("wrong receiver identity")
     if item.get("model") != expected_model or item.get("reasoning_effort") != "high":
         raise SystemExit("wrong receiver model or effort")
     if tids[0] == root:
         raise SystemExit("receiver reused root thread")
-    evidence = {"route":"consult","advisor_count":1,"roles":["advisor"],"freshness":"distinct_receiver_thread","model":expected_model,"effort":"high","sandbox":"read-only"}
+    evidence = {"route":"consult","advisor_count":1,"roles":[expected_role],"freshness":"distinct_receiver_thread","model":expected_model,"effort":"high","sandbox":"read-only"}
 
 text = json.dumps(evidence, separators=(",", ":"))
 if root in text or any(tid in text for item in all_spawns for tid in item.get("receiver_thread_ids", []) if isinstance(tid, str)):
@@ -129,7 +138,8 @@ PY
 # fail-closed parser used by --run without starting Codex or touching live state.
 if [ "${ADVISOR_SELECT_FOR_PARENT+x}" = x ]; then
   [ "$#" -eq 0 ] || fail "model-selection fixture accepts no arguments"
-  select_advisor_model "$ADVISOR_SELECT_FOR_PARENT"
+  selected_role=$(select_advisor_role "$ADVISOR_SELECT_FOR_PARENT")
+  printf '%s %s\n' "$selected_role" "$(model_for_role "$selected_role")"
   exit
 fi
 if [ "${ADVISOR_VALIDATE_CLI_VERSION+x}" = x ]; then
@@ -147,7 +157,8 @@ if [ "${ADVISOR_PARSE_RUNTIME_EVIDENCE+x}" = x ]; then
   [ "$#" -eq 0 ] || fail "runtime-evidence fixture accepts no arguments"
   [ "${ADVISOR_RUNTIME_EVIDENCE_OUT+x}" = x ] || fail "runtime-evidence fixture requires an output path"
   [ "${ADVISOR_EXPECTED_MODEL+x}" = x ] || fail "runtime-evidence fixture requires an expected model"
-  parse_runtime_evidence "$ADVISOR_PARSE_RUNTIME_EVIDENCE" "$ADVISOR_RUNTIME_EVIDENCE_OUT" "$ADVISOR_EXPECTED_MODEL"
+  [ "${ADVISOR_EXPECTED_ROLE+x}" = x ] || fail "runtime-evidence fixture requires an expected role"
+  parse_runtime_evidence "$ADVISOR_PARSE_RUNTIME_EVIDENCE" "$ADVISOR_RUNTIME_EVIDENCE_OUT" "$ADVISOR_EXPECTED_ROLE" "$ADVISOR_EXPECTED_MODEL"
   exit
 fi
 
@@ -181,11 +192,11 @@ if re.search(r'(?i)(api[_-]?key|authorization|bearer|password|token)["\s:]+[^"\s
     raise SystemExit("result contains a secret-like field or value")
 fixtures = json.loads(fixture_path.read_text(encoding="utf-8"))["cases"]
 expected = {c["id"]: c for c in fixtures}
-def selected_model(parent):
+def selected_pair(parent):
     value = str(parent).lower()
     if "luna" in value or "spark" in value:
-        return "gpt-5.6-terra"
-    return "gpt-5.6-sol"
+        return "advisor-terra", "gpt-5.6-terra"
+    return "advisor-sol", "gpt-5.6-sol"
 if data.get("status") == "unavailable":
     if not allow:
         raise SystemExit("typed unavailable result requires --allow-unavailable")
@@ -240,11 +251,11 @@ for schema in schemas:
         for trial in trials:
             route = trial.get("route")
             roles = trial.get("roles")
-            expected_model = selected_model(trial.get("parent_model", "unknown"))
-            if trial.get("selected_model") != expected_model:
-                raise SystemExit(f"invalid parent-model selection: {case['id']}")
+            expected_role, expected_model = selected_pair(trial.get("parent_model", "unknown"))
+            if trial.get("selected_role") != expected_role or trial.get("selected_model") != expected_model:
+                raise SystemExit(f"invalid parent-role/model selection: {case['id']}")
             if route == "consult":
-                if trial.get("advisor_count") != 1 or roles != ["advisor"] or trial.get("freshness") != "distinct_receiver_thread":
+                if trial.get("advisor_count") != 1 or roles != [expected_role] or trial.get("freshness") != "distinct_receiver_thread":
                     raise SystemExit(f"invalid consultation identity/freshness: {case['id']}")
                 if trial.get("model") != expected_model or trial.get("effort") != "high" or trial.get("sandbox") != "read-only":
                     raise SystemExit(f"invalid consultation pin/isolation: {case['id']}")
@@ -355,7 +366,7 @@ setup_schema() {
   codex features "$feature_switch" multi_agent_v2 list >"$work/features-$schema" 2>/dev/null || write_unavailable feature_state_unavailable
   feature_output=$(cat "$work/features-$schema")
   validate_feature_state "$feature_output" "$feature" || write_unavailable feature_state_unavailable
-  progress "$schema: isolated project, skill, plugin link, and exact child role ready"
+  progress "$schema: isolated project, skill, plugin link, and exact child roles ready"
 }
 
 run_trial() {
@@ -364,25 +375,27 @@ run_trial() {
   sessions_run=$((sessions_run + 1))
   project=$work/project-$schema
   runtime_home=$work/runtime-$schema
-  role_file=$runtime_home/agents/advisor.toml
   parent_model=${ADVISOR_EVAL_PARENT_MODEL-unknown}
-  selected_model=$(select_advisor_model "$parent_model")
+  selected_role=$(select_advisor_role "$parent_model")
+  selected_model=$(model_for_role "$selected_role")
   case "$feature" in true) feature_switch=--enable ;; false) feature_switch=--disable ;; esac
   raw=$work/raw-$schema-$id-$attempt.jsonl
   evidence=$work/evidence-$schema-$id-$attempt.json
   progress "$schema: session $sessions_run/40, case $id, trial $attempt"
-  eval_prompt="Classify this task under the installed Advisor consultation contract. Emit the required ADVISOR DECISION before any implementation. Do not implement. Parent model is $parent_model; apply the shipped selection policy. If consulting, spawn exactly one advisor in a new thread with model $selected_model and high effort. Finish with exactly one line: ADVISOR_EVAL route=consult|skip. TASK: $prompt_text"
+  eval_prompt="Classify this task under the installed Advisor consultation contract. Emit the required ADVISOR DECISION before any implementation. Do not implement. Parent model is $parent_model; apply the shipped role-selection policy. If consulting, spawn exactly one $selected_role in a new thread; its installed profile pins $selected_model and high effort. Do not pass a model override. Finish with exactly one line: ADVISOR_EVAL route=consult|skip. TASK: $prompt_text"
   codex exec --json --ignore-user-config --ignore-rules --ephemeral "$feature_switch" multi_agent_v2 \
-    -c "agents.advisor.description=Advisor read-only consultation" \
-    -c "agents.advisor.config_file=\"$role_file\"" \
+    -c "agents.advisor-terra.description=Advisor Terra read-only consultation" \
+    -c "agents.advisor-terra.config_file=\"$runtime_home/agents/advisor-terra.toml\"" \
+    -c "agents.advisor-sol.description=Advisor Sol read-only consultation" \
+    -c "agents.advisor-sol.config_file=\"$runtime_home/agents/advisor-sol.toml\"" \
     -c "shell_environment_policy.set={CODEX_HOME=\"$runtime_home\"}" \
     -C "$project" --sandbox read-only --skip-git-repo-check "$eval_prompt" </dev/null >"$raw" 2>/dev/null || write_unavailable runtime_evidence_unavailable
-  parse_runtime_evidence "$raw" "$evidence" "$selected_model" || write_unavailable runtime_evidence_unavailable
-  python3 - "$evidence" "$trials" "$schema" "$feature" "$id" "$expected" "$attempt" "$parent_model" "$selected_model" <<'PY' || write_unavailable runtime_evidence_unavailable
+  parse_runtime_evidence "$raw" "$evidence" "$selected_role" "$selected_model" || write_unavailable runtime_evidence_unavailable
+  python3 - "$evidence" "$trials" "$schema" "$feature" "$id" "$expected" "$attempt" "$parent_model" "$selected_role" "$selected_model" <<'PY' || write_unavailable runtime_evidence_unavailable
 import json, sys
-evidence, out, schema, feature, cid, expected, attempt, parent_model, selected_model = sys.argv[1:]
+evidence, out, schema, feature, cid, expected, attempt, parent_model, selected_role, selected_model = sys.argv[1:]
 record = json.load(open(evidence, encoding="utf-8"))
-record.update({"schema":schema,"multi_agent_v2":feature=="true","id":cid,"expected":expected,"attempt":int(attempt),"parent_model":parent_model,"selected_model":selected_model})
+record.update({"schema":schema,"multi_agent_v2":feature=="true","id":cid,"expected":expected,"attempt":int(attempt),"parent_model":parent_model,"selected_role":selected_role,"selected_model":selected_model})
 with open(out,"a",encoding="utf-8") as f: f.write(json.dumps(record,separators=(",",":"))+"\n")
 PY
 }
@@ -428,7 +441,7 @@ for name, feature in (("v1",False),("v2",True)):
         final=max(("consult","skip"),key=routes.count)
         if fixture["class"]=="boundary": boundary_ok += final==fixture["expected"]
         else: overall &= final==fixture["expected"]
-        cases.append({"id":fixture["id"],"final_route":final,"trials":[{k:t[k] for k in ("route","advisor_count","roles","freshness","model","effort","sandbox","parent_model","selected_model")} for t in ts]})
+        cases.append({"id":fixture["id"],"final_route":final,"trials":[{k:t[k] for k in ("route","advisor_count","roles","freshness","model","effort","sandbox","parent_model","selected_role","selected_model")} for t in ts]})
     overall &= boundary_ok>=3
     schemas.append({"name":name,"multi_agent_v2":feature,"cases":cases})
 data={"status":"pass" if overall else "fail","redacted":True,"codex_version":version,"subscription_only":True,"overage_disabled":True,"session_cap":40,"sessions_run":int(count),"nonmutation":{"live_home":{"before":lb,"after":la,"unchanged":lb==la},"marketplace":{"before":mb,"after":ma,"unchanged":mb==ma}},"schemas":schemas}

@@ -8,7 +8,7 @@ technical decisions; it never implements, routes implementation, or performs
 final verification.
 
 The distributable plugin identity is `advisor`. Its single skill is `consultation`, and
-the current release version is `1.0.1`. Local development installs may add
+the current release version is `1.1.0`. Local development installs may add
 one `+codex.<cachebuster>` build suffix without changing that release identity.
 
 ## Outcome
@@ -71,13 +71,14 @@ in repository evidence.
 
 ### Consult route
 
-1. Verify the installed `advisor` custom role exactly matches the shipped
-   profile.
-2. Select the child model from the parent: Luna, Spark, or lower uses GPT-5.6
-   Terra / high; Terra uses GPT-5.6 Sol / high; Sol uses a fresh GPT-5.6 Sol /
-   high; unknown parents fail safe to GPT-5.6 Sol / high.
-3. Spawn exactly one fresh subagent with `agent_type: advisor` and explicit selected
-   model/high effort. Use the
+1. Verify installed `advisor-terra` and `advisor-sol` custom roles exactly match
+   both shipped profiles.
+2. Select the role from the parent: Luna, Spark, or lower uses `advisor-terra`,
+   pinned GPT-5.6 Terra / high; Terra, Sol, and unknown parents use `advisor-sol`,
+   pinned GPT-5.6 Sol / high.
+3. Spawn exactly one fresh subagent with the selected role and no model/effort
+   override; live Codex may ignore per-spawn overrides, so the model-pinned role is
+   the enforcement boundary. Use the
    fresh-context field exposed by the host schema: `fork_turns: none` for the v2
    schema or `fork_context: false` for the v1 schema. Never send both, inherit
    context, or pass model or effort overrides.
@@ -137,11 +138,12 @@ RISKS: <material residual risks, or none>
 - The advisor is pre-decision consultation, not post-implementation review.
 - No hooks, MCP server, connector, API key, network service, telemetry, or
   scheduled task is introduced.
-- Installation may add only the exact `advisor` custom-agent TOML through a
+- Installation may add only the exact `advisor-terra` and `advisor-sol` custom-agent TOMLs through a
   fail-closed, idempotent companion installer. An attended upgrade must also
   deactivate byte-exact known historical Sol Advisor role files by recoverably renaming
   implementation/review roles to `<role>.toml.retired-v0.6.0` and the historical
-  consultation role to `sol-advisor.toml.retired-v1.0.0`, outside the `.toml` discovery
+  consultation role to `sol-advisor.toml.retired-v1.0.0` and the obsolete neutral
+  `advisor.toml` to `advisor.toml.retired-v1.0.1`, outside the `.toml` discovery
   pattern. A later run treats an absent active role plus an exact retired file as
   already migrated. Both paths existing, a mismatched retired file, or a modified,
   unsafe, or conflicting active role stops migration. The installer must not edit
@@ -158,7 +160,7 @@ RISKS: <material residual risks, or none>
   `06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d`,
   used by the intermediate v0.3.0/v0.4.0/pre-revert v0.5.0 history. Unknown blobs
   still fail closed.
-- Plugin installation identity is `advisor`. Set version `1.0.1` and make
+- Plugin installation identity is `advisor`. Set version `1.1.0` and make
   the manifest author identify David Schmidt / Zero Delta LLC as the fork
   maintainer while crediting original author Daniel McAteer. Preserve Daniel
   McAteer's MIT copyright in `LICENSE`, add `NOTICE.md` with the upstream URL and
@@ -171,7 +173,8 @@ RISKS: <material residual risks, or none>
 ```text
 plugins/advisor/
   .codex-plugin/plugin.json
-  agents/advisor.toml
+  agents/advisor-terra.toml
+  agents/advisor-sol.toml
   scripts/install-agents.sh
   scripts/inspect-agent-runtime.sh
   scripts/evaluate-triggers.sh
@@ -194,13 +197,13 @@ trigger retired behavior.
 The repository verifier must prove:
 
 1. Manifest JSON, marketplace JSON, TOML, YAML, and shell syntax are valid.
-2. The plugin exposes exactly one skill and ships exactly one custom-agent role.
+2. The plugin exposes exactly one skill and ships exactly two model-pinned custom-agent roles.
 3. Implicit invocation is enabled and the skill description contains explicit
    consult and skip boundaries.
 4. Retired `solo`, `delegate`, `audit`, `full`, Luna, Terra, and final-review
    contracts are absent from active plugin content.
-5. The advisor role is model-neutral and requests read-only sandboxing; static
-   fixtures prove the parent-model selection policy and exact spawn evidence.
+5. The advisor roles pin the exact Terra/high and Sol/high pairs and request
+   read-only sandboxing; static fixtures prove parent-role selection and exact spawn evidence.
 6. The installer is fail-closed, idempotent, supports an isolated target, and
    refuses modified, symlinked, nonregular, unknown, or unsafe destinations.
 7. Upgrade fixtures prove byte-exact retired roles become recoverable inactive
@@ -232,8 +235,8 @@ Pass criteria:
   exactly two more trials and its majority route becomes that schema's case result;
 - at least three of four boundary cases choose the expected route after that
   bounded majority rule;
-- every consult case spawns exactly one `advisor` role with fresh context and the
-  model selected for its parent;
+- every consult case spawns exactly one selected `advisor-terra` or `advisor-sol`
+  role with fresh context and its pinned model;
 - both `multi_agent_v2` feature states are covered without ever accepting a
   self-reported or inherited-context consultation as runtime evidence;
 - every skip case spawns none;
@@ -247,7 +250,7 @@ keeps its authenticated Codex home; the evaluator neither copies nor links auth
 material. Each feature state uses an isolated temporary project and child runtime,
 with `--ignore-user-config`, `--ignore-rules`, `--ephemeral`, and a read-only
 sandbox. The project links only the repository-local consultation skill and plugin,
-and `install-agents.sh --target-dir` installs and checks the exact role in the child
+and `install-agents.sh --target-dir` installs and checks both exact roles in the child
 runtime. The evaluator applies `--disable multi_agent_v2` and `--enable
 multi_agent_v2` in separate runs and confirms each effective state with `codex
 features list`. A completed `spawn_agent` event, not model-authored output, must

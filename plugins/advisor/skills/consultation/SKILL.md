@@ -26,17 +26,18 @@ General quality is not a decision question.
 
 ## Consult exactly
 
-1. Run the companion installer in check mode and verify that the installed
-   `advisor` TOML byte-matches the shipped role.
-2. Select the child model from the parent model: Luna, Spark, or lower uses
-   `gpt-5.6-terra`; Terra uses `gpt-5.6-sol`; Sol uses a fresh `gpt-5.6-sol`;
-   and an unknown parent fails safe to `gpt-5.6-sol`. Every lane uses `high`
-   reasoning. This selection is policy, not model-authored advice.
-3. Spawn exactly one `agent_type: advisor` with the selected model and `high`
-   effort. With host schema v2 use `fork_turns: none`; with v1 use
-   `fork_context: false`. Never send both or inherit context.
-4. Verify the completed `spawn_agent` event first: role `advisor`, the selected
-   model, `high` effort, one receiver thread distinct from the root, and read-only
+1. Run the companion installer in check mode and verify that installed
+   `advisor-terra` and `advisor-sol` TOMLs byte-match both shipped roles.
+2. Select the role from the parent model: Luna, Spark, or lower uses
+   `agent_type: advisor-terra`, pinned to `gpt-5.6-terra` / `high`; Terra, Sol,
+   and unknown parents use `agent_type: advisor-sol`, pinned to `gpt-5.6-sol` /
+   `high`. Selection is policy, not model-authored advice.
+3. Spawn exactly one selected role. Do not pass a model or effort override because
+   live Codex may ignore it; the installed role is the enforcement boundary. With
+   host schema v2 use `fork_turns: none`; with v1 use `fork_context: false`.
+   Never send both or inherit context.
+4. Verify the completed `spawn_agent` event first: the exact selected role/model
+   pair, `high` effort, one receiver thread distinct from the root, and read-only
    isolation established by invocation and role files. The local inspector may fill
    only fields omitted by public metadata. Conflicts or missing evidence block the
    consult route.
@@ -79,7 +80,8 @@ Treat the response as evidence, verify cited repository facts, then record `acce
 If the exact completed spawn evidence is unavailable, report `advisor unavailable`
 and block the consult route. Never continue independently, substitute another role,
 or add an implementer or final reviewer after choosing `consult`.
-In all cases, never substitute another role for `advisor`.
+In all cases, never substitute a role other than the policy-selected
+`advisor-terra` or `advisor-sol`.
 
 See [operations](references/operations.md) for installation, runtime evidence, and
 evaluation details.

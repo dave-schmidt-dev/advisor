@@ -37,14 +37,15 @@ Use $advisor:consultation for a fresh, read-only second opinion on this decision
 
 Before implementation, the root emits `ADVISOR DECISION` with `consult` or `skip`, a
 task-specific reason, and a bounded question when consulting. A valid consult uses
-exactly one fresh `advisor` role. Luna/Spark-or-lower parents select `gpt-5.6-terra` /
-High; Terra selects `gpt-5.6-sol` / High; Sol selects a fresh `gpt-5.6-sol` / High; and
-unknown parents fail safe to `gpt-5.6-sol` / High. The completed spawn event must prove
-the selected role, model, effort, and distinct receiver thread. If it does not,
+exactly one model-pinned role. Luna/Spark-or-lower parents select `advisor-terra`
+(`gpt-5.6-terra` / High); Terra, Sol, and unknown parents select `advisor-sol`
+(`gpt-5.6-sol` / High). The parent does not pass a model override. The completed
+spawn event must prove the exact selected role/model pair, effort, and distinct
+receiver thread. If it does not,
 evidence is unavailable and the consult route blocks rather than continuing
 independently.
 
-The companion installer adds only the exact current advisor role. During upgrade it
+The companion installer adds only the two exact current advisor roles. During upgrade it
 recoverably retires byte-exact known historical implementation/review roles without
 editing Codex configuration or overwriting modified or unsafe files.
 

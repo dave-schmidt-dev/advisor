@@ -11,7 +11,8 @@ plugin_dir=$(CDPATH= cd "$script_dir/.." && pwd) || exit 1
 repo_dir=$(CDPATH= cd "$plugin_dir/../.." && pwd) || exit 1
 manifest=$plugin_dir/.codex-plugin/plugin.json
 marketplace=$repo_dir/.agents/plugins/marketplace.json
-role=$plugin_dir/agents/advisor.toml
+terra_role=$plugin_dir/agents/advisor-terra.toml
+sol_role=$plugin_dir/agents/advisor-sol.toml
 skill=$plugin_dir/skills/consultation/SKILL.md
 ui=$plugin_dir/skills/consultation/agents/openai.yaml
 operations=$plugin_dir/skills/consultation/references/operations.md
@@ -23,23 +24,24 @@ readme=$repo_dir/README.md
 notice=$repo_dir/NOTICE.md
 license=$repo_dir/LICENSE
 
-for file in "$manifest" "$marketplace" "$role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$evaluator" "$readme" "$notice" "$license"; do
+for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$evaluator" "$readme" "$notice" "$license"; do
   [ -f "$file" ] || fail "missing required file: $file"
 done
-[ "$(find "$plugin_dir/agents" -maxdepth 1 -type f -name '*.toml' | wc -l | tr -d ' ')" -eq 1 ] || fail "expected exactly one active role"
+[ "$(find "$plugin_dir/agents" -maxdepth 1 -type f -name '*.toml' | wc -l | tr -d ' ')" -eq 2 ] || fail "expected exactly two active roles"
 [ "$(find "$plugin_dir/skills" -type f -name SKILL.md | wc -l | tr -d ' ')" -eq 1 ] || fail "expected exactly one skill"
-pass "required inventory: one skill, one role, evaluator, documentation"
+pass "required inventory: one skill, two model-pinned roles, evaluator, documentation"
 
-python3 - "$manifest" "$marketplace" "$role" "$fixtures" "$ui" <<'PY'
+python3 - "$manifest" "$marketplace" "$terra_role" "$sol_role" "$fixtures" "$ui" <<'PY'
 import json, re, sys, tomllib
 from pathlib import Path
 manifest=json.loads(Path(sys.argv[1]).read_text())
 market=json.loads(Path(sys.argv[2]).read_text())
-role=tomllib.loads(Path(sys.argv[3]).read_text())
-cases=json.loads(Path(sys.argv[4]).read_text())
-ui=Path(sys.argv[5]).read_text()
+terra=tomllib.loads(Path(sys.argv[3]).read_text())
+sol=tomllib.loads(Path(sys.argv[4]).read_text())
+cases=json.loads(Path(sys.argv[5]).read_text())
+ui=Path(sys.argv[6]).read_text()
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or not re.fullmatch(r"1\.0\.1(?:\+codex\.[0-9A-Za-z.-]+)?",version): raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or not re.fullmatch(r"1\.1\.0(?:\+codex\.[0-9A-Za-z.-]+)?",version): raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if "David Schmidt / Zero Delta LLC" not in author_name or "Daniel McAteer" not in author_name: raise SystemExit("maintainer/original-author identity")
@@ -48,10 +50,10 @@ entry=market.get("plugins",[])
 if market.get("name")!="advisor" or market.get("interface",{}).get("displayName")!="Advisor": raise SystemExit("marketplace identity")
 if len(entry)!=1 or entry[0].get("name")!="advisor" or entry[0].get("source")!={"source":"local","path":"./plugins/advisor"}: raise SystemExit("marketplace source")
 if entry[0].get("policy")!={"installation":"AVAILABLE","authentication":"ON_INSTALL"} or not entry[0].get("category"): raise SystemExit("marketplace policy")
-pins={"name":"advisor","sandbox_mode":"read-only"}
-if any(role.get(k)!=v for k,v in pins.items()): raise SystemExit("role pins")
-if "model" in role or "model_reasoning_effort" in role: raise SystemExit("role must remain model-neutral")
-if not all(isinstance(role.get(k),str) and role[k].strip() for k in ("description","developer_instructions")): raise SystemExit("role text")
+pairs=((terra,{"name":"advisor-terra","model":"gpt-5.6-terra","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(sol,{"name":"advisor-sol","model":"gpt-5.6-sol","model_reasoning_effort":"high","sandbox_mode":"read-only"}))
+for role,pins in pairs:
+    if any(role.get(k)!=v for k,v in pins.items()): raise SystemExit("role pins")
+    if not all(isinstance(role.get(k),str) and role[k].strip() for k in ("description","developer_instructions")): raise SystemExit("role text")
 items=cases.get("cases",[])
 if len(items)!=12 or len({c.get("id") for c in items})!=12: raise SystemExit("fixture inventory")
 counts={k:sum(c.get("class")==k for c in items) for k in ("consult","skip","boundary")}
@@ -71,17 +73,17 @@ for phrase in \
   grep -Fqi "$phrase" "$skill" || fail "skill description/contract omits: $phrase"
 done
 for phrase in 'ADVISOR DECISION' 'route: consult | skip' 'fork_turns: none' 'fork_context: false' \
-  'agent_type: advisor' 'gpt-5.6-terra' 'gpt-5.6-sol' 'Luna' 'Spark' 'Terra' 'Sol' 'unknown parent' \
+  'agent_type: advisor-terra' 'agent_type: advisor-sol' 'gpt-5.6-terra' 'gpt-5.6-sol' 'Luna' 'Spark' 'Terra' 'Sol' 'unknown parent' \
   'DECISION' 'CONTEXT' 'OPTIONS' 'BOUNDARIES' 'REQUEST' \
   'ADVISOR RESPONSE' 'RECOMMENDATION:' 'WHY:' 'STRONGEST OBJECTION:' 'CHANGE MY MIND:' \
   'ACCEPTANCE CHECKS:' 'RISKS:' 'accept' 'modify' 'reject' 'advisor unavailable'; do
   grep -Fq "$phrase" "$skill" || fail "consultation contract omits: $phrase"
 done
 grep -Fq 'Never send both or inherit' "$skill" || fail "fresh-context exclusion missing"
-grep -Fq 'never substitute another role' "$skill" || fail "no-substitution rule missing"
+grep -Fq 'never substitute a role other than the policy-selected' "$skill" || fail "no-substitution rule missing"
 pass "implicit consult/skip boundaries and exact request/response contract"
 
-for document in "$manifest" "$skill" "$ui" "$operations" "$readme" "$role"; do
+for document in "$manifest" "$skill" "$ui" "$operations" "$readme" "$terra_role" "$sol_role"; do
   if grep -Eqi 'SELECTIVE ROUTE|mode: solo|solo \| delegate|sol_advisor_(luna|terra|sol_reviewer)|route selected implementation|fresh final review lane'; then
     fail "retired delivery behavior remains in $document"
   fi <"$document"
@@ -97,7 +99,8 @@ for digest in \
  dc329fe87f6f6610c13157ec16432f91c79cf5a541ee3e7448f6afb165dd18ce \
  06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d \
  77ed2f36bb149da5d9032230c3d6f5e5cd56b059b3fa5f59085249bba06e1f3a \
- 0333acf0ef562bcfebd06009ac09bd1dd8cbc04c4cf28e08e9e049bd8bf202d2; do
+ 0333acf0ef562bcfebd06009ac09bd1dd8cbc04c4cf28e08e9e049bd8bf202d2 \
+ b0be4d07ef2958ad2dd01a4b11be6edff309063fe45d75e778aeac6dfce80363; do
   grep -Fq "$digest" "$installer" || fail "missing historical digest: $digest"
 done
 pass "all v0.2, intermediate, v0.5, and v0.6 retirement fingerprints retained"
@@ -110,7 +113,8 @@ snapshot() { find "$1" -mindepth 1 -maxdepth 1 -print | LC_ALL=C sort | while IF
 
 clean=$tmp/clean
 sh "$installer" --target-dir "$clean" >/dev/null
-cmp -s "$role" "$clean/advisor.toml" || fail "clean install differs"
+cmp -s "$terra_role" "$clean/advisor-terra.toml" || fail "clean Terra install differs"
+cmp -s "$sol_role" "$clean/advisor-sol.toml" || fail "clean Sol install differs"
 sh "$installer" --target-dir "$clean" --check >/dev/null
 before=$(snapshot "$clean"); sh "$installer" --target-dir "$clean" >/dev/null; after=$(snapshot "$clean")
 [ "$before" = "$after" ] || fail "second install changed exact state"
@@ -134,6 +138,11 @@ python3 - "$historical/sol-advisor.toml" <<'PY'
 from pathlib import Path
 import sys
 Path(sys.argv[1]).write_text('''name = "sol_advisor"\ndescription = "Fresh, read-only GPT-5.6 Sol advisor for bounded technical decisions."\nmodel = "gpt-5.6-sol"\nmodel_reasoning_effort = "high"\nsandbox_mode = "read-only"\n\ndeveloper_instructions = """\nYou are Sol Advisor, a consultation-only technical advisor. Remain strictly\nread-only. Do not create, edit, delete, format, route, implement, or review final\nwork. Evaluate only the bounded decision packet supplied by the root agent.\n\nReturn exactly:\nADVISOR RESPONSE\nRECOMMENDATION: <one path>\nWHY: <decisive evidence and reasoning>\nSTRONGEST OBJECTION: <best case against the recommendation>\nCHANGE MY MIND: <specific missing or contrary evidence>\nACCEPTANCE CHECKS: <concrete checks>\nRISKS: <material residual risks, or none>\n\nAdvice is non-authoritative. Do not spawn another agent, request irrelevant history,\nor silently substitute a different role, model, reasoning level, or isolation mode.\n"""\n''',encoding="utf-8")
+PY
+python3 - "$historical/advisor.toml" <<'PY'
+from pathlib import Path
+import sys
+Path(sys.argv[1]).write_text('''name = "advisor"\ndescription = "Fresh, read-only advisor for bounded technical decisions. The parent selects the model from the shipped policy."\nsandbox_mode = "read-only"\n\ndeveloper_instructions = """\nYou are Advisor, a consultation-only technical advisor. Remain strictly\nread-only. Do not create, edit, delete, format, route, implement, or review final\nwork. Evaluate only the bounded decision packet supplied by the root agent.\n\nReturn exactly:\nADVISOR RESPONSE\nRECOMMENDATION: <one path>\nWHY: <decisive evidence and reasoning>\nSTRONGEST OBJECTION: <best case against the recommendation>\nCHANGE MY MIND: <specific missing or contrary evidence>\nACCEPTANCE CHECKS: <concrete checks>\nRISKS: <material residual risks, or none>\n\nAdvice is non-authoritative. Do not spawn another agent, request irrelevant history,\nor silently substitute a different role, model, reasoning level, or isolation mode.\n"""\n''',encoding="utf-8")
 PY
 
 v020=$tmp/historical-v020
@@ -165,15 +174,18 @@ assert_digest "$historical/sol-advisor-luna-implementer.toml" 12fa9180a292876e67
 assert_digest "$historical/sol-advisor-terra-implementer.toml" 77ed2f36bb149da5d9032230c3d6f5e5cd56b059b3fa5f59085249bba06e1f3a
 assert_digest "$historical/sol-advisor-sol-reviewer.toml" 0333acf0ef562bcfebd06009ac09bd1dd8cbc04c4cf28e08e9e049bd8bf202d2
 assert_digest "$historical/sol-advisor.toml" 20ed49d92068594b251b2cf3fc38207f415a39879e15d07d635b3f7f7127da57
+assert_digest "$historical/advisor.toml" b0be4d07ef2958ad2dd01a4b11be6edff309063fe45d75e778aeac6dfce80363
 
 exercise_retirement() {
   label=$1 target=$2
   shift 2
   sh "$installer" --target-dir "$target" >/dev/null
-  cmp -s "$role" "$target/advisor.toml" || fail "$label advisor install mismatch"
+  cmp -s "$terra_role" "$target/advisor-terra.toml" || fail "$label Terra advisor install mismatch"
+  cmp -s "$sol_role" "$target/advisor-sol.toml" || fail "$label Sol advisor install mismatch"
   for old in "$@"; do
     suffix=.retired-v0.6.0
     [ "$old" != sol-advisor.toml ] || suffix=.retired-v1.0.0
+    [ "$old" != advisor.toml ] || suffix=.retired-v1.0.1
     [ ! -e "$target/$old" ] && [ -f "$target/$old$suffix" ] || fail "$label retirement failed: $old"
   done
   sh "$installer" --target-dir "$target" --check >/dev/null
@@ -183,37 +195,39 @@ exercise_retirement() {
 exercise_retirement v0.2.0 "$v020" sol-advisor-luna-implementer.toml sol-advisor-terra-implementer.toml
 exercise_retirement v0.5.0 "$v050" sol-advisor-luna-implementer.toml sol-advisor-terra-implementer.toml
 exercise_retirement intermediate "$intermediate" sol-advisor-terra-implementer.toml
-exercise_retirement v0.6.0-v1.0.0 "$historical" sol-advisor.toml sol-advisor-luna-implementer.toml sol-advisor-terra-implementer.toml sol-advisor-sol-reviewer.toml
+exercise_retirement through-v1.0.1 "$historical" advisor.toml sol-advisor.toml sol-advisor-luna-implementer.toml sol-advisor-terra-implementer.toml sol-advisor-sol-reviewer.toml
 pass "all historical digests retire dynamically and every vintage is second-run idempotent"
 
-for kind in modified symlink nonregular dual collision; do
+for kind in modified symlink nonregular dual collision neutral-modified neutral-dual; do
   target=$tmp/refuse-$kind; mkdir "$target"
   case "$kind" in
     modified) printf 'unknown\n' >"$target/sol-advisor-luna-implementer.toml" ;;
-    symlink) ln -s "$role" "$target/sol-advisor-luna-implementer.toml" ;;
+    symlink) ln -s "$terra_role" "$target/sol-advisor-luna-implementer.toml" ;;
     nonregular) mkdir "$target/sol-advisor-luna-implementer.toml" ;;
     dual) cp "$historical/sol-advisor-luna-implementer.toml.retired-v0.6.0" "$target/sol-advisor-luna-implementer.toml"; cp "$target/sol-advisor-luna-implementer.toml" "$target/sol-advisor-luna-implementer.toml.retired-v0.6.0" ;;
     collision) printf 'unknown\n' >"$target/sol-advisor-luna-implementer.toml.retired-v0.6.0" ;;
+    neutral-modified) printf 'unknown\n' >"$target/advisor.toml" ;;
+    neutral-dual) cp "$historical/advisor.toml.retired-v1.0.1" "$target/advisor.toml"; cp "$historical/advisor.toml.retired-v1.0.1" "$target/advisor.toml.retired-v1.0.1" ;;
   esac
   before=$(snapshot "$target")
   if sh "$installer" --target-dir "$target" >/dev/null 2>&1; then fail "installer accepted $kind state"; fi
   after=$(snapshot "$target"); [ "$before" = "$after" ] || fail "$kind refusal mutated target"
 done
-pass "modified, symlink, nonregular, dual-path, and destination-collision refusal"
+pass "modified, symlink, nonregular, dual-path, destination-collision, and obsolete-neutral refusal"
 
 sessions=$tmp/sessions/2026/08/27; mkdir -p "$sessions"
 id=11111111-1111-7111-8111-111111111111
 rollout=$sessions/rollout-fixture-$id.jsonl
 printf '%s\n' \
  '{"type":"response_item","payload":{"text":"DO_NOT_LEAK"}}' \
- "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$id\",\"parent_thread_id\":\"00000000-0000-7000-8000-000000000000\",\"agent_role\":\"advisor\"}}" \
+ "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$id\",\"parent_thread_id\":\"00000000-0000-7000-8000-000000000000\",\"agent_role\":\"advisor-sol\"}}" \
  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$rollout"
-out=$(TMPDIR=/nonexistent-read-only-path sh "$inspector" --sessions-dir "$tmp/sessions" --expected-model gpt-5.6-sol "$id")
-printf '%s\n' "$out" | jq -e '.agent_role=="advisor" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and (keys|sort)==["agent_role","effort","model","parent_thread_id","permission_profile_type","sandbox_policy_type","thread_id"]' >/dev/null || fail "inspector allowlist/pins"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-model gpt-5.6-terra "$id" >/dev/null 2>&1; then fail "inspector accepted a model other than the selected model"; fi
+out=$(TMPDIR=/nonexistent-read-only-path sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$id")
+printf '%s\n' "$out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and (keys|sort)==["agent_role","effort","model","parent_thread_id","permission_profile_type","sandbox_policy_type","thread_id"]' >/dev/null || fail "inspector allowlist/pins"
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-terra --expected-model gpt-5.6-terra "$id" >/dev/null 2>&1; then fail "inspector accepted a role/model pair other than the selected pair"; fi
 printf '%s\n' "$out" | grep -Fq DO_NOT_LEAK && fail "inspector leaked payload"
 printf '%s\n' '{"type":"turn_context","payload":{"model":"gpt-5.6-terra","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >>"$rollout"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-model gpt-5.6-sol "$id" >/dev/null 2>&1; then fail "inspector accepted conflicting model"; fi
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$id" >/dev/null 2>&1; then fail "inspector accepted conflicting model"; fi
 pass "runtime inspector exact allowlist, pin validation, redaction, and conflict refusal"
 
 python3 - "$tmp/result.json" "$tmp/rerun-result.json" "$tmp/unnecessary-rerun-result.json" "$tmp/boundary-three-of-four.json" "$tmp/boundary-two-of-four.json" "$fixtures" <<'PY'
@@ -221,8 +235,10 @@ import copy,json,sys
 result,rerun_result,unnecessary_result,threshold_pass_result,threshold_fail_result,fixtures=sys.argv[1:]; items=json.load(open(fixtures))["cases"]
 schemas=[]; n=0
 def trial(route,parent="unknown"):
-  selected="gpt-5.6-terra" if "luna" in parent or "spark" in parent else "gpt-5.6-sol"
-  return {"route":route,"advisor_count":1 if route=="consult" else 0,"roles":["advisor"] if route=="consult" else [],"freshness":"distinct_receiver_thread" if route=="consult" else "none","model":selected if route=="consult" else "none","effort":"high" if route=="consult" else "none","sandbox":"read-only" if route=="consult" else "none","parent_model":parent,"selected_model":selected}
+  terra="luna" in parent.lower() or "spark" in parent.lower()
+  selected_role="advisor-terra" if terra else "advisor-sol"
+  selected_model="gpt-5.6-terra" if terra else "gpt-5.6-sol"
+  return {"route":route,"advisor_count":1 if route=="consult" else 0,"roles":[selected_role] if route=="consult" else [],"freshness":"distinct_receiver_thread" if route=="consult" else "none","model":selected_model if route=="consult" else "none","effort":"high" if route=="consult" else "none","sandbox":"read-only" if route=="consult" else "none","parent_model":parent,"selected_role":selected_role,"selected_model":selected_model}
 for name,flag in (("v1",False),("v2",True)):
   cases=[]
   for c in items:
@@ -344,8 +360,8 @@ root_id="11111111-1111-7111-8111-111111111111"
 child_id="22222222-2222-7222-8222-222222222222"
 def message(route, extra=""):
     return {"type":"item.completed","item":{"type":"agent_message","text":extra+f"ADVISOR_EVAL route={route}"}}
-def spawn(model="gpt-5.6-sol",**changes):
-    item={"id":"spawn-1","type":"collab_tool_call","tool":"spawn_agent","receiver_thread_ids":[child_id],"receiver_agents":[{"agent_role":"advisor","thread_id":child_id}],"model":model,"reasoning_effort":"high","status":"completed"}
+def spawn(role="advisor-sol",model="gpt-5.6-sol",**changes):
+    item={"id":"spawn-1","type":"collab_tool_call","tool":"spawn_agent","receiver_thread_ids":[child_id],"receiver_agents":[{"agent_role":role,"thread_id":child_id}],"model":model,"reasoning_effort":"high","status":"completed"}
     item.update(changes)
     return {"type":"item.completed","item":item}
 def write(name, events):
@@ -354,53 +370,54 @@ base=[{"type":"thread.started","thread_id":root_id},spawn(),message("consult","P
 write("valid-consult",base)
 started=copy.deepcopy(base[1]); started["type"]="item.started"; started["item"]["status"]="in_progress"
 write("valid-lifecycle",[base[0],started,base[1],base[2]])
-write("valid-terra",[{"type":"thread.started","thread_id":root_id},spawn("gpt-5.6-terra"),message("consult")])
+write("valid-terra",[{"type":"thread.started","thread_id":root_id},spawn("advisor-terra","gpt-5.6-terra"),message("consult")])
 write("valid-skip",[{"type":"thread.started","thread_id":root_id},message("skip")])
-write("fabricated-no-spawn",[{"type":"thread.started","thread_id":root_id},message("consult","advisor_count=1 role=advisor model=gpt-5.6-sol\n")])
+write("fabricated-no-spawn",[{"type":"thread.started","thread_id":root_id},message("consult","advisor_count=1 role=advisor-sol model=gpt-5.6-sol\n")])
 write("empty-wait",[{"type":"thread.started","thread_id":root_id},{"type":"item.completed","item":{"type":"collab_tool_call","tool":"wait","receiver_thread_ids":[]}},message("consult")])
 write("duplicate-spawn",base[:2]+[copy.deepcopy(base[1]),base[2]])
+write("duplicate-started",[base[0],started,copy.deepcopy(started),base[1],base[2]])
 extra_spawn=copy.deepcopy(base[1]); extra_spawn["type"]="item.started"; extra_spawn["item"]["id"]="spawn-2"
 write("extra-uncompleted-spawn",[base[0],extra_spawn,base[1],base[2]])
 for name,changes in (
-    ("wrong-role",{"receiver_agents":[{"agent_role":"other","thread_id":child_id}]}),
+    ("wrong-role",{"receiver_agents":[{"agent_role":"advisor-terra","thread_id":child_id}]}),
     ("wrong-model",{"model":"gpt-5.6-terra"}),
     ("wrong-effort",{"reasoning_effort":"medium"}),
-    ("root-equals-child",{"receiver_thread_ids":[root_id],"receiver_agents":[{"agent_role":"advisor","thread_id":root_id}]}),
+    ("root-equals-child",{"receiver_thread_ids":[root_id],"receiver_agents":[{"agent_role":"advisor-sol","thread_id":root_id}]}),
     ("noncompleted",{"status":"failed"}),
 ):
     write(name,[{"type":"thread.started","thread_id":root_id},spawn(**changes),message("consult")])
 PY
 events=$tmp/runtime-events
-ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-consult.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-consult.json" ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
-jq -e '.route=="consult" and .advisor_count==1 and .roles==["advisor"] and .freshness=="distinct_receiver_thread" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox=="read-only"' "$tmp/valid-consult.json" >/dev/null || fail "valid Sol consult spawn evidence was not derived exactly"
-ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-lifecycle.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-lifecycle.json" ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
-jq -e '.route=="consult" and .advisor_count==1 and .roles==["advisor"]' "$tmp/valid-lifecycle.json" >/dev/null || fail "one logical spawn lifecycle was not accepted"
-ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-terra.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-terra.json" ADVISOR_EXPECTED_MODEL=gpt-5.6-terra sh "$evaluator"
-jq -e '.role==null and .roles==["advisor"] and .model=="gpt-5.6-terra" and .effort=="high"' "$tmp/valid-terra.json" >/dev/null || fail "valid Terra consult spawn evidence was not derived exactly"
-ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-skip.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-skip.json" ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
+ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-consult.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-consult.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
+jq -e '.route=="consult" and .advisor_count==1 and .roles==["advisor-sol"] and .freshness=="distinct_receiver_thread" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox=="read-only"' "$tmp/valid-consult.json" >/dev/null || fail "valid Sol consult spawn evidence was not derived exactly"
+ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-lifecycle.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-lifecycle.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
+jq -e '.route=="consult" and .advisor_count==1 and .roles==["advisor-sol"]' "$tmp/valid-lifecycle.json" >/dev/null || fail "one logical spawn lifecycle was not accepted"
+ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-terra.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-terra.json" ADVISOR_EXPECTED_ROLE=advisor-terra ADVISOR_EXPECTED_MODEL=gpt-5.6-terra sh "$evaluator"
+jq -e '.role==null and .roles==["advisor-terra"] and .model=="gpt-5.6-terra" and .effort=="high"' "$tmp/valid-terra.json" >/dev/null || fail "valid Terra consult spawn evidence was not derived exactly"
+ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-skip.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-skip.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
 jq -e '.route=="skip" and .advisor_count==0 and .roles==[]' "$tmp/valid-skip.json" >/dev/null || fail "valid skip/no-spawn evidence was not derived exactly"
-for rejected_events in fabricated-no-spawn empty-wait duplicate-spawn extra-uncompleted-spawn wrong-role wrong-model wrong-effort root-equals-child noncompleted; do
-  if ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/$rejected_events.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/rejected.json" ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator" >/dev/null 2>&1; then
+for rejected_events in fabricated-no-spawn empty-wait duplicate-spawn duplicate-started extra-uncompleted-spawn wrong-role wrong-model wrong-effort root-equals-child noncompleted; do
+  if ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/$rejected_events.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/rejected.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator" >/dev/null 2>&1; then
     fail "runtime evidence parser accepted: $rejected_events"
   fi
 done
 if grep -Eq '11111111|22222222|PRIVATE PROMPT' "$tmp/valid-consult.json"; then fail "runtime evidence output leaked raw prompt or thread identifiers"; fi
-grep -Fq 'parse_runtime_evidence "$raw" "$evidence" "$selected_model" || write_unavailable runtime_evidence_unavailable' "$evaluator" || fail "live path bypasses the tested runtime evidence parser"
+grep -Fq 'parse_runtime_evidence "$raw" "$evidence" "$selected_role" "$selected_model" || write_unavailable runtime_evidence_unavailable' "$evaluator" || fail "live path bypasses the tested runtime evidence parser"
 
 for policy_case in \
-  'gpt-5.6-luna:gpt-5.6-terra' 'GPT-5.6-LUNA:gpt-5.6-terra' \
-  'gpt-5.3-codex-spark:gpt-5.6-terra' 'GPT-5.3-CODEX-SPARK:gpt-5.6-terra' \
-  'gpt-5.6-terra:gpt-5.6-sol' 'gpt-5.6-sol:gpt-5.6-sol' 'unknown:gpt-5.6-sol'; do
+  'gpt-5.6-luna:advisor-terra gpt-5.6-terra' 'GPT-5.6-LUNA:advisor-terra gpt-5.6-terra' \
+  'gpt-5.3-codex-spark:advisor-terra gpt-5.6-terra' 'GPT-5.3-CODEX-SPARK:advisor-terra gpt-5.6-terra' \
+  'gpt-5.6-terra:advisor-sol gpt-5.6-sol' 'gpt-5.6-sol:advisor-sol gpt-5.6-sol' 'unknown:advisor-sol gpt-5.6-sol'; do
   parent=${policy_case%%:*}; wanted=${policy_case#*:}
   actual=$(ADVISOR_SELECT_FOR_PARENT=$parent sh "$evaluator")
-  [ "$actual" = "$wanted" ] || fail "wrong advisor model selection for $parent"
+  [ "$actual" = "$wanted" ] || fail "wrong advisor role/model selection for $parent"
 done
 
 for exact_flag in \
   'codex exec --json --ignore-user-config --ignore-rules --ephemeral "$feature_switch" multi_agent_v2' \
   '-C "$project" --sandbox read-only --skip-git-repo-check "$eval_prompt" </dev/null' \
-  '-c "agents.advisor.description=Advisor read-only consultation"' \
-  '-c "agents.advisor.config_file=\"$role_file\""' \
+  '-c "agents.advisor-terra.config_file=\"$runtime_home/agents/advisor-terra.toml\""' \
+  '-c "agents.advisor-sol.config_file=\"$runtime_home/agents/advisor-sol.toml\""' \
   '-c "shell_environment_policy.set={CODEX_HOME=\"$runtime_home\"}"'; do
   grep -Fq -- "$exact_flag" "$evaluator" || fail "live isolation invocation omits: $exact_flag"
 done
@@ -441,7 +458,7 @@ for phrase in \
   grep -Fq "$phrase" "$evaluator" || fail "marketplace snapshot progress omits: $phrase"
 done
 for phrase in 'multi_agent_v2=false/true' 'pooled cap of 40' 'subscription-only' 'overage' 'Progress goes' 'before/after digests'; do grep -Fqi "$phrase" "$operations" || fail "operations omits evaluator parity: $phrase"; done
-pass "deterministic evaluator base path, authoritative spawn-event evidence/refusal/redaction, authenticated-parent isolation flags, mismatch reruns, 2-of-3 majority, unnecessary-rerun refusal, exact 3-of-4 boundary threshold, 2-of-4 rejection, Codex CLI and feature-state compatibility/refusal, typed unavailable, schemas, cap, progress-visible snapshots, and nonmutation"
+pass "deterministic evaluator base path, exact pinned-role/model spawn evidence, lifecycle duplicate and extra-logical-spawn refusal, redaction, authenticated-parent isolation flags, mismatch reruns, 2-of-3 majority, unnecessary-rerun refusal, exact 3-of-4 boundary threshold, 2-of-4 rejection, Codex CLI and feature-state compatibility/refusal, typed unavailable, schemas, cap, progress-visible snapshots, and nonmutation"
 
 grep -Fq 'https://github.com/DannyMac180/sol-advisor' "$notice" || fail "NOTICE upstream URL"
 grep -Fq '37b75cad535abdd46531f0227483a8842d045ab8' "$notice" || fail "NOTICE base"
@@ -454,4 +471,4 @@ pass "README, NOTICE, LICENSE, UI, and operations parity"
 
 sh -n "$script_dir"/*.sh
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.0.1 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.1.0 consultation-only static contract"

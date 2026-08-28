@@ -3,7 +3,7 @@
 Advisor provides pre-decision advice only. It does not implement, route
 implementation, perform final review, or replace root authority.
 
-## Install and verify the companion role
+## Install and verify the companion roles
 
 From the repository root:
 
@@ -12,9 +12,11 @@ sh plugins/advisor/scripts/install-agents.sh
 sh plugins/advisor/scripts/install-agents.sh --check
 ```
 
-The installer adds only `advisor.toml`. During an attended upgrade it
+The installer adds only `advisor-terra.toml` and `advisor-sol.toml`. During an attended upgrade it
 recoverably retires byte-exact known historical Luna, Terra, and Sol-reviewer files
-to `<role>.toml.retired-v0.6.0`. It preflights every path before mutation, is
+to `<role>.toml.retired-v0.6.0`, the old Sol consultation role to
+`sol-advisor.toml.retired-v1.0.0`, and the obsolete neutral role to
+`advisor.toml.retired-v1.0.1`. It preflights every path before mutation, is
 idempotent, refuses symlinks/nonregular files/modified content/collisions/dual paths,
 and never edits Codex configuration.
 
@@ -29,29 +31,24 @@ reason: <one task-specific sentence>
 question: <bounded decision question, or none>
 ```
 
-For a consult, verify the exact installed role, select the child model from the
+For a consult, verify both exact installed roles, select the role from the
 parent-model policy, then use one schema only:
 
-- Luna, Spark, or lower parent: `gpt-5.6-terra`, high.
-- Terra parent: `gpt-5.6-sol`, high.
-- Sol parent: fresh `gpt-5.6-sol`, high.
-- Unknown parent: `gpt-5.6-sol`, high fail-safe.
+- Luna, Spark, or lower parent: `advisor-terra`, pinned `gpt-5.6-terra`, high.
+- Terra, Sol, or unknown parent: `advisor-sol`, pinned `gpt-5.6-sol`, high.
 
 ```text
 # host schema v2
-agent_type: advisor
+agent_type: advisor-terra | advisor-sol
 fork_turns: none
-model: <selected model>
-reasoning_effort: high
 
 # host schema v1
-agent_type: advisor
+agent_type: advisor-terra | advisor-sol
 fork_context: false
-model: <selected model>
-reasoning_effort: high
 ```
 
-Never inherit context or omit the selected model/high override. Send the five-section
+Never inherit context or pass a model/effort override. The selected installed role
+enforces the pair. Send the five-section
 DECISION/CONTEXT/OPTIONS/BOUNDARIES/REQUEST packet from the skill. Require:
 
 ```text
@@ -70,13 +67,14 @@ is never authoritative.
 ## Runtime evidence
 
 Public spawn metadata is primary. A completed `spawn_agent` event must establish one
-receiver agent and thread, role `advisor`, the policy-selected model, effort `high`,
+receiver agent and thread, the exact policy-selected `advisor-terra`/`gpt-5.6-terra`
+or `advisor-sol`/`gpt-5.6-sol` pair, effort `high`,
 and a receiver thread distinct from the root `thread.started` identifier. Invocation
 flags and the installed role establish the read-only sandbox. For fields omitted by
 the public record only:
 
 ```sh
-sh plugins/advisor/scripts/inspect-agent-runtime.sh --expected-model <selected-model> <thread-id>
+sh plugins/advisor/scripts/inspect-agent-runtime.sh --expected-role <selected-role> --expected-model <selected-model> <thread-id>
 ```
 
 The inspector emits only thread, parent, role, model, effort, sandbox-policy, and
@@ -96,7 +94,7 @@ PATH` requires subscription-only routing and disabled overage. The parent proces
 the live authenticated Codex home and runs with ignored user configuration/rules,
 ephemeral state, and a read-only sandbox. Each feature state gets an isolated temporary
 project and child runtime: the project links the consultation skill and repository-local
-plugin, while the companion installer places and checks the exact role in the child
+plugin, while the companion installer places and checks both exact roles in the child
 runtime. The evaluator does not copy or link authentication and does not add a plugin
 or marketplace during live evaluation.
 

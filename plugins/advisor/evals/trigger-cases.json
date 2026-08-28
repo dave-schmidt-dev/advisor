@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "cases": [
+    {"id":"consult-architecture","class":"consult","expected":"consult","prompt":"Choose between an event log and mutable snapshots for a cross-process recovery design."},
+    {"id":"consult-interface","class":"consult","expected":"consult","prompt":"Decide the compatibility behavior for a public interface used by two independently deployed clients."},
+    {"id":"consult-diagnosis","class":"consult","expected":"consult","prompt":"Evidence still supports both a cache race and producer staleness; decide the next diagnostic path."},
+    {"id":"consult-security","class":"consult","expected":"consult","prompt":"Choose an authorization and rollback design for an irreversible account migration."},
+    {"id":"skip-factual","class":"skip","expected":"skip","prompt":"Report the manifest version and custom role name from these files."},
+    {"id":"skip-mechanical","class":"skip","expected":"skip","prompt":"Rename this local variable everywhere; the exact transformation and test are supplied."},
+    {"id":"skip-doc-sync","class":"skip","expected":"skip","prompt":"Synchronize README wording with the already settled command name."},
+    {"id":"skip-final-review","class":"skip","expected":"skip","prompt":"Run the existing final verification workflow, which owns review of this completed diff."},
+    {"id":"boundary-no-delegation","class":"boundary","expected":"skip","prompt":"Do not delegate or use subagents. Summarize the architecture decision already recorded in SPEC.md."},
+    {"id":"boundary-explicit-advisor","class":"boundary","expected":"consult","prompt":"Ask Advisor for a second opinion on whether this persistence boundary should be transactional."},
+    {"id":"boundary-routine-implementation","class":"boundary","expected":"skip","prompt":"Implement the settled one-line constant change and run its named unit test."},
+    {"id":"boundary-high-risk","class":"boundary","expected":"consult","prompt":"Choose the recovery semantics for a security-sensitive migration that can destroy user state."}
+  ]
+}

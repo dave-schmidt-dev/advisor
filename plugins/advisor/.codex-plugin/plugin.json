@@ -1,0 +1,31 @@
+{
+  "name": "advisor",
+  "version": "1.0.0",
+  "description": "One fresh, read-only consultation for material technical decisions.",
+  "author": {
+    "name": "David Schmidt / Zero Delta LLC (maintainer); Daniel McAteer (original author)"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "consultation",
+    "architecture",
+    "gpt-5.6"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Advisor",
+    "shortDescription": "Read-only advice for material technical decisions.",
+    "longDescription": "Advisor implicitly matches material architecture, interface, data-model, compatibility, cross-boundary, diagnostic, security, privacy, authorization, migration, recovery, and irreversible-state decisions. The root declares consult or skip before implementation, selects the consultation model from the parent-model policy, sends one bounded packet to one fresh read-only advisor role, verifies the completed spawn event, and records accept, modify, or reject. Routine and borderline work skips consultation. Advice is non-authoritative, and the plugin never implements, routes work, or performs final review.",
+    "developerName": "David Schmidt / Zero Delta LLC",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read"
+    ],
+    "defaultPrompt": [
+      "Use $advisor:consultation for a material technical decision.",
+      "Ask Advisor for a fresh, read-only second opinion."
+    ]
+  }
+}

@@ -1,14 +1,14 @@
 {
-  "name": "sol-advisor",
+  "name": "advisor",
   "interface": {
-    "displayName": "Sol Advisor"
+    "displayName": "Advisor"
   },
   "plugins": [
     {
-      "name": "sol-advisor",
+      "name": "advisor",
       "source": {
         "source": "local",
-        "path": "./plugins/sol-advisor"
+        "path": "./plugins/advisor"
       },
       "policy": {
         "installation": "AVAILABLE",

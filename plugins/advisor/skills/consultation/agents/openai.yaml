@@ -1,0 +1,6 @@
+interface:
+  display_name: "Advisor Consultation"
+  short_description: "Fresh read-only advice for material technical decisions"
+  default_prompt: "Use $consultation for one bounded technical decision, then record whether the advice is accepted, modified, or rejected."
+policy:
+  allow_implicit_invocation: true

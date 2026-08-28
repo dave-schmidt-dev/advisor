@@ -1,83 +1,76 @@
-# Sol Advisor
+# Advisor
 
-**Sol / High runs the show. It declares a risk-gated route before task tools, keeps
-solo as the default, and uses a single auxiliary only when that improves delivery.**
+Advisor adds one automatic, read-only consultation before a
+material technical decision. It does not implement, route implementation, or perform
+final review. The root agent owns every decision and records whether advice was
+accepted, modified, or rejected.
 
-Sol Advisor is a Codex-only workflow for capability-routed software delivery. You
-bring the goal and constraints; Sol owns the plan, implementation or delegation,
-verification, and acceptance.
+It consults for architecture, interface, data-model, compatibility, cross-boundary,
+competing-diagnosis, security, privacy, authorization, migration, recovery, and
+irreversible-state choices. It skips factual/status/summarization work, determined
+mechanical edits, formatting/renaming/docs synchronization, settled-plan execution,
+final review owned elsewhere, explicit no-delegation requests, and borderline cases.
 
-## Go deeper
+## Install
 
-I write [**Attention Heads**](https://attentionheads.substack.com/?utm_source=github&utm_medium=readme&utm_campaign=sol-advisor) — deep, evidence-backed writing on AI, cognition, and agentic engineering. The **Agentic Engineering Field Notes** series is where I publish practical advice on the craft of using AI. [Subscribe](https://attentionheads.substack.com/subscribe?utm_source=github&utm_medium=readme&utm_campaign=sol-advisor) to get new posts to your inbox.
+Add the public marketplace, install the plugin, then run the companion installer
+resolved from the installed plugin directory:
 
-## Quick start
+```sh
+codex plugin marketplace add dave-schmidt-dev/advisor --ref main
+codex plugin add advisor@advisor
+plugin_dir="$(codex plugin list --json | jq -r '.installed[] | select(.pluginId == "advisor@advisor") | .source.path')" && test -n "$plugin_dir" && test "$plugin_dir" != null && test -d "$plugin_dir" && test -f "$plugin_dir/scripts/install-agents.sh" && sh "$plugin_dir/scripts/install-agents.sh"
+```
 
-You need a current Codex CLI or ChatGPT desktop app with plugins enabled, GPT-5.6
-Sol / High for the primary session, native custom-agent support, and jq. GPT-5.6
-Luna / Max or Terra / High access is needed only when the selected route delegates.
+For local development, replace the first command with:
 
-~~~sh
-codex plugin marketplace add DannyMac180/sol-advisor --ref main
-codex plugin add sol-advisor@sol-advisor
-plugin_dir="$(codex plugin list --json | jq -r '.installed[] | select(.pluginId == "sol-advisor@sol-advisor") | .source.path')" && test -n "$plugin_dir" && test "$plugin_dir" != null && test -d "$plugin_dir" && test -f "$plugin_dir/scripts/install-agents.sh" && sh "$plugin_dir/scripts/install-agents.sh"
-~~~
+```sh
+codex plugin marketplace add /absolute/path/to/advisor
+```
 
-The companion installer verifies all three exact role files after installation. It is
-fail-closed: modified, unsafe, nonregular, symlinked, unknown, or differing files
-are left untouched. It does not edit Codex configuration. Start a fresh Codex task
-after installation so native roles are discovered.
+Start a new Codex thread after installation so the skill and custom role are
+discovered. Implicit matching handles eligible decisions; an explicit request can use:
 
-Use this one prompt in the new task:
+```text
+Use $advisor:consultation for a fresh, read-only second opinion on this decision.
+```
 
-~~~text
-Use $sol-advisor:orchestration to build this feature and verify it. Declare the selective route before task tools.
-~~~
+Before implementation, the root emits `ADVISOR DECISION` with `consult` or `skip`, a
+task-specific reason, and a bounded question when consulting. A valid consult uses
+exactly one fresh `advisor` role. Luna/Spark-or-lower parents select `gpt-5.6-terra` /
+High; Terra selects `gpt-5.6-sol` / High; Sol selects a fresh `gpt-5.6-sol` / High; and
+unknown parents fail safe to `gpt-5.6-sol` / High. The completed spawn event must prove
+the selected role, model, effort, and distinct receiver thread. If it does not,
+evidence is unavailable and the consult route blocks rather than continuing
+independently.
 
-## What you do
+The companion installer adds only the exact current advisor role. During upgrade it
+recoverably retires byte-exact known historical implementation/review roles without
+editing Codex configuration or overwriting modified or unsafe files.
 
-Give Sol the outcome, constraints, and any important repository context. You do not
-need to select or manage a lane; Sol records the route and owns verification and
-acceptance.
+## Verify
 
-## Routes
+```sh
+sh plugins/advisor/scripts/verify.sh --static
+```
 
-| Mode | Use it when | Delivery |
-|---|---|---|
-| `solo` | Default; risk is contained. | Root plans, implements, tests, and self-reviews. |
-| `delegate` | A complete spec is better executed by one implementer. | Luna / Max for bounded work, or Terra / High for judgment-heavy or high-risk work; root verifies. |
-| `audit` | Independent final scrutiny matters more than delegation. | Root implements; a fresh read-only Sol / High reviews. |
-| `full` | Explicit broad or high-risk exception. | One selected implementer, root verification, and a fresh Sol / High review. |
+The no-argument verifier is byte-identical to `--static` and does not start Codex or
+use the network. Live trigger evaluation is a separate attended workflow documented
+in [consultation operations](plugins/advisor/skills/consultation/references/operations.md).
+That workflow keeps the parent's authenticated Codex home, uses two isolated temporary
+project/child-runtime fixtures, and accepts consultation identity only from completed
+`spawn_agent` events with a receiver thread distinct from the root.
 
-Solo is the default. One auxiliary is the default maximum; `full` is the explicit
-exception. Sol emits a `SELECTIVE ROUTE` declaration with the mode and concise risk
-rationale before the first task tool call. It can escalate only when newly observed
-risk justifies it and never silently downgrades.
+## Origin and maintenance
 
-## What happens automatically
+This fork is maintained by David Schmidt / Zero Delta LLC. It derives from Daniel
+McAteer's upstream [Sol Advisor](https://github.com/DannyMac180/sol-advisor) at audited base
+`37b75cad535abdd46531f0227483a8842d045ab8`; see [NOTICE.md](NOTICE.md). Daniel's MIT
+copyright remains in [LICENSE](LICENSE).
 
-Sol / High keeps architecture, decomposition, route selection, parent verification,
-escalation decisions, and acceptance in the primary task. Auxiliary work substitutes
-for root work; it does not duplicate it. The root inspects the complete diff and
-reruns the requested checks. When the selected route includes a review, a fresh Sol /
-High reviewer returns ship, fix-first, or rethink; any fix requires a new review.
+## Repository hygiene
 
-## Updating
-
-Update the marketplace plugin, reinstall the companion roles, and start a new task:
-
-~~~sh
-codex plugin marketplace upgrade sol-advisor
-codex plugin add sol-advisor@sol-advisor
-plugin_dir="$(codex plugin list --json | jq -r '.installed[] | select(.pluginId == "sol-advisor@sol-advisor") | .source.path')" && test -n "$plugin_dir" && test "$plugin_dir" != null && test -d "$plugin_dir" && test -f "$plugin_dir/scripts/install-agents.sh" && sh "$plugin_dir/scripts/install-agents.sh"
-~~~
-
-For exact spawn, runtime-evidence, sandbox, installer, and maintainer verification
-details, read [advanced native operations](plugins/sol-advisor/skills/orchestration/references/operations.md).
-For local development, install this checkout as a marketplace:
-
-~~~sh
-cd /absolute/path/to/sol-advisor
-codex plugin marketplace add /absolute/path/to/sol-advisor
-codex plugin add sol-advisor@sol-advisor
-~~~
+`HISTORY.md`, `TASKS.md`, `verifications/`, and `.logs/` are local delivery and audit
+artifacts and are excluded from the public repository. The committed contract is
+defined by this README, [SPEC.md](SPEC.md), [INVARIANTS.md](INVARIANTS.md), the
+plugin source, and the license/provenance files.

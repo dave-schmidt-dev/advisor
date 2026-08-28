@@ -39,7 +39,7 @@ role=tomllib.loads(Path(sys.argv[3]).read_text())
 cases=json.loads(Path(sys.argv[4]).read_text())
 ui=Path(sys.argv[5]).read_text()
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or not re.fullmatch(r"1\.0\.0(?:\+codex\.[0-9A-Za-z.-]+)?",version): raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or not re.fullmatch(r"1\.0\.1(?:\+codex\.[0-9A-Za-z.-]+)?",version): raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if "David Schmidt / Zero Delta LLC" not in author_name or "Daniel McAteer" not in author_name: raise SystemExit("maintainer/original-author identity")
@@ -208,7 +208,7 @@ printf '%s\n' \
  '{"type":"response_item","payload":{"text":"DO_NOT_LEAK"}}' \
  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$id\",\"parent_thread_id\":\"00000000-0000-7000-8000-000000000000\",\"agent_role\":\"advisor\"}}" \
  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$rollout"
-out=$(sh "$inspector" --sessions-dir "$tmp/sessions" --expected-model gpt-5.6-sol "$id")
+out=$(TMPDIR=/nonexistent-read-only-path sh "$inspector" --sessions-dir "$tmp/sessions" --expected-model gpt-5.6-sol "$id")
 printf '%s\n' "$out" | jq -e '.agent_role=="advisor" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and (keys|sort)==["agent_role","effort","model","parent_thread_id","permission_profile_type","sandbox_policy_type","thread_id"]' >/dev/null || fail "inspector allowlist/pins"
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-model gpt-5.6-terra "$id" >/dev/null 2>&1; then fail "inspector accepted a model other than the selected model"; fi
 printf '%s\n' "$out" | grep -Fq DO_NOT_LEAK && fail "inspector leaked payload"
@@ -454,4 +454,4 @@ pass "README, NOTICE, LICENSE, UI, and operations parity"
 
 sh -n "$script_dir"/*.sh
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.0.0 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.0.1 consultation-only static contract"

@@ -23,13 +23,9 @@ if [ -z "$sessions_dir" ]; then
 fi
 [ -d "$sessions_dir" ] || fail "sessions directory unavailable"
 
-tmp_base=${TMPDIR:-/tmp}; case "$tmp_base" in /*) ;; *) tmp_base=/tmp ;; esac
-matches=$(mktemp "$tmp_base/advisor-runtime.XXXXXX") || fail "cannot create match list"
-cleanup() { case "$matches" in "$tmp_base"/advisor-runtime.*) rm -f "$matches" ;; esac; }
-trap cleanup 0 HUP INT TERM
-find "$sessions_dir" -type f -name "rollout-*-$thread_id.jsonl" -print >"$matches" || fail "rollout enumeration failed"
-[ "$(awk 'END {print NR+0}' "$matches")" -eq 1 ] || fail "expected exactly one rollout match"
-IFS= read -r rollout <"$matches"
+matches=$(find "$sessions_dir" -type f -name "rollout-*-$thread_id.jsonl" -print) || fail "rollout enumeration failed"
+[ "$(printf '%s\n' "$matches" | awk 'NF {count++} END {print count+0}')" -eq 1 ] || fail "expected exactly one rollout match"
+rollout=$matches
 
 jq -ce -s --arg id "$thread_id" --arg expected_model "$expected_model" '
   [ .[] | select(.type=="session_meta") | .payload ] as $s |

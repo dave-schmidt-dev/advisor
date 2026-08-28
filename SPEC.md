@@ -8,7 +8,7 @@ technical decisions; it never implements, routes implementation, or performs
 final verification.
 
 The distributable plugin identity is `advisor`. Its single skill is `consultation`, and
-the breaking redesign version is `1.0.0`. Local development installs may add
+the current release version is `1.0.1`. Local development installs may add
 one `+codex.<cachebuster>` build suffix without changing that release identity.
 
 ## Outcome
@@ -158,7 +158,7 @@ RISKS: <material residual risks, or none>
   `06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d`,
   used by the intermediate v0.3.0/v0.4.0/pre-revert v0.5.0 history. Unknown blobs
   still fail closed.
-- Plugin installation identity is `advisor`. Set version `1.0.0` and make
+- Plugin installation identity is `advisor`. Set version `1.0.1` and make
   the manifest author identify David Schmidt / Zero Delta LLC as the fork
   maintainer while crediting original author Daniel McAteer. Preserve Daniel
   McAteer's MIT copyright in `LICENSE`, add `NOTICE.md` with the upstream URL and

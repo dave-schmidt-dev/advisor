@@ -20,7 +20,7 @@ to `<role>.toml.retired-v0.6.0`, the old Sol consultation role to
 idempotent, refuses symlinks/nonregular files/modified content/collisions/dual paths,
 and never edits Codex configuration. An exact Advisor 1.1.0 upgrade recoverably
 retires the prior model-pinned roles to `advisor-terra.toml.retired-v1.1.0` and
-`advisor-sol.toml.retired-v1.1.0`, then installs the risk-described 1.2.0 roles at
+`advisor-sol.toml.retired-v1.1.0`, then installs the risk-described 1.3.0 roles at
 their original active paths. Exact retired-only interrupted states resume safely;
 modified, dual, or colliding states refuse all mutation.
 
@@ -74,6 +74,39 @@ RISKS: <material residual risks, or none>
 
 The root verifies evidence and records `accept`, `modify`, or `reject`. The advisor
 is never authoritative.
+
+Immediately before the spawn, the root emits:
+
+```text
+ADVISOR CALL
+tier: Standard | Specialist
+role: advisor-terra | advisor-sol
+reason: <one task-specific sentence>
+question: <bounded decision question>
+status: running
+```
+
+After runtime evidence and advice processing, it always emits:
+
+```text
+ADVISOR RESULT
+status: completed | unavailable
+tier: Standard | Specialist
+role: advisor-terra | advisor-sol
+model: <verified gpt-5.6-terra | gpt-5.6-sol>
+effort: high
+isolation: read-only
+recommendation: <concise recommendation, or unavailable>
+decision: accept | modify | reject | blocked
+reason: <one sentence>
+```
+
+Only verified runtime evidence plus a processed response can produce `completed`.
+Unavailable runtime evidence or required advice produces `status: unavailable`,
+`recommendation: unavailable`, and `decision: blocked`; the consult route remains
+fail-closed. These main-chat receipts summarize verified evidence but are not runtime
+proof. The native child thread remains the inspectable detailed record. A skip emits
+only `ADVISOR DECISION`, with no call/result receipt and no spawn.
 
 ## Runtime evidence
 

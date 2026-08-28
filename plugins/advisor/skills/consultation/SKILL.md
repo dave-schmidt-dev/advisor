@@ -38,16 +38,27 @@ General quality is not a decision question.
    Security adjacency or project importance alone
    does not qualify. A borderline role choice uses `advisor-terra`. The parent
    model is irrelevant, so Terra may advise Luna.
-3. Spawn exactly one selected role. Do not pass a model or effort override because
+3. Before spawning, emit this visible main-chat receipt:
+
+```text
+ADVISOR CALL
+tier: Standard | Specialist
+role: advisor-terra | advisor-sol
+reason: <one task-specific sentence>
+question: <bounded decision question>
+status: running
+```
+
+4. Spawn exactly one selected role. Do not pass a model or effort override because
    live Codex may ignore it; the installed role is the enforcement boundary. With
    host schema v2 use `fork_turns: none`; with v1 use `fork_context: false`.
    Never send both or inherit context.
-4. Verify the completed `spawn_agent` event first: the exact selected role/model
+5. Verify the completed `spawn_agent` event first: the exact selected role/model
    pair, `high` effort, one receiver thread distinct from the root, and read-only
    isolation established by invocation and role files. The local inspector may fill
    only fields omitted by public metadata. Conflicts or missing evidence block the
    consult route.
-5. Send only this bounded, non-sensitive packet:
+6. Send only this bounded, non-sensitive packet:
 
 ```text
 DECISION
@@ -81,13 +92,36 @@ RISKS: <material residual risks, or none>
 ```
 
 Treat the response as evidence, verify cited repository facts, then record `accept`,
-`modify`, or `reject` with one reason.
+`modify`, or `reject` with one reason. After runtime evidence and advice processing,
+always emit this visible main-chat receipt:
+
+```text
+ADVISOR RESULT
+status: completed | unavailable
+tier: Standard | Specialist
+role: advisor-terra | advisor-sol
+model: <verified gpt-5.6-terra | gpt-5.6-sol>
+effort: high
+isolation: read-only
+recommendation: <concise recommendation, or unavailable>
+decision: accept | modify | reject | blocked
+reason: <one sentence>
+```
+
+`completed` requires verified runtime evidence and a processed advisor response.
+Any unavailable runtime evidence or required advice produces `status: unavailable`,
+`recommendation: unavailable`, and `decision: blocked` and remains fail-closed.
+These receipts summarize verified evidence; they are not runtime proof.
+The native child thread remains the inspectable detailed record.
 
 If the exact completed spawn evidence is unavailable, report `advisor unavailable`
 and block the consult route. Never continue independently, substitute another role,
 or add an implementer or final reviewer after choosing `consult`.
 In all cases, never substitute a role other than the policy-selected
 `advisor-terra` or `advisor-sol`.
+
+For `skip`, emit only the existing `ADVISOR DECISION`; do not emit `ADVISOR CALL` or
+`ADVISOR RESULT`, and do not spawn.
 
 See [operations](references/operations.md) for installation, runtime evidence, and
 evaluation details.

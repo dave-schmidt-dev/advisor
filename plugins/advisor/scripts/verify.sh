@@ -41,7 +41,7 @@ sol=tomllib.loads(Path(sys.argv[4]).read_text())
 cases=json.loads(Path(sys.argv[5]).read_text())
 ui=Path(sys.argv[6]).read_text()
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or not re.fullmatch(r"1\.2\.0(?:\+codex\.[0-9A-Za-z.-]+)?",version): raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or not re.fullmatch(r"1\.3\.0(?:\+codex\.[0-9A-Za-z.-]+)?",version): raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if "David Schmidt / Zero Delta LLC" not in author_name or "Daniel McAteer" not in author_name: raise SystemExit("maintainer/original-author identity")
@@ -83,11 +83,24 @@ for phrase in 'ADVISOR DECISION' 'route: consult | skip' 'fork_turns: none' 'for
   'borderline role choice' 'model is irrelevant' \
   'DECISION' 'CONTEXT' 'OPTIONS' 'BOUNDARIES' 'REQUEST' \
   'ADVISOR RESPONSE' 'RECOMMENDATION:' 'WHY:' 'STRONGEST OBJECTION:' 'CHANGE MY MIND:' \
-  'ACCEPTANCE CHECKS:' 'RISKS:' 'accept' 'modify' 'reject' 'advisor unavailable'; do
+  'ACCEPTANCE CHECKS:' 'RISKS:' 'accept' 'modify' 'reject' 'advisor unavailable' \
+  'ADVISOR CALL' 'status: running' 'ADVISOR RESULT' 'status: completed | unavailable' \
+  'tier: Standard | Specialist' 'role: advisor-terra | advisor-sol' \
+  'model: <verified gpt-5.6-terra | gpt-5.6-sol>' 'effort: high' \
+  'isolation: read-only' 'recommendation: <concise recommendation, or unavailable>' \
+  'decision: accept | modify | reject | blocked' 'recommendation: unavailable' \
+  'decision: blocked' 'native child thread remains the inspectable detailed record'; do
   grep -Fq "$phrase" "$skill" || fail "consultation contract omits: $phrase"
 done
 grep -Fq 'Never send both or inherit' "$skill" || fail "fresh-context exclusion missing"
 grep -Fq 'never substitute a role other than the policy-selected' "$skill" || fail "no-substitution rule missing"
+grep -Fq 'For `skip`, emit only the existing `ADVISOR DECISION`' "$skill" || fail "skip receipt exclusion missing"
+call_line=$(grep -n '^ADVISOR CALL$' "$skill" | head -1 | cut -d: -f1)
+spawn_line=$(grep -n '^4\. Spawn exactly one selected role\.' "$skill" | head -1 | cut -d: -f1)
+response_line=$(grep -n '^Treat the response as evidence' "$skill" | head -1 | cut -d: -f1)
+result_line=$(grep -n '^ADVISOR RESULT$' "$skill" | head -1 | cut -d: -f1)
+[ -n "$call_line" ] && [ -n "$spawn_line" ] && [ "$call_line" -lt "$spawn_line" ] || fail "ADVISOR CALL must precede spawn"
+[ -n "$response_line" ] && [ -n "$result_line" ] && [ "$response_line" -lt "$result_line" ] || fail "ADVISOR RESULT must follow response processing"
 pass "implicit consult/skip boundaries and exact request/response contract"
 
 for document in "$manifest" "$skill" "$ui" "$operations" "$readme" "$terra_role" "$sol_role"; do
@@ -153,8 +166,8 @@ assert_v110_digest "$v110/advisor-terra.toml" 95be7e69ee4d5350ea199a66280e180774
 assert_v110_digest "$v110/advisor-sol.toml" 5ab78b10e1abd4b86d8adeb7d71aa6b4d1c79b1a44457d2c717f5a03cd360367
 if sh "$installer" --target-dir "$v110" --check >/dev/null 2>&1; then fail "check accepted active Advisor 1.1.0 roles"; fi
 sh "$installer" --target-dir "$v110" >/dev/null
-cmp -s "$terra_role" "$v110/advisor-terra.toml" || fail "Advisor 1.1.0 Terra upgrade did not install 1.2.0 exactly"
-cmp -s "$sol_role" "$v110/advisor-sol.toml" || fail "Advisor 1.1.0 Sol upgrade did not install 1.2.0 exactly"
+cmp -s "$terra_role" "$v110/advisor-terra.toml" || fail "Advisor 1.1.0 Terra upgrade did not install 1.3.0 exactly"
+cmp -s "$sol_role" "$v110/advisor-sol.toml" || fail "Advisor 1.1.0 Sol upgrade did not install 1.3.0 exactly"
 assert_v110_digest "$v110/advisor-terra.toml.retired-v1.1.0" 95be7e69ee4d5350ea199a66280e180774309371fefcf1a2765f782ec1a670c0
 assert_v110_digest "$v110/advisor-sol.toml.retired-v1.1.0" 5ab78b10e1abd4b86d8adeb7d71aa6b4d1c79b1a44457d2c717f5a03cd360367
 sh "$installer" --target-dir "$v110" --check >/dev/null
@@ -520,9 +533,14 @@ grep -Fq 'David Schmidt / Zero Delta LLC' "$notice" || fail "NOTICE maintainer"
 grep -Fq 'Daniel McAteer' "$notice" || fail "NOTICE original author"
 grep -Fq 'Copyright (c) 2026 Daniel McAteer' "$license" || fail "LICENSE copyright"
 if grep -Eqi 'substack|attentionheads' "$readme"; then fail "README retains Substack promotion"; fi
-for phrase in 'consultation' 'read-only' 'ADVISOR DECISION' 'advisor' 'gpt-5.6-terra' 'gpt-5.6-sol' 'unavailable' 'NOTICE.md'; do grep -Fqi "$phrase" "$readme" || fail "README parity omits: $phrase"; done
+for phrase in 'consultation' 'read-only' 'ADVISOR DECISION' 'ADVISOR CALL' 'ADVISOR RESULT' 'status: running' 'decision: blocked' 'native child thread' 'advisor' 'gpt-5.6-terra' 'gpt-5.6-sol' 'unavailable' 'NOTICE.md'; do grep -Fqi "$phrase" "$readme" || fail "README parity omits: $phrase"; done
+for document in "$operations" "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
+  for phrase in 'ADVISOR CALL' 'ADVISOR RESULT' 'unavailable' 'blocked' 'native child thread'; do
+    grep -Fqi "$phrase" "$document" || fail "lifecycle documentation omits $phrase: $document"
+  done
+done
 pass "README, NOTICE, LICENSE, UI, and operations parity"
 
 sh -n "$script_dir"/*.sh
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.2.0 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.3.0 consultation-only static contract"

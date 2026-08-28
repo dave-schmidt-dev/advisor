@@ -49,11 +49,21 @@ distinct receiver thread. If it does not,
 evidence is unavailable and the consult route blocks rather than continuing
 independently.
 
+Every consult is visible in main chat. Immediately before spawning, `ADVISOR CALL`
+records the selected tier and role, task-specific reason, bounded question, and
+`status: running`. After runtime evidence and advice processing, `ADVISOR RESULT`
+records `completed` or `unavailable`, the tier and role, verified model and High
+effort, read-only isolation, a concise recommendation, and the root's disposition.
+Unavailable evidence records `recommendation: unavailable` and `decision: blocked`
+and remains fail-closed. Receipts summarize verified evidence; the native child thread
+is the inspectable detailed runtime record. A skip emits only `ADVISOR DECISION`,
+with no call/result receipt and no spawn.
+
 The companion installer adds only the two exact current advisor roles. During upgrade it
 recoverably retires byte-exact known historical implementation/review roles without
 editing Codex configuration or overwriting modified or unsafe files. It also retires
 exact Advisor 1.1.0 role files to `.retired-v1.1.0` paths before installing the
-risk-described 1.2.0 roles; modified, dual, or colliding states fail closed.
+risk-described 1.3.0 roles; modified, dual, or colliding states fail closed.
 
 ## Verify
 

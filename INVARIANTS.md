@@ -60,3 +60,9 @@ area: ["README.md", "SPEC.md", ".agents/plugins/marketplace.json"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
 rationale: Overnight work stops at a validated local checkpoint without live installation, push, marketplace mutation, or publication.
+
+### INV-10 — Visible consultation lifecycle
+area: ["plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]
+gate_test: plugins/advisor/scripts/verify.sh
+threshold: 3
+rationale: Every consult emits a visible running `ADVISOR CALL` receipt and a completed or unavailable `ADVISOR RESULT` receipt; unavailable evidence records `decision: blocked` and remains fail-closed, receipts do not replace runtime proof, the native child thread remains inspectable, and skips emit neither receipt nor spawn.

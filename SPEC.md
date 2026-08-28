@@ -8,7 +8,7 @@ technical decisions; it never implements, routes implementation, or performs
 final verification.
 
 The distributable plugin identity is `advisor`. Its single skill is `consultation`, and
-the current release version is `1.2.0`. Local development installs may add
+the current release version is `1.3.0`. Local development installs may add
 one `+codex.<cachebuster>` build suffix without changing that release identity.
 
 ## Outcome
@@ -81,26 +81,65 @@ in repository evidence.
    an irreversible migration or data-loss decision, or a credible unresolved
    High-severity disagreement. Security adjacency and project importance alone
    do not qualify; a borderline role choice uses Terra. Parent model is irrelevant.
-3. Spawn exactly one fresh subagent with the selected role and no model/effort
+3. Immediately before spawning, emit a visible `ADVISOR CALL` receipt containing
+   the selected tier and role, task-specific reason, bounded question, and
+   `status: running`.
+4. Spawn exactly one fresh subagent with the selected role and no model/effort
    override; live Codex may ignore per-spawn overrides, so the model-pinned role is
    the enforcement boundary. Use the
    fresh-context field exposed by the host schema: `fork_turns: none` for the v2
    schema or `fork_context: false` for the v1 schema. Never send both, inherit
    context, or pass model or effort overrides.
-4. Verify the completed spawn event first. Accept only the selected model, high
+5. Verify the completed spawn event first. Accept only the selected model, high
    reasoning, named role, and distinct receiver thread; invocation and role files
    establish read-only isolation. A local inspector may fill
    only metadata fields omitted by the public record.
-5. Send only the bounded packet below. Do not send secrets, credentials, personal
+6. Send only the bounded packet below. Do not send secrets, credentials, personal
    data, or irrelevant conversation history.
-6. Treat the response as advice, not authority. The root checks cited repository
+7. Treat the response as advice, not authority. The root checks cited repository
    evidence and records `accept`, `modify`, or `reject` with one reason.
-7. Do not spawn a replacement, second advisor, implementer, or final reviewer as
+8. After runtime evidence and advice processing, always emit a visible
+   `ADVISOR RESULT` receipt containing completed/unavailable status, tier, role,
+   verified model and high effort, read-only isolation, a concise recommendation
+   or unavailable, the accept/modify/reject/blocked disposition, and one-sentence
+   reason.
+9. Do not spawn a replacement, second advisor, implementer, or final reviewer as
    part of this skill.
 
 If the exact completed spawn evidence is unavailable, report `advisor unavailable`,
 block the consult route, and never continue independently or silently substitute
 another role or model.
+
+`completed` requires verified runtime evidence and a processed advisor response.
+Unavailable runtime evidence or required advice must visibly produce
+`status: unavailable`, `recommendation: unavailable`, and `decision: blocked`, and
+remain fail-closed. Receipts summarize verified evidence and are not runtime proof;
+the native child thread remains the inspectable detailed record. The skip route emits
+only the existing `ADVISOR DECISION`, with no call/result receipt and no spawn.
+
+### Main-chat consultation receipts
+
+```text
+ADVISOR CALL
+tier: Standard | Specialist
+role: advisor-terra | advisor-sol
+reason: <one task-specific sentence>
+question: <bounded decision question>
+status: running
+```
+
+```text
+ADVISOR RESULT
+status: completed | unavailable
+tier: Standard | Specialist
+role: advisor-terra | advisor-sol
+model: <verified gpt-5.6-terra | gpt-5.6-sol>
+effort: high
+isolation: read-only
+recommendation: <concise recommendation, or unavailable>
+decision: accept | modify | reject | blocked
+reason: <one sentence>
+```
 
 ### Advisor input
 
@@ -151,7 +190,7 @@ RISKS: <material residual risks, or none>
   `advisor.toml` to `advisor.toml.retired-v1.0.1`, outside the `.toml` discovery
   pattern. An exact 1.1.0 same-path upgrade must retire `advisor-terra.toml` and
   `advisor-sol.toml` to their respective `.retired-v1.1.0` paths before installing
-  the risk-described 1.2.0 roles. A later run resumes an exact retired-only 1.1.0
+  the risk-described 1.3.0 roles. A later run resumes an exact retired-only 1.1.0
   state by installing the current role and accepts the exact current-plus-retired
   state as already migrated. An old active role plus its retirement path, a
   mismatched retired file, or a modified, unsafe, or conflicting active role stops
@@ -169,7 +208,7 @@ RISKS: <material residual risks, or none>
   `06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d`,
   used by the intermediate v0.3.0/v0.4.0/pre-revert v0.5.0 history. Unknown blobs
   still fail closed.
-- Plugin installation identity is `advisor`. Set version `1.2.0` and make
+- Plugin installation identity is `advisor`. Set version `1.3.0` and make
   the manifest author identify David Schmidt / Zero Delta LLC as the fork
   maintainer while crediting original author Daniel McAteer. Preserve Daniel
   McAteer's MIT copyright in `LICENSE`, add `NOTICE.md` with the upstream URL and
@@ -222,6 +261,8 @@ The repository verifier must prove:
    or conflicting evidence.
 9. README, manifest UI text, skill metadata, operations reference, and examples
    describe the same workflow.
+10. Every consult emits visible `ADVISOR CALL` and `ADVISOR RESULT` receipts; a
+    skip emits neither, and unavailable evidence is visibly blocked fail-closed.
 
 `verify.sh` with no arguments is exactly equivalent to `verify.sh --static` and
 never starts Codex, performs network work, or requires a runtime result. Live

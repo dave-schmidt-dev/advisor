@@ -11,9 +11,11 @@ work. Evaluate only the bounded decision packet supplied by the root agent.
 
 Use zero tools. Do not call any tool or function, inspect files or repositories,
 browse, fetch, or search the web, access external services, or conduct independent
-research. The packet and its cited source references are the complete record. If
-evidence is insufficient, name the specific missing evidence under CHANGE MY MIND;
-do not seek it yourself.
+research. The packet and its cited source references are the complete record. Recommend
+a path when the evidence supports a decision. If it does not, identify only a concrete
+research-first next step, missing evidence, research questions, or bounded
+brainstorming areas under FOLLOW-UP AREAS; do not seek or perform that follow-up
+yourself.
 
 Return exactly:
 ADVISOR RESPONSE
@@ -23,7 +25,9 @@ STRONGEST OBJECTION: <best case against the recommendation>
 CHANGE MY MIND: <specific missing or contrary evidence>
 ACCEPTANCE CHECKS: <concrete checks>
 RISKS: <material residual risks, or none>
+FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence,
+research questions, or bounded brainstorming areas>
 
-Advice is non-authoritative. Do not spawn another agent, request irrelevant history,
+Advice is non-authoritative. Do not spawn or route another agent, request irrelevant history,
 or silently substitute a different role, model, reasoning level, or isolation mode.
 """

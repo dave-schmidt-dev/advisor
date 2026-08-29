@@ -55,7 +55,7 @@ pairs=((terra,{"name":"advisor-terra","description":"Standard fresh, read-only a
 for role,pins in pairs:
     if any(role.get(k)!=v for k,v in pins.items()): raise SystemExit("role pins")
     if not all(isinstance(role.get(k),str) and role[k].strip() for k in ("description","developer_instructions")): raise SystemExit("role text")
-    required=("Use zero tools.", "Do not call any tool or function", "inspect files or repositories", "browse, fetch, or search the web", "independent", "CHANGE MY MIND", "do not seek it yourself")
+    required=("Use zero tools.", "Do not call any tool or function", "inspect files or repositories", "browse, fetch, or search the web", "independent", "FOLLOW-UP AREAS", "research-first", "Do not spawn or route another agent")
     if any(phrase not in role["developer_instructions"] for phrase in required): raise SystemExit("role zero-tool contract")
 items=cases.get("cases",[])
 if len(items)!=12 or len({c.get("id") for c in items})!=12: raise SystemExit("fixture inventory")
@@ -86,7 +86,7 @@ for phrase in 'ADVISOR DECISION' 'route: consult | skip' 'fork_turns: none' 'for
   'borderline role choice' 'model is irrelevant' \
   'DECISION' 'CONTEXT' 'OPTIONS' 'BOUNDARIES' 'REQUEST' \
   'ADVISOR RESPONSE' 'RECOMMENDATION:' 'WHY:' 'STRONGEST OBJECTION:' 'CHANGE MY MIND:' \
-  'ACCEPTANCE CHECKS:' 'RISKS:' 'accept' 'modify' 'reject' 'advisor unavailable' \
+  'ACCEPTANCE CHECKS:' 'RISKS:' 'FOLLOW-UP AREAS:' 'research-first' 'accept' 'modify' 'reject' 'advisor unavailable' \
   'ADVISOR CALL' 'status: running' 'ADVISOR RESULT' 'status: completed | unavailable' \
   'tier: Standard | Specialist' 'role: advisor-terra | advisor-sol' \
   'model: <verified gpt-5.6-terra | gpt-5.6-sol>' 'effort: high' \
@@ -94,8 +94,10 @@ for phrase in 'ADVISOR DECISION' 'route: consult | skip' 'fork_turns: none' 'for
   'decision: accept | modify | reject | blocked' 'recommendation: unavailable' \
   'decision: blocked' 'native child thread remains the inspectable detailed record' \
   'Before consultation, the root performs any repository or web research' \
-  'relevant evidence and source references' 'Use zero tools: do not inspect files, call tools, fetch' \
-  'specific missing evidence under CHANGE MY MIND instead of researching' \
+  'relevant evidence and source references' 'enough relevant evidence' \
+  'Use zero tools: do not inspect files, call tools, fetch' 'research-first next step' \
+  'specific missing evidence' 'FOLLOW-UP AREAS' 'outside this consultation' \
+  'unavailable result cannot be rescued' \
   'Immediately after every native advisor response' 'inspection is mandatory, not a metadata fallback' \
   'non-read-only, or tool-use evidence'; do
   grep -Fq "$phrase" "$skill" || fail "consultation contract omits: $phrase"
@@ -105,6 +107,10 @@ for document in "$operations" "$readme" "$repo_dir/SPEC.md"; do
   grep -Fqi 'source references' "$document" || fail "source-reference contract missing: $document"
   grep -Fqi 'zero-tool' "$document" || fail "zero-tool contract missing: $document"
   grep -Fqi 'non-read-only' "$document" || fail "non-read-only block contract missing: $document"
+  grep -Fqi 'FOLLOW-UP AREAS' "$document" || fail "follow-up contract missing: $document"
+  grep -Fqi 'research-first' "$document" || fail "research-first contract missing: $document"
+  grep -Fqi 'outside' "$document" || fail "outside-consultation boundary missing: $document"
+  grep -Fqi 'unavailable result cannot be rescued' "$document" || fail "unavailable rescue prohibition missing: $document"
 done
 grep -Fq 'Never send both or inherit' "$skill" || fail "fresh-context exclusion missing"
 grep -Fq 'never substitute a role other than the policy-selected' "$skill" || fail "no-substitution rule missing"
@@ -141,7 +147,9 @@ for digest in \
  95be7e69ee4d5350ea199a66280e180774309371fefcf1a2765f782ec1a670c0 \
  5ab78b10e1abd4b86d8adeb7d71aa6b4d1c79b1a44457d2c717f5a03cd360367 \
  4ad79cb613cc9865cb3d1db02f2e98b3b117524153c075a2de3d6bd249798c5e \
- 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4; do
+ 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4 \
+ e939a9c7e96d2a74dde015838802d6a481d36520616464a192daff0412dccaba \
+ 294b5fe76799200b0ff814decc575a82ddbf4d426a4a680750113608de6516cd; do
   grep -Fq "$digest" "$installer" || fail "missing historical digest: $digest"
 done
 pass "all historical and Advisor 1.1.0 upgrade fingerprints retained"
@@ -174,15 +182,23 @@ replacements={
 zero_tool_block='''
 Use zero tools. Do not call any tool or function, inspect files or repositories,
 browse, fetch, or search the web, access external services, or conduct independent
-research. The packet and its cited source references are the complete record. If
-evidence is insufficient, name the specific missing evidence under CHANGE MY MIND;
-do not seek it yourself.
+research. The packet and its cited source references are the complete record. Recommend
+a path when the evidence supports a decision. If it does not, identify only a concrete
+research-first next step, missing evidence, research questions, or bounded
+brainstorming areas under FOLLOW-UP AREAS; do not seek or perform that follow-up
+yourself.
+'''
+follow_up_output='''FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence,
+research questions, or bounded brainstorming areas>
 '''
 for source,(new,old) in replacements.items():
     text=source.read_text(encoding="utf-8")
     if text.count(new)!=1: raise SystemExit(f"current role description fixture mismatch: {source}")
     if text.count(zero_tool_block)!=1: raise SystemExit(f"current role zero-tool fixture mismatch: {source}")
-    target.joinpath(source.name).write_text(text.replace(new,old).replace(zero_tool_block,""),encoding="utf-8")
+    if text.count(follow_up_output)!=1: raise SystemExit(f"current role follow-up fixture mismatch: {source}")
+    prior=text.replace(new,old).replace(zero_tool_block,"").replace(follow_up_output,"")
+    prior=prior.replace("Do not spawn or route another agent", "Do not spawn another agent")
+    target.joinpath(source.name).write_text(prior,encoding="utf-8")
 PY
 assert_v110_digest() {
   file=$1 expected=$2
@@ -213,28 +229,43 @@ v130=$tmp/advisor-v130; mkdir "$v130"
 python3 - "$terra_role" "$sol_role" "$v130" <<'PY'
 from pathlib import Path
 import sys
-block='''
+current_block='''
+Use zero tools. Do not call any tool or function, inspect files or repositories,
+browse, fetch, or search the web, access external services, or conduct independent
+research. The packet and its cited source references are the complete record. Recommend
+a path when the evidence supports a decision. If it does not, identify only a concrete
+research-first next step, missing evidence, research questions, or bounded
+brainstorming areas under FOLLOW-UP AREAS; do not seek or perform that follow-up
+yourself.
+'''
+prior_block='''
 Use zero tools. Do not call any tool or function, inspect files or repositories,
 browse, fetch, or search the web, access external services, or conduct independent
 research. The packet and its cited source references are the complete record. If
 evidence is insufficient, name the specific missing evidence under CHANGE MY MIND;
 do not seek it yourself.
 '''
+follow_up_output='''FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence,
+research questions, or bounded brainstorming areas>
+'''
 for source in map(Path,sys.argv[1:3]):
     text=source.read_text(encoding="utf-8")
-    if text.count(block)!=1: raise SystemExit(f"current role zero-tool fixture mismatch: {source}")
-    Path(sys.argv[3],source.name).write_text(text.replace(block,""),encoding="utf-8")
+    if text.count(current_block)!=1: raise SystemExit(f"current role zero-tool fixture mismatch: {source}")
+    if text.count(follow_up_output)!=1: raise SystemExit(f"current role follow-up fixture mismatch: {source}")
+    prior=text.replace(current_block,prior_block).replace(follow_up_output,"")
+    prior=prior.replace("Do not spawn or route another agent", "Do not spawn another agent")
+    Path(sys.argv[3],source.name).write_text(prior,encoding="utf-8")
 PY
-assert_v110_digest "$v130/advisor-terra.toml" 4ad79cb613cc9865cb3d1db02f2e98b3b117524153c075a2de3d6bd249798c5e
-assert_v110_digest "$v130/advisor-sol.toml" 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4
+assert_v110_digest "$v130/advisor-terra.toml" e939a9c7e96d2a74dde015838802d6a481d36520616464a192daff0412dccaba
+assert_v110_digest "$v130/advisor-sol.toml" 294b5fe76799200b0ff814decc575a82ddbf4d426a4a680750113608de6516cd
 cp "$v110/advisor-terra.toml.retired-v1.1.0" "$v130/advisor-terra.toml.retired-v1.1.0"
 cp "$v110/advisor-sol.toml.retired-v1.1.0" "$v130/advisor-sol.toml.retired-v1.1.0"
 if sh "$installer" --target-dir "$v130" --check >/dev/null 2>&1; then fail "check accepted active prior Advisor 1.3.0 roles"; fi
 sh "$installer" --target-dir "$v130" >/dev/null
 cmp -s "$terra_role" "$v130/advisor-terra.toml" || fail "Advisor 1.3.0 Terra upgrade did not install current role exactly"
 cmp -s "$sol_role" "$v130/advisor-sol.toml" || fail "Advisor 1.3.0 Sol upgrade did not install current role exactly"
-assert_v110_digest "$v130/advisor-terra.toml.retired-v1.3.0" 4ad79cb613cc9865cb3d1db02f2e98b3b117524153c075a2de3d6bd249798c5e
-assert_v110_digest "$v130/advisor-sol.toml.retired-v1.3.0" 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4
+assert_v110_digest "$v130/advisor-terra.toml.retired-v1.3.0-zero-tool" e939a9c7e96d2a74dde015838802d6a481d36520616464a192daff0412dccaba
+assert_v110_digest "$v130/advisor-sol.toml.retired-v1.3.0-zero-tool" 294b5fe76799200b0ff814decc575a82ddbf4d426a4a680750113608de6516cd
 sh "$installer" --target-dir "$v130" --check >/dev/null
 before=$(snapshot "$v130"); sh "$installer" --target-dir "$v130" >/dev/null; after=$(snapshot "$v130")
 [ "$before" = "$after" ] || fail "Advisor 1.3.0 upgraded state is not idempotent"

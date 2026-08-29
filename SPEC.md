@@ -19,8 +19,11 @@ the decision-risk policy
 before the decision is finalized. Routine work does not spawn an advisor.
 
 The root owns the task, chooses whether advice is accepted, and records the
-disposition. Any later implementation continues through the repository's normal
-workflow, including Switchyard where applicable.
+disposition. The root supplies enough evidence for the advisor to recommend a path;
+when that is not possible, a valid result identifies a concrete research-first next
+step, missing evidence, research questions, or bounded brainstorming areas. Any
+later implementation continues through the repository's normal workflow, including
+Switchyard where applicable.
 
 ## Trigger contract
 
@@ -94,35 +97,44 @@ in repository evidence.
    reasoning, named role, and distinct receiver thread. Missing or conflicting spawn
    evidence blocks the consult route.
 6. Before consultation, the root performs any repository or web research. Send only
-   the bounded packet below, with relevant root-gathered evidence and source
-   references; do not send secrets, credentials, personal data, or irrelevant
-   conversation history. The advisor uses zero tools: it does not inspect files,
-   fetch the web, or conduct independent research. It names insufficient evidence
-   under `CHANGE MY MIND` instead of researching.
+   the bounded packet below, with enough relevant root-gathered evidence and source
+   references for a decision; do not send secrets, credentials, personal data, or
+   irrelevant conversation history. The advisor uses zero tools: it does not inspect
+   files, fetch the web, or conduct independent research. If the packet cannot settle
+   the question, it identifies the specific missing evidence or research questions
+   under `FOLLOW-UP AREAS` instead of researching.
 7. Immediately after every native advisor response, run
    `inspect-agent-runtime.sh` for the selected thread and expected role/model. This
    inspection is mandatory, not a metadata fallback, and must complete before any
    `ADVISOR RESULT` with `status: completed`. It must prove a read-only, zero-tool
    runtime; any missing, conflicting, non-read-only, or tool-use evidence makes the
    advisor unavailable and blocks the consult route.
-8. Treat a response that passed runtime inspection as advice, not authority. The root
-   checks its cited source references and records `accept`, `modify`, or `reject`
-   with one reason.
+8. Treat a response that passed runtime inspection as advice, not authority. A valid
+   processed response contains either a recommendation grounded in the packet or a
+   concrete `FOLLOW-UP AREAS` entry. The root checks its cited source references and
+   records `accept`, `modify`, or `reject` with one reason.
 9. After runtime evidence and advice processing, always emit a visible
    `ADVISOR RESULT` receipt containing completed/unavailable status, tier, role,
    verified model and high effort, read-only isolation, a concise recommendation
    or unavailable, the accept/modify/reject/blocked disposition, and one-sentence
    reason.
-10. Do not spawn a replacement, second advisor, implementer, or final reviewer as
-   part of this skill.
+10. After a valid, runtime-inspected completed result, the root may route only the
+    identified research or brainstorming follow-up to an appropriate Luna or Terra
+    subagent outside this consultation, synthesize the result, and optionally start a
+    fresh consultation with fresh `ADVISOR CALL` and `ADVISOR RESULT` receipts. This
+    does not rescue or alter the original result; an unavailable result cannot be
+    rescued by follow-up work. The advisor may not spawn or conduct that work.
+11. Do not spawn a replacement, second advisor, implementer, or final reviewer as
+    part of this skill.
 
 If the exact completed spawn evidence is unavailable, report `advisor unavailable`,
 block the consult route, and never continue independently or silently substitute
 another role or model.
 
 `completed` requires mandatory post-response runtime inspection and a processed
-advisor response. Unavailable runtime evidence, a non-read-only runtime policy,
-tool-use evidence, or required advice must visibly produce
+advisor response with either a recommendation or a concrete `FOLLOW-UP AREAS`
+entry. Unavailable runtime evidence, a non-read-only runtime policy, tool-use
+evidence, or required advice must visibly produce
 `status: unavailable`, `recommendation: unavailable`, and `decision: blocked`, and
 remain fail-closed. Receipts summarize verified evidence and are not runtime proof;
 the native child thread remains the inspectable detailed record. The skip route emits
@@ -185,14 +197,23 @@ STRONGEST OBJECTION: <best case against the recommendation>
 CHANGE MY MIND: <specific missing or contrary evidence>
 ACCEPTANCE CHECKS: <concrete checks>
 RISKS: <material residual risks, or none>
+FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence,
+research questions, or bounded brainstorming areas>
 ```
 
 ## Boundaries
 
 - The root remains architect, implementer-or-router, verifier, and acceptor.
-- The root performs all repository and web research before consultation; the advisor
-  receives only relevant evidence and source references and makes no tool call, file
-  inspection, web fetch, or independent research attempt.
+- The root performs all repository and web research before consultation and supplies
+  enough relevant evidence and source references for a decision; the advisor receives
+  no secrets and makes no tool call, file inspection, web fetch, or independent
+  research attempt. If a decision cannot yet be made, it may only identify a concrete
+  research-first next step, missing evidence, research questions, or bounded
+  brainstorming areas.
+- After a valid runtime-inspected result, the root may use Luna or Terra subagents
+  outside the consultation for the identified research or brainstorming, synthesize
+  it, and optionally start a fresh separately receipted consultation. Unavailable
+  runtime evidence cannot be rescued this way. An unavailable result cannot be rescued by follow-up work.
 - Every native advisor response receives mandatory runtime inspection before a
   completed result; missing, conflicting, non-read-only, or tool-use evidence blocks.
 - Switchyard remains the implementation router; the plugin must not contain an

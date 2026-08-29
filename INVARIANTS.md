@@ -71,7 +71,13 @@ rationale: Every consult emits a visible running `ADVISOR CALL` receipt and a co
 area: ["plugins/advisor/agents/**", "plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
-rationale: The root completes repository and web research before consultation and supplies only relevant evidence and source references; advisors make no tool call, file inspection, web fetch, or independent research attempt, and identify missing evidence under CHANGE MY MIND.
+rationale: The root completes repository and web research before consultation and supplies enough relevant evidence and source references for a decision; advisors make no tool call, file inspection, web fetch, or independent research attempt, and may only identify missing evidence, research questions, or bounded brainstorming areas for a root-routed follow-up.
+
+### INV-13 — Inspected-result follow-up boundary
+area: ["plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]
+gate_test: plugins/advisor/scripts/verify.sh
+threshold: 3
+rationale: A valid follow-up requires a processed recommendation or concrete research-first next step plus mandatory read-only, zero-tool runtime inspection; only then may the root route research or brainstorming to Luna or Terra outside consultation and optionally start a fresh separately receipted consultation. An unavailable result remains blocked and cannot be rescued.
 
 ### INV-12 — Redacted deferred audit
 area: ["plugins/advisor/scripts/advisor-audit.sh", "plugins/advisor/scripts/verify.sh", "plugins/advisor/skills/consultation/references/operations.md", "README.md", "SPEC.md"]

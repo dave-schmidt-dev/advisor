@@ -7,10 +7,12 @@ description: Consult for material architecture, interface, data-model, or compat
 
 Use one fresh, read-only, zero-tool advisor only when the task has a concrete material
 decision. The root remains architect, implementer-or-router, verifier, and acceptor.
-Before consultation, the root performs any repository or web research and includes
-only the relevant evidence and source references in the five-section decision packet.
-The advisor does not inspect files, call tools, fetch the web, or conduct independent
-research.
+Before consultation, the root performs any repository or web research and supplies
+enough relevant evidence and source references in the five-section decision packet for
+the advisor to recommend a path. If that evidence cannot settle the question, a valid
+advisor result may instead identify a concrete research-first next step, missing
+evidence, research questions, or bounded brainstorming areas. The advisor does not
+inspect files, call tools, fetch the web, or conduct independent research.
 
 ## Declare the route
 
@@ -77,11 +79,12 @@ BOUNDARIES
 <owned files, excluded scope, compatibility, security, and authority limits>
 
 REQUEST
-Challenge the tentative choice. Recommend one path, identify the strongest
+Challenge the tentative choice. Recommend one path when the packet supports a
+decision; otherwise identify a concrete research-first next step, specific missing evidence,
+research questions, or bounded brainstorming areas. Identify the strongest
 counterargument, name evidence that would change the recommendation, and give
 specific acceptance checks. Use zero tools: do not inspect files, call tools, fetch
-the web, or conduct independent research. If the packet is insufficient, name the
-specific missing evidence under CHANGE MY MIND instead of researching.
+the web, or conduct independent research. Do not perform or delegate the follow-up.
 ```
 
 Require exactly:
@@ -94,10 +97,13 @@ STRONGEST OBJECTION: <best case against the recommendation>
 CHANGE MY MIND: <specific missing or contrary evidence>
 ACCEPTANCE CHECKS: <concrete checks>
 RISKS: <material residual risks, or none>
+FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence,
+research questions, or bounded brainstorming areas>
 ```
 
 7. Receive the required advisor response without supplying more context or asking it
-   to research.
+   to research. A valid processed response contains either a recommendation grounded
+   in the packet or a concrete research-first follow-up under `FOLLOW-UP AREAS`.
 8. Immediately after every native advisor response, run
    `inspect-agent-runtime.sh` for the selected thread and expected role/model. This
    inspection is mandatory, not a metadata fallback, and must complete before any
@@ -123,9 +129,19 @@ decision: accept | modify | reject | blocked
 reason: <one sentence>
 ```
 
-`completed` requires a processed advisor response and mandatory post-response runtime
-inspection. Any unavailable runtime evidence, non-read-only runtime policy, tool-use
-evidence, or required advice produces `status: unavailable`,
+10. After a valid, runtime-inspected completed result, the root may route only the
+   identified research or brainstorming follow-up to an appropriate Luna or Terra
+   subagent outside this consultation, synthesize that work, and optionally start a
+   fresh consultation with a new `ADVISOR CALL` and `ADVISOR RESULT` receipt. Those
+   subagents do not rescue or alter the original consultation result. An unavailable result cannot be rescued by follow-up work.
+11. The advisor may not spawn, route, research, implement, or review final work. Do
+   not spawn a replacement, second advisor, implementer, or final reviewer as part of
+   this consultation.
+
+`completed` requires a processed advisor response with either a recommendation or a
+concrete `FOLLOW-UP AREAS` entry, plus mandatory post-response runtime inspection.
+Any unavailable runtime evidence, non-read-only runtime policy, tool-use evidence, or
+required advice produces `status: unavailable`,
 `recommendation: unavailable`, and `decision: blocked` and remains fail-closed.
 These receipts summarize verified evidence; they are not runtime proof.
 The native child thread remains the inspectable detailed record.

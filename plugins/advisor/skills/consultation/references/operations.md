@@ -2,9 +2,11 @@
 
 Advisor provides pre-decision advice only. It does not implement, route
 implementation, perform final review, or replace root authority. The root performs
-any repository or web research before consultation and sends only relevant evidence
-and source references in the five-section packet. The advisor uses zero tools: it
-does not inspect files, fetch the web, or conduct independent research.
+any repository or web research before consultation and sends enough relevant evidence
+and source references in the five-section packet for a decision. If the evidence is
+not enough, the advisor may identify only a concrete research-first next step, missing
+evidence, research questions, or bounded brainstorming areas. The advisor uses zero
+tools: it does not inspect files, fetch the web, or conduct independent research.
 
 ## Install and verify the companion roles
 
@@ -74,6 +76,8 @@ STRONGEST OBJECTION: <best case against the recommendation>
 CHANGE MY MIND: <specific missing or contrary evidence>
 ACCEPTANCE CHECKS: <concrete checks>
 RISKS: <material residual risks, or none>
+FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence,
+research questions, or bounded brainstorming areas>
 ```
 
 Immediately after every native advisor response, before a completed result, the root
@@ -81,9 +85,16 @@ must run `inspect-agent-runtime.sh` for the selected thread and expected role/mo
 This mandatory inspection verifies the runtime is read-only and zero-tool; it is not
 a metadata fallback. Missing, conflicting, non-read-only, or tool-use evidence makes
 the advisor unavailable and blocks the consult route. If packet evidence is
-insufficient, the advisor names it under `CHANGE MY MIND` instead of researching.
-Only then does the root verify the response's cited source references and record
-`accept`, `modify`, or `reject`. The advisor is never authoritative.
+insufficient, the advisor names the specific missing evidence or research questions
+under `FOLLOW-UP AREAS` instead of researching. A valid processed response contains
+either a recommendation grounded in the packet or a concrete `FOLLOW-UP AREAS`
+entry. Only then does the root verify the response's cited source references and
+record `accept`, `modify`, or `reject`. The advisor is never authoritative.
+
+After a valid, runtime-inspected completed result, the root may route only its
+research or brainstorming follow-up to an appropriate Luna or Terra subagent outside
+this consultation, synthesize the result, and optionally begin a fresh consultation
+with fresh `ADVISOR CALL` and `ADVISOR RESULT` receipts. An unavailable result cannot be rescued by follow-up work, and the advisor may not spawn or conduct that work.
 
 Immediately before the spawn, the root emits:
 
@@ -135,7 +146,8 @@ The inspector emits only thread, parent, role, model, effort, sandbox-policy, an
 permission-profile fields, while rejecting any tool-use event. It must confirm a
 read-only runtime policy; a role TOML requesting read-only is not proof of actual
 isolation. Missing, conflicting, unexpected, non-read-only, or tool-use evidence is
-unavailable, never approval. No substitute role or follow-up agent is allowed.
+unavailable, never approval. No substitute advisor role or replacement consultation
+is allowed; any root-routed follow-up remains outside this consultation.
 
 ## Local advisor audit
 

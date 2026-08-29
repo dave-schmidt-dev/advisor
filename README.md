@@ -82,6 +82,16 @@ That workflow keeps the parent's authenticated Codex home, uses two isolated tem
 project/child-runtime fixtures, and accepts consultation identity only from completed
 `spawn_agent` events with a receiver thread distinct from the root.
 
+For a local, read-only aggregate audit of recent advisor runtime evidence:
+
+```sh
+sh plugins/advisor/scripts/advisor-audit.sh --window-hours 24
+```
+
+It reports only redacted counts and totals, with stderr progress before session
+enumeration and parsing. Use `--since`/`--until` for an explicit RFC3339 window or
+`--sessions-dir` for an isolated fixture; it never changes sessions or configuration.
+
 ## Origin and maintenance
 
 This fork is maintained by David Schmidt / Zero Delta LLC. It derives from Daniel

@@ -19,12 +19,13 @@ operations=$plugin_dir/skills/consultation/references/operations.md
 fixtures=$plugin_dir/evals/trigger-cases.json
 installer=$script_dir/install-agents.sh
 inspector=$script_dir/inspect-agent-runtime.sh
+audit=$script_dir/advisor-audit.sh
 evaluator=$script_dir/evaluate-triggers.sh
 readme=$repo_dir/README.md
 notice=$repo_dir/NOTICE.md
 license=$repo_dir/LICENSE
 
-for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$evaluator" "$readme" "$notice" "$license"; do
+for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$audit" "$evaluator" "$readme" "$notice" "$license"; do
   [ -f "$file" ] || fail "missing required file: $file"
 done
 [ "$(find "$plugin_dir/agents" -maxdepth 1 -type f -name '*.toml' | wc -l | tr -d ' ')" -eq 2 ] || fail "expected exactly two active roles"
@@ -330,6 +331,67 @@ if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --
 printf '%s\n' '{"type":"turn_context","payload":{"model":"gpt-5.6-terra","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >>"$rollout"
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$id" >/dev/null 2>&1; then fail "inspector accepted conflicting model"; fi
 pass "runtime inspector exact allowlist, pins, redaction, non-read-only, tool-use, and conflict refusal"
+
+audit_sessions=$tmp/audit-sessions; mkdir -p "$audit_sessions/2026/01/01"
+python3 - "$audit_sessions/2026/01/01" <<'PY'
+import json,sys
+from pathlib import Path
+
+root=Path(sys.argv[1])
+def write(name, entries):
+    root.joinpath(name).write_text("".join(json.dumps(entry)+"\n" for entry in entries),encoding="utf-8")
+def stamp(second):
+    return f"2026-01-01T00:00:{second:02d}Z"
+def receipt(heading, **fields):
+    return heading+"\n"+"\n".join(f"{key}: {value}" for key,value in fields.items())+"\nDO_NOT_LEAK_SECRET_PROMPT"
+def spawn(role, second):
+    return {"timestamp":stamp(second),"type":"item.completed","item":{"id":f"spawn-{role}-{second}","type":"collab_tool_call","tool":"spawn_agent","status":"completed","receiver_agents":[{"agent_role":role,"thread_id":"00000000-0000-7000-8000-000000000000"}]}}
+write("root.jsonl",[
+    {"timestamp":stamp(1),"type":"response_item","payload":{"text":receipt("ADVISOR CALL",tier="Standard",role="advisor-terra",status="running")}},
+    spawn("advisor-terra",2),
+    {"timestamp":stamp(3),"type":"response_item","payload":{"text":receipt("ADVISOR RESULT",status="completed",decision="accept")}},
+    {"timestamp":stamp(4),"type":"response_item","payload":{"text":receipt("ADVISOR CALL",tier="Specialist",role="advisor-sol",status="running")}},
+    spawn("advisor-sol",5),
+    {"timestamp":stamp(6),"type":"response_item","payload":{"text":receipt("ADVISOR RESULT",status="unavailable",decision="blocked")}},
+    spawn("sol_advisor",7), spawn("sol-advisor",8),
+])
+write("terra.jsonl",[
+    {"timestamp":stamp(10),"type":"session_meta","payload":{"agent_role":"advisor-terra","id":"00000000-0000-7000-8000-000000000000"}},
+    {"timestamp":stamp(11),"type":"turn_context","payload":{"sandbox_policy":{"type":"read-only"}}},
+    {"timestamp":stamp(12),"type":"response_item","payload":{"type":"function_call","text":"DO_NOT_LEAK_TOOL"},"usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_tokens":4}},
+])
+write("sol.jsonl",[
+    {"timestamp":stamp(20),"type":"session_meta","payload":{"agent_role":"advisor-sol","id":"00000000-0000-7000-8000-000000000000"}},
+    {"timestamp":stamp(22),"type":"turn_context","payload":{"sandbox_policy":{"type":"workspace-write"}}},
+    {"timestamp":stamp(23),"type":"response_item","payload":{"text":"DO_NOT_LEAK_RESPONSE"},"usage":{"input_tokens":20,"cached_input_tokens":5,"output_tokens":6,"reasoning_tokens":7}},
+])
+PY
+audit_out=$tmp/advisor-audit.json
+audit_err=$tmp/advisor-audit.stderr
+audit_before=$(snapshot "$audit_sessions/2026/01/01")
+sh "$audit" --sessions-dir "$audit_sessions" --since 2026-01-01T00:00:00Z --until 2026-01-02T00:00:00Z >"$audit_out" 2>"$audit_err"
+audit_after=$(snapshot "$audit_sessions/2026/01/01")
+[ "$audit_before" = "$audit_after" ] || fail "advisor audit modified session fixtures"
+jq -e '
+  .schema_version==1 and .redacted==true and
+  .consultations.attempted==2 and .consultations.advisor_child_calls==2 and
+  .consultations.selected_roles=={"standard":1,"specialist":1} and
+  .consultations.dispositions=={"completed":1,"unavailable":1,"blocked":1,"accept":1,"modify":0,"reject":0} and
+  .runtime.sandbox_counts=={"read_only":1,"workspace_write":1,"other":0} and
+  .runtime.advisor_tool_calls==1 and
+  .runtime.child_durations=={"count":2,"total_ms":5000,"minimum_ms":2000,"maximum_ms":3000,"average_ms":2500,"availability":"evidenced"} and
+  .runtime.tokens=={"input":30,"cached_input":7,"output":9,"reasoning":11} and
+  .runtime.availability=={"sandbox_counts":"evidenced","advisor_tool_calls":"evidenced","tokens":"evidenced"} and
+  .stale_role_attempts=={"sol_advisor":1,"sol-advisor":1}
+' "$audit_out" >/dev/null || fail "advisor audit aggregate report mismatch"
+grep -Fq 'ADVISOR AUDIT: session enumeration started' "$audit_err" || fail "advisor audit lacks enumeration progress"
+grep -Fq 'ADVISOR AUDIT: session parsing started' "$audit_err" || fail "advisor audit lacks parsing progress"
+if grep -Eqi 'DO_NOT_LEAK|00000000|root\.jsonl|secret_prompt' "$audit_out" "$audit_err"; then fail "advisor audit leaked fixture content or identifiers"; fi
+empty_sessions=$tmp/empty-audit-sessions; mkdir "$empty_sessions"
+empty_audit=$tmp/empty-advisor-audit.json
+sh "$audit" --sessions-dir "$empty_sessions" --since 2026-01-01T00:00:00Z --until 2026-01-02T00:00:00Z >"$empty_audit" 2>/dev/null
+jq -e '.runtime.sandbox_counts==null and .runtime.advisor_tool_calls==null and .runtime.tokens==null and .runtime.child_durations.availability=="unavailable" and .runtime.availability=={"sandbox_counts":"unavailable","advisor_tool_calls":"unavailable","tokens":"unavailable"}' "$empty_audit" >/dev/null || fail "advisor audit guessed unavailable evidence"
+pass "advisor audit aggregate fixtures, fail-safe redaction, unavailable evidence, and stderr progress"
 
 python3 - "$tmp/result.json" "$tmp/rerun-result.json" "$tmp/unnecessary-rerun-result.json" "$tmp/boundary-three-of-four.json" "$tmp/boundary-two-of-four.json" "$fixtures" <<'PY'
 import copy,json,sys

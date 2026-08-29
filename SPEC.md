@@ -200,6 +200,13 @@ RISKS: <material residual risks, or none>
 - The advisor is pre-decision consultation, not post-implementation review.
 - No hooks, MCP server, connector, API key, network service, telemetry, or
   scheduled task is introduced.
+- `advisor-audit.sh` is a local read-only, aggregate-only inspection command. It
+  supports a caller-selected time window and an optional session directory for
+  synthetic tests, writes progress to stderr before enumeration and parsing, and
+  emits stable redacted JSON only. It may parse only allowlisted metadata, fixed
+  receipt enums, event kinds, timestamps, and usage counters; it must not emit
+  content, identifiers, paths, filenames, contact data, secret-shaped values, or
+  cost estimates. Unknown runtime evidence is unavailable, never inferred.
 - Installation may add only the exact `advisor-terra` and `advisor-sol` custom-agent TOMLs through a
   fail-closed, idempotent companion installer. An attended upgrade must also
   deactivate byte-exact known historical Sol Advisor role files by recoverably renaming

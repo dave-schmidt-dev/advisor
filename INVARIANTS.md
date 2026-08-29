@@ -72,3 +72,9 @@ area: ["plugins/advisor/agents/**", "plugins/advisor/skills/consultation/**", "R
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
 rationale: The root completes repository and web research before consultation and supplies only relevant evidence and source references; advisors make no tool call, file inspection, web fetch, or independent research attempt, and identify missing evidence under CHANGE MY MIND.
+
+### INV-12 — Redacted deferred audit
+area: ["plugins/advisor/scripts/advisor-audit.sh", "plugins/advisor/scripts/verify.sh", "plugins/advisor/skills/consultation/references/operations.md", "README.md", "SPEC.md"]
+gate_test: plugins/advisor/scripts/verify.sh
+threshold: 3
+rationale: The local advisor audit is read-only, progress-visible, window-bounded, and aggregate-only; it reports unavailable evidence as unavailable and never emits session content, identifiers, filenames, paths, contact data, secret-shaped values, or costs.

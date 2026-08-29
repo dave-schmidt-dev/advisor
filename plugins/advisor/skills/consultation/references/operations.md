@@ -137,6 +137,27 @@ read-only runtime policy; a role TOML requesting read-only is not proof of actua
 isolation. Missing, conflicting, unexpected, non-read-only, or tool-use evidence is
 unavailable, never approval. No substitute role or follow-up agent is allowed.
 
+## Local advisor audit
+
+Use the read-only local audit to inspect aggregate consultation drift without exposing
+session content. It writes progress to stderr before enumeration and parsing, then
+emits one redacted JSON report on stdout. The report never includes session names,
+paths, identifiers, receipt prose, prompts, responses, or cost estimates.
+
+```sh
+sh plugins/advisor/scripts/advisor-audit.sh --window-hours 24
+```
+
+`--since RFC3339` and `--until RFC3339` select an explicit half-open time window;
+`--sessions-dir DIR` is available for isolated synthetic tests. The audit reads only
+allowlisted runtime metadata, fixed receipt enums, tool-event kinds, timestamps, and
+usage counters. Missing sandbox, tool, token, or duration evidence is JSON `null`
+with an `unavailable` availability value, never an inferred value. It reports receipt
+attempts separately from completed `spawn_agent` advisor child calls, Standard and
+Specialist selections, evidenced dispositions, stale `sol_advisor`/`sol-advisor`
+attempts, sandbox counts, advisor tool-call counts, duration aggregates, and token
+totals. It never changes sessions or Codex configuration.
+
 ## Trigger evaluation
 
 Static verification is non-networked:

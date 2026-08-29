@@ -101,9 +101,19 @@ def receipt_fields(text, heading):
             fields[match.group(1)] = match.group(2)
     return fields
 
-def message_text(entry):
-    candidates = (string_at(entry, "item", "text"), string_at(entry, "payload", "text"), string_at(entry, "item", "payload", "text"))
-    return next((value for value in candidates if value is not None), None)
+def receipt_texts(entry):
+    payload = entry.get("payload")
+    if entry.get("type") != "response_item" or not isinstance(payload, dict):
+        return ()
+    if payload.get("type") != "message" or payload.get("role") != "assistant":
+        return ()
+    content = payload.get("content")
+    if not isinstance(content, list):
+        return ()
+    return tuple(
+        item["text"] for item in content
+        if isinstance(item, dict) and item.get("type") == "output_text" and isinstance(item.get("text"), str)
+    )
 
 def nested_objects(value):
     if isinstance(value, dict):
@@ -160,28 +170,40 @@ for path in files:
         stamps = [stamp for stamp in stamps if stamp is not None]
         if len(stamps) >= 2:
             durations.append(round((max(stamps) - min(stamps)).total_seconds() * 1000))
-        for entry in in_window:
-            sandbox_type = string_at(entry, "payload", "sandbox_policy", "type")
-            if sandbox_type is not None:
-                sandbox_evidence = True
-                if sandbox_type == "read-only": sandbox["read_only"] += 1
-                elif sandbox_type == "workspace-write": sandbox["workspace_write"] += 1
-                else: sandbox["other"] += 1
-            tool_calls += sum(1 for value in nested_objects(entry) if value.get("type") in ("function_call", "custom_tool_call", "collab_tool_call", "tool_call", "tool_use"))
-            usage_sources = (value.get("usage") for value in nested_objects(entry))
-            for usage in usage_sources:
-                if not isinstance(usage, dict):
-                    continue
-                aliases = {"input": ("input_tokens",), "cached_input": ("cached_input_tokens", "cached_tokens"), "output": ("output_tokens",), "reasoning": ("reasoning_tokens",)}
-                for target, names in aliases.items():
-                    value = next((usage.get(name) for name in names if isinstance(usage.get(name), int) and not isinstance(usage.get(name), bool) and usage.get(name) >= 0), None)
-                    if value is not None:
-                        tokens[target] += value
-                        token_evidence = True
+        sandbox_values = {
+            value for entry in in_window
+            if (value := string_at(entry, "payload", "sandbox_policy", "type")) is not None
+        }
+        if sandbox_values:
+            sandbox_evidence = True
+            if sandbox_values == {"read-only"}: sandbox["read_only"] += 1
+            elif sandbox_values == {"workspace-write"}: sandbox["workspace_write"] += 1
+            else: sandbox["other"] += 1
+        tool_calls += sum(
+            1 for entry in in_window
+            if entry.get("type") == "response_item"
+            and string_at(entry, "payload", "type") in ("function_call", "custom_tool_call", "collab_tool_call", "tool_call", "tool_use")
+        )
+        usage = next((
+            entry.get("payload", {}).get("info", {}).get("total_token_usage")
+            for entry in reversed(in_window)
+            if isinstance(entry.get("payload"), dict)
+            and entry["payload"].get("type") == "token_count"
+            and isinstance(entry["payload"].get("info"), dict)
+            and isinstance(entry["payload"]["info"].get("total_token_usage"), dict)
+        ), None)
+        if usage is not None:
+            aliases = {"input": ("input_tokens",), "cached_input": ("cached_input_tokens", "cached_tokens"), "output": ("output_tokens",), "reasoning": ("reasoning_output_tokens", "reasoning_tokens")}
+            for target, names in aliases.items():
+                value = next((usage.get(name) for name in names if isinstance(usage.get(name), int) and not isinstance(usage.get(name), bool) and usage.get(name) >= 0), None)
+                if value is not None:
+                    tokens[target] += value
+                    token_evidence = True
 
     for entry in in_window:
-        item = entry.get("item") if isinstance(entry.get("item"), dict) else {}
-        if string_at(item, "type") == "collab_tool_call" and string_at(item, "tool") == "spawn_agent" and string_at(item, "status") == "completed":
+        item = entry.get("payload", {}).get("item") if isinstance(entry.get("payload"), dict) else {}
+        item = item if isinstance(item, dict) else {}
+        if entry.get("type") == "event_msg" and string_at(entry, "payload", "type") == "item_completed" and string_at(item, "type") == "CollabAgentToolCall" and string_at(item, "tool") == "spawn_agent" and string_at(item, "status") == "completed":
             receivers = item.get("receiver_agents")
             if isinstance(receivers, list):
                 for receiver in receivers:
@@ -192,20 +214,20 @@ for path in files:
                         stale_underscore += 1
                     elif role == "sol-advisor":
                         stale_hyphen += 1
-        text = message_text(entry)
-        call = receipt_fields(text, "ADVISOR CALL")
-        if call and call.get("status") == "running":
-            attempts += 1
-            if call.get("tier") == "Standard" and call.get("role") == "advisor-terra": standard += 1
-            if call.get("tier") == "Specialist" and call.get("role") == "advisor-sol": specialist += 1
-        result = receipt_fields(text, "ADVISOR RESULT")
-        if result:
-            if result.get("status") == "completed": completed += 1
-            elif result.get("status") == "unavailable": unavailable += 1
-            if result.get("decision") == "blocked": blocked += 1
-            elif result.get("decision") == "accept": accept += 1
-            elif result.get("decision") == "modify": modify += 1
-            elif result.get("decision") == "reject": reject += 1
+        for text in receipt_texts(entry):
+            call = receipt_fields(text, "ADVISOR CALL")
+            if call and call.get("status") == "running":
+                attempts += 1
+                if call.get("tier") == "Standard" and call.get("role") == "advisor-terra": standard += 1
+                if call.get("tier") == "Specialist" and call.get("role") == "advisor-sol": specialist += 1
+            result = receipt_fields(text, "ADVISOR RESULT")
+            if result:
+                if result.get("status") == "completed": completed += 1
+                elif result.get("status") == "unavailable": unavailable += 1
+                if result.get("decision") == "blocked": blocked += 1
+                elif result.get("decision") == "accept": accept += 1
+                elif result.get("decision") == "modify": modify += 1
+                elif result.get("decision") == "reject": reject += 1
 
 duration_report = {"count": len(durations), "total_ms": sum(durations) if durations else None, "minimum_ms": min(durations) if durations else None, "maximum_ms": max(durations) if durations else None, "average_ms": round(sum(durations) / len(durations)) if durations else None, "availability": "evidenced" if durations else "unavailable"}
 disposition_evidence = (completed + unavailable + blocked + accept + modify + reject) > 0

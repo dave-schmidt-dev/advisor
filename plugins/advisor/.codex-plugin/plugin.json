@@ -1,6 +1,6 @@
 {
   "name": "advisor",
-  "version": "1.3.0",
+  "version": "1.3.0+codex.20260829173450",
   "description": "One fresh, read-only consultation for material technical decisions.",
   "author": {
     "name": "David Schmidt / Zero Delta LLC (maintainer); Daniel McAteer (original author)"

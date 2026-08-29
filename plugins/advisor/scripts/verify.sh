@@ -344,26 +344,30 @@ def stamp(second):
     return f"2026-01-01T00:00:{second:02d}Z"
 def receipt(heading, **fields):
     return heading+"\n"+"\n".join(f"{key}: {value}" for key,value in fields.items())+"\nDO_NOT_LEAK_SECRET_PROMPT"
+def message(text, second):
+    return {"timestamp":stamp(second),"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":text}]}}
 def spawn(role, second):
-    return {"timestamp":stamp(second),"type":"item.completed","item":{"id":f"spawn-{role}-{second}","type":"collab_tool_call","tool":"spawn_agent","status":"completed","receiver_agents":[{"agent_role":role,"thread_id":"00000000-0000-7000-8000-000000000000"}]}}
+    return {"timestamp":stamp(second),"type":"event_msg","payload":{"type":"item_completed","item":{"id":f"spawn-{role}-{second}","type":"CollabAgentToolCall","tool":"spawn_agent","status":"completed","receiver_agents":[{"agent_role":role,"thread_id":"00000000-0000-7000-8000-000000000000"}]}}}
 write("root.jsonl",[
-    {"timestamp":stamp(1),"type":"response_item","payload":{"text":receipt("ADVISOR CALL",tier="Standard",role="advisor-terra",status="running")}},
+    message(receipt("ADVISOR CALL",tier="Standard",role="advisor-terra",status="running"),1),
     spawn("advisor-terra",2),
-    {"timestamp":stamp(3),"type":"response_item","payload":{"text":receipt("ADVISOR RESULT",status="completed",decision="accept")}},
-    {"timestamp":stamp(4),"type":"response_item","payload":{"text":receipt("ADVISOR CALL",tier="Specialist",role="advisor-sol",status="running")}},
+    message(receipt("ADVISOR RESULT",status="completed",decision="accept"),3),
+    message(receipt("ADVISOR CALL",tier="Specialist",role="advisor-sol",status="running"),4),
     spawn("advisor-sol",5),
-    {"timestamp":stamp(6),"type":"response_item","payload":{"text":receipt("ADVISOR RESULT",status="unavailable",decision="blocked")}},
+    message(receipt("ADVISOR RESULT",status="unavailable",decision="blocked"),6),
     spawn("sol_advisor",7), spawn("sol-advisor",8),
 ])
 write("terra.jsonl",[
     {"timestamp":stamp(10),"type":"session_meta","payload":{"agent_role":"advisor-terra","id":"00000000-0000-7000-8000-000000000000"}},
     {"timestamp":stamp(11),"type":"turn_context","payload":{"sandbox_policy":{"type":"read-only"}}},
-    {"timestamp":stamp(12),"type":"response_item","payload":{"type":"function_call","text":"DO_NOT_LEAK_TOOL"},"usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_tokens":4}},
+    {"timestamp":stamp(12),"type":"response_item","payload":{"type":"custom_tool_call","text":"DO_NOT_LEAK_TOOL"}},
+    {"timestamp":stamp(13),"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_output_tokens":4}}}},
 ])
 write("sol.jsonl",[
     {"timestamp":stamp(20),"type":"session_meta","payload":{"agent_role":"advisor-sol","id":"00000000-0000-7000-8000-000000000000"}},
     {"timestamp":stamp(22),"type":"turn_context","payload":{"sandbox_policy":{"type":"workspace-write"}}},
-    {"timestamp":stamp(23),"type":"response_item","payload":{"text":"DO_NOT_LEAK_RESPONSE"},"usage":{"input_tokens":20,"cached_input_tokens":5,"output_tokens":6,"reasoning_tokens":7}},
+    {"timestamp":stamp(23),"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"DO_NOT_LEAK_RESPONSE"}]}},
+    {"timestamp":stamp(24),"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":20,"cached_input_tokens":5,"output_tokens":6,"reasoning_output_tokens":7}}}},
 ])
 PY
 audit_out=$tmp/advisor-audit.json
@@ -379,7 +383,7 @@ jq -e '
   .consultations.dispositions=={"completed":1,"unavailable":1,"blocked":1,"accept":1,"modify":0,"reject":0} and
   .runtime.sandbox_counts=={"read_only":1,"workspace_write":1,"other":0} and
   .runtime.advisor_tool_calls==1 and
-  .runtime.child_durations=={"count":2,"total_ms":5000,"minimum_ms":2000,"maximum_ms":3000,"average_ms":2500,"availability":"evidenced"} and
+  .runtime.child_durations=={"count":2,"total_ms":7000,"minimum_ms":3000,"maximum_ms":4000,"average_ms":3500,"availability":"evidenced"} and
   .runtime.tokens=={"input":30,"cached_input":7,"output":9,"reasoning":11} and
   .runtime.availability=={"sandbox_counts":"evidenced","advisor_tool_calls":"evidenced","tokens":"evidenced"} and
   .stale_role_attempts=={"sol_advisor":1,"sol-advisor":1}

@@ -139,7 +139,9 @@ for digest in \
  0333acf0ef562bcfebd06009ac09bd1dd8cbc04c4cf28e08e9e049bd8bf202d2 \
  b0be4d07ef2958ad2dd01a4b11be6edff309063fe45d75e778aeac6dfce80363 \
  95be7e69ee4d5350ea199a66280e180774309371fefcf1a2765f782ec1a670c0 \
- 5ab78b10e1abd4b86d8adeb7d71aa6b4d1c79b1a44457d2c717f5a03cd360367; do
+ 5ab78b10e1abd4b86d8adeb7d71aa6b4d1c79b1a44457d2c717f5a03cd360367 \
+ 4ad79cb613cc9865cb3d1db02f2e98b3b117524153c075a2de3d6bd249798c5e \
+ 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4; do
   grep -Fq "$digest" "$installer" || fail "missing historical digest: $digest"
 done
 pass "all historical and Advisor 1.1.0 upgrade fingerprints retained"
@@ -206,6 +208,37 @@ cmp -s "$terra_role" "$v110_interrupted/advisor-terra.toml" || fail "retired-onl
 cmp -s "$sol_role" "$v110_interrupted/advisor-sol.toml" || fail "retired-only Sol upgrade did not resume"
 sh "$installer" --target-dir "$v110_interrupted" --check >/dev/null
 pass "exact Advisor 1.1.0 same-path upgrade, recoverable retirement, and idempotency"
+
+v130=$tmp/advisor-v130; mkdir "$v130"
+python3 - "$terra_role" "$sol_role" "$v130" <<'PY'
+from pathlib import Path
+import sys
+block='''
+Use zero tools. Do not call any tool or function, inspect files or repositories,
+browse, fetch, or search the web, access external services, or conduct independent
+research. The packet and its cited source references are the complete record. If
+evidence is insufficient, name the specific missing evidence under CHANGE MY MIND;
+do not seek it yourself.
+'''
+for source in map(Path,sys.argv[1:3]):
+    text=source.read_text(encoding="utf-8")
+    if text.count(block)!=1: raise SystemExit(f"current role zero-tool fixture mismatch: {source}")
+    Path(sys.argv[3],source.name).write_text(text.replace(block,""),encoding="utf-8")
+PY
+assert_v110_digest "$v130/advisor-terra.toml" 4ad79cb613cc9865cb3d1db02f2e98b3b117524153c075a2de3d6bd249798c5e
+assert_v110_digest "$v130/advisor-sol.toml" 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4
+cp "$v110/advisor-terra.toml.retired-v1.1.0" "$v130/advisor-terra.toml.retired-v1.1.0"
+cp "$v110/advisor-sol.toml.retired-v1.1.0" "$v130/advisor-sol.toml.retired-v1.1.0"
+if sh "$installer" --target-dir "$v130" --check >/dev/null 2>&1; then fail "check accepted active prior Advisor 1.3.0 roles"; fi
+sh "$installer" --target-dir "$v130" >/dev/null
+cmp -s "$terra_role" "$v130/advisor-terra.toml" || fail "Advisor 1.3.0 Terra upgrade did not install current role exactly"
+cmp -s "$sol_role" "$v130/advisor-sol.toml" || fail "Advisor 1.3.0 Sol upgrade did not install current role exactly"
+assert_v110_digest "$v130/advisor-terra.toml.retired-v1.3.0" 4ad79cb613cc9865cb3d1db02f2e98b3b117524153c075a2de3d6bd249798c5e
+assert_v110_digest "$v130/advisor-sol.toml.retired-v1.3.0" 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4
+sh "$installer" --target-dir "$v130" --check >/dev/null
+before=$(snapshot "$v130"); sh "$installer" --target-dir "$v130" >/dev/null; after=$(snapshot "$v130")
+[ "$before" = "$after" ] || fail "Advisor 1.3.0 upgraded state is not idempotent"
+pass "exact prior Advisor 1.3.0 upgrade, generation-specific retirement, and idempotency"
 
 # Exercise all three v0.6.0 historical role types using their original exact bytes.
 historical=$tmp/historical; mkdir "$historical"

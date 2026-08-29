@@ -91,27 +91,38 @@ in repository evidence.
    schema or `fork_context: false` for the v1 schema. Never send both, inherit
    context, or pass model or effort overrides.
 5. Verify the completed spawn event first. Accept only the selected model, high
-   reasoning, named role, and distinct receiver thread; invocation and role files
-   establish read-only isolation. A local inspector may fill
-   only metadata fields omitted by the public record.
-6. Send only the bounded packet below. Do not send secrets, credentials, personal
-   data, or irrelevant conversation history.
-7. Treat the response as advice, not authority. The root checks cited repository
-   evidence and records `accept`, `modify`, or `reject` with one reason.
-8. After runtime evidence and advice processing, always emit a visible
+   reasoning, named role, and distinct receiver thread. Missing or conflicting spawn
+   evidence blocks the consult route.
+6. Before consultation, the root performs any repository or web research. Send only
+   the bounded packet below, with relevant root-gathered evidence and source
+   references; do not send secrets, credentials, personal data, or irrelevant
+   conversation history. The advisor uses zero tools: it does not inspect files,
+   fetch the web, or conduct independent research. It names insufficient evidence
+   under `CHANGE MY MIND` instead of researching.
+7. Immediately after every native advisor response, run
+   `inspect-agent-runtime.sh` for the selected thread and expected role/model. This
+   inspection is mandatory, not a metadata fallback, and must complete before any
+   `ADVISOR RESULT` with `status: completed`. It must prove a read-only, zero-tool
+   runtime; any missing, conflicting, non-read-only, or tool-use evidence makes the
+   advisor unavailable and blocks the consult route.
+8. Treat a response that passed runtime inspection as advice, not authority. The root
+   checks its cited source references and records `accept`, `modify`, or `reject`
+   with one reason.
+9. After runtime evidence and advice processing, always emit a visible
    `ADVISOR RESULT` receipt containing completed/unavailable status, tier, role,
    verified model and high effort, read-only isolation, a concise recommendation
    or unavailable, the accept/modify/reject/blocked disposition, and one-sentence
    reason.
-9. Do not spawn a replacement, second advisor, implementer, or final reviewer as
+10. Do not spawn a replacement, second advisor, implementer, or final reviewer as
    part of this skill.
 
 If the exact completed spawn evidence is unavailable, report `advisor unavailable`,
 block the consult route, and never continue independently or silently substitute
 another role or model.
 
-`completed` requires verified runtime evidence and a processed advisor response.
-Unavailable runtime evidence or required advice must visibly produce
+`completed` requires mandatory post-response runtime inspection and a processed
+advisor response. Unavailable runtime evidence, a non-read-only runtime policy,
+tool-use evidence, or required advice must visibly produce
 `status: unavailable`, `recommendation: unavailable`, and `decision: blocked`, and
 remain fail-closed. Receipts summarize verified evidence and are not runtime proof;
 the native child thread remains the inspectable detailed record. The skip route emits
@@ -148,7 +159,7 @@ DECISION
 <one question the root must resolve>
 
 CONTEXT
-<goal, observed evidence, and current constraints>
+<goal, relevant root-gathered evidence with source references, and current constraints>
 
 OPTIONS
 <known viable choices, including the root's tentative choice when one exists>
@@ -159,7 +170,9 @@ BOUNDARIES
 REQUEST
 Challenge the tentative choice. Recommend one path, identify the strongest
 counterargument, name evidence that would change the recommendation, and give
-specific acceptance checks. Remain read-only.
+specific acceptance checks. Use zero tools: do not inspect files, call tools, fetch
+the web, or conduct independent research. If the packet is insufficient, name the
+specific missing evidence under CHANGE MY MIND instead of researching.
 ```
 
 ### Advisor output
@@ -177,6 +190,11 @@ RISKS: <material residual risks, or none>
 ## Boundaries
 
 - The root remains architect, implementer-or-router, verifier, and acceptor.
+- The root performs all repository and web research before consultation; the advisor
+  receives only relevant evidence and source references and makes no tool call, file
+  inspection, web fetch, or independent research attempt.
+- Every native advisor response receives mandatory runtime inspection before a
+  completed result; missing, conflicting, non-read-only, or tool-use evidence blocks.
 - Switchyard remains the implementation router; the plugin must not contain an
   implementation role or bypass repository routing policy.
 - The advisor is pre-decision consultation, not post-implementation review.
@@ -250,15 +268,16 @@ The repository verifier must prove:
    consult and skip boundaries.
 4. Retired `solo`, `delegate`, `audit`, `full`, Luna, Terra, and final-review
    contracts are absent from active plugin content.
-5. The advisor roles pin the exact Terra/high and Sol/high pairs and request
-   read-only sandboxing; static fixtures prove decision-risk role selection and exact spawn evidence.
+5. The advisor roles pin the exact Terra/high and Sol/high pairs, request read-only
+   sandboxing, and forbid tools, file inspection, web fetches, and independent
+   research; static fixtures prove decision-risk role selection and exact spawn evidence.
 6. The installer is fail-closed, idempotent, supports an isolated target, and
    refuses modified, symlinked, nonregular, unknown, or unsafe destinations.
 7. Upgrade fixtures prove byte-exact retired roles become recoverable inactive
    files, a second run is idempotent, and modified, unsafe, or conflicting
    historical roles stop migration.
-8. Runtime inspection emits only allowlisted routing fields and fails on missing
-   or conflicting evidence.
+8. Mandatory post-response runtime inspection emits only allowlisted routing fields
+   and fails on missing, conflicting, non-read-only, or tool-use evidence.
 9. README, manifest UI text, skill metadata, operations reference, and examples
    describe the same workflow.
 10. Every consult emits visible `ADVISOR CALL` and `ADVISOR RESULT` receipts; a

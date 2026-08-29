@@ -5,8 +5,12 @@ description: Consult for material architecture, interface, data-model, or compat
 
 # Advisor consultation
 
-Use one fresh, read-only advisor only when the task has a concrete material decision.
-The root remains architect, implementer-or-router, verifier, and acceptor.
+Use one fresh, read-only, zero-tool advisor only when the task has a concrete material
+decision. The root remains architect, implementer-or-router, verifier, and acceptor.
+Before consultation, the root performs any repository or web research and includes
+only the relevant evidence and source references in the five-section decision packet.
+The advisor does not inspect files, call tools, fetch the web, or conduct independent
+research.
 
 ## Declare the route
 
@@ -55,9 +59,8 @@ status: running
    Never send both or inherit context.
 5. Verify the completed `spawn_agent` event first: the exact selected role/model
    pair, `high` effort, one receiver thread distinct from the root, and read-only
-   isolation established by invocation and role files. The local inspector may fill
-   only fields omitted by public metadata. Conflicts or missing evidence block the
-   consult route.
+   isolation requested by invocation and role files. Conflicts or missing evidence
+   block the consult route.
 6. Send only this bounded, non-sensitive packet:
 
 ```text
@@ -65,7 +68,7 @@ DECISION
 <one question the root must resolve>
 
 CONTEXT
-<goal, observed evidence, and current constraints>
+<goal, relevant root-gathered evidence with source references, and current constraints>
 
 OPTIONS
 <known viable choices, including the tentative choice when one exists>
@@ -76,7 +79,9 @@ BOUNDARIES
 REQUEST
 Challenge the tentative choice. Recommend one path, identify the strongest
 counterargument, name evidence that would change the recommendation, and give
-specific acceptance checks. Remain read-only.
+specific acceptance checks. Use zero tools: do not inspect files, call tools, fetch
+the web, or conduct independent research. If the packet is insufficient, name the
+specific missing evidence under CHANGE MY MIND instead of researching.
 ```
 
 Require exactly:
@@ -91,9 +96,19 @@ ACCEPTANCE CHECKS: <concrete checks>
 RISKS: <material residual risks, or none>
 ```
 
-Treat the response as evidence, verify cited repository facts, then record `accept`,
-`modify`, or `reject` with one reason. After runtime evidence and advice processing,
-always emit this visible main-chat receipt:
+7. Receive the required advisor response without supplying more context or asking it
+   to research.
+8. Immediately after every native advisor response, run
+   `inspect-agent-runtime.sh` for the selected thread and expected role/model. This
+   inspection is mandatory, not a metadata fallback, and must complete before any
+   `ADVISOR RESULT` with `status: completed`. It verifies the runtime policy remains
+   read-only and that the advisor made no tool call. Any missing, conflicting,
+   non-read-only, or tool-use evidence makes the advisor unavailable and blocks the
+   consult route.
+9. Treat a response that passed mandatory runtime inspection as evidence, verify its
+   cited source references, then record `accept`, `modify`, or `reject` with one
+   reason. After runtime evidence and advice processing, always emit this visible
+   main-chat receipt:
 
 ```text
 ADVISOR RESULT
@@ -108,8 +123,9 @@ decision: accept | modify | reject | blocked
 reason: <one sentence>
 ```
 
-`completed` requires verified runtime evidence and a processed advisor response.
-Any unavailable runtime evidence or required advice produces `status: unavailable`,
+`completed` requires a processed advisor response and mandatory post-response runtime
+inspection. Any unavailable runtime evidence, non-read-only runtime policy, tool-use
+evidence, or required advice produces `status: unavailable`,
 `recommendation: unavailable`, and `decision: blocked` and remains fail-closed.
 These receipts summarize verified evidence; they are not runtime proof.
 The native child thread remains the inspectable detailed record.

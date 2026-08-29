@@ -1,7 +1,10 @@
 # Consultation operations
 
 Advisor provides pre-decision advice only. It does not implement, route
-implementation, perform final review, or replace root authority.
+implementation, perform final review, or replace root authority. The root performs
+any repository or web research before consultation and sends only relevant evidence
+and source references in the five-section packet. The advisor uses zero tools: it
+does not inspect files, fetch the web, or conduct independent research.
 
 ## Install and verify the companion roles
 
@@ -60,7 +63,8 @@ fork_context: false
 
 Never inherit context or pass a model/effort override. The selected installed role
 enforces the pair. Send the five-section
-DECISION/CONTEXT/OPTIONS/BOUNDARIES/REQUEST packet from the skill. Require:
+DECISION/CONTEXT/OPTIONS/BOUNDARIES/REQUEST packet from the skill, with only
+root-gathered relevant evidence and source references. Require:
 
 ```text
 ADVISOR RESPONSE
@@ -72,8 +76,14 @@ ACCEPTANCE CHECKS: <concrete checks>
 RISKS: <material residual risks, or none>
 ```
 
-The root verifies evidence and records `accept`, `modify`, or `reject`. The advisor
-is never authoritative.
+Immediately after every native advisor response, before a completed result, the root
+must run `inspect-agent-runtime.sh` for the selected thread and expected role/model.
+This mandatory inspection verifies the runtime is read-only and zero-tool; it is not
+a metadata fallback. Missing, conflicting, non-read-only, or tool-use evidence makes
+the advisor unavailable and blocks the consult route. If packet evidence is
+insufficient, the advisor names it under `CHANGE MY MIND` instead of researching.
+Only then does the root verify the response's cited source references and record
+`accept`, `modify`, or `reject`. The advisor is never authoritative.
 
 Immediately before the spawn, the root emits:
 
@@ -101,28 +111,30 @@ decision: accept | modify | reject | blocked
 reason: <one sentence>
 ```
 
-Only verified runtime evidence plus a processed response can produce `completed`.
-Unavailable runtime evidence or required advice produces `status: unavailable`,
-`recommendation: unavailable`, and `decision: blocked`; the consult route remains
-fail-closed. These main-chat receipts summarize verified evidence but are not runtime
-proof. The native child thread remains the inspectable detailed record. A skip emits
-only `ADVISOR DECISION`, with no call/result receipt and no spawn.
+Only mandatory post-response runtime inspection plus a processed response can produce
+`completed`. Missing, conflicting, non-read-only, tool-use, or required-advice
+evidence produces `status: unavailable`, `recommendation: unavailable`, and
+`decision: blocked`; the consult route remains fail-closed. These main-chat receipts
+summarize verified evidence but are not runtime proof. The native child thread remains
+the inspectable detailed record. A skip emits only `ADVISOR DECISION`, with no
+call/result receipt and no spawn.
 
 ## Runtime evidence
 
 Public spawn metadata is primary. A completed `spawn_agent` event must establish one
 receiver agent and thread, the exact decision-risk-selected `advisor-terra`/`gpt-5.6-terra`
 or `advisor-sol`/`gpt-5.6-sol` pair, effort `high`,
-and a receiver thread distinct from the root `thread.started` identifier. Invocation
-flags and the installed role establish the read-only sandbox. For fields omitted by
-the public record only:
+and a receiver thread distinct from the root `thread.started` identifier. After every
+native advisor response, the root must run:
 
 ```sh
 sh plugins/advisor/scripts/inspect-agent-runtime.sh --expected-role <selected-role> --expected-model <selected-model> <thread-id>
 ```
 
 The inspector emits only thread, parent, role, model, effort, sandbox-policy, and
-permission-profile fields. Missing, conflicting, or unexpected evidence is
+permission-profile fields, while rejecting any tool-use event. It must confirm a
+read-only runtime policy; a role TOML requesting read-only is not proof of actual
+isolation. Missing, conflicting, unexpected, non-read-only, or tool-use evidence is
 unavailable, never approval. No substitute role or follow-up agent is allowed.
 
 ## Trigger evaluation

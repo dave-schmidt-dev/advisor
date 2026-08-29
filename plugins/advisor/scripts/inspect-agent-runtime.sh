@@ -1,5 +1,5 @@
 #!/bin/sh
-# Emit only allowlisted identity/isolation evidence for one exact advisor rollout.
+# Emit only allowlisted identity/isolation evidence for one exact, zero-tool advisor rollout.
 
 set -eu
 fail() { printf '%s\n' "ERROR: $*" >&2; exit 1; }
@@ -34,11 +34,13 @@ jq -ce -s --arg id "$thread_id" --arg expected_role "$expected_role" --arg expec
   if ($s|length)!=1 or ($t|length)==0 then error("missing metadata") else
     [$t[].model] as $m | [$t[].effort] as $e |
     [$t[].sandbox_policy.type] as $b | [$t[].permission_profile.type] as $p |
+    [ .[] | .. | objects | .type? |
+      select(. == "function_call" or . == "custom_tool_call" or . == "collab_tool_call" or . == "tool_call" or . == "tool_use") ] as $tool_events |
     if $s[0].id!=$id or $s[0].agent_role!=$expected_role or
        ($m|unique)!=[$expected_model] or ($e|unique)!=["high"] or
        ($b|unique)!=["read-only"] or ($p|unique|length)!=1 or
-       any($p[]; type!="string" or length==0)
-    then error("unexpected or conflicting advisor evidence")
+       any($p[]; type!="string" or length==0) or ($tool_events|length)!=0
+    then error("unexpected, non-read-only, or tool-using advisor evidence")
     else {
       thread_id:$s[0].id,
       parent_thread_id:($s[0].parent_thread_id // null),

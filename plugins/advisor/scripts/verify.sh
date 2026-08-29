@@ -54,6 +54,8 @@ pairs=((terra,{"name":"advisor-terra","description":"Standard fresh, read-only a
 for role,pins in pairs:
     if any(role.get(k)!=v for k,v in pins.items()): raise SystemExit("role pins")
     if not all(isinstance(role.get(k),str) and role[k].strip() for k in ("description","developer_instructions")): raise SystemExit("role text")
+    required=("Use zero tools.", "Do not call any tool or function", "inspect files or repositories", "browse, fetch, or search the web", "independent", "CHANGE MY MIND", "do not seek it yourself")
+    if any(phrase not in role["developer_instructions"] for phrase in required): raise SystemExit("role zero-tool contract")
 items=cases.get("cases",[])
 if len(items)!=12 or len({c.get("id") for c in items})!=12: raise SystemExit("fixture inventory")
 counts={k:sum(c.get("class")==k for c in items) for k in ("consult","skip","boundary")}
@@ -89,19 +91,33 @@ for phrase in 'ADVISOR DECISION' 'route: consult | skip' 'fork_turns: none' 'for
   'model: <verified gpt-5.6-terra | gpt-5.6-sol>' 'effort: high' \
   'isolation: read-only' 'recommendation: <concise recommendation, or unavailable>' \
   'decision: accept | modify | reject | blocked' 'recommendation: unavailable' \
-  'decision: blocked' 'native child thread remains the inspectable detailed record'; do
+  'decision: blocked' 'native child thread remains the inspectable detailed record' \
+  'Before consultation, the root performs any repository or web research' \
+  'relevant evidence and source references' 'Use zero tools: do not inspect files, call tools, fetch' \
+  'specific missing evidence under CHANGE MY MIND instead of researching' \
+  'Immediately after every native advisor response' 'inspection is mandatory, not a metadata fallback' \
+  'non-read-only, or tool-use evidence'; do
   grep -Fq "$phrase" "$skill" || fail "consultation contract omits: $phrase"
+done
+for document in "$operations" "$readme" "$repo_dir/SPEC.md"; do
+  grep -Fqi 'repository or web research' "$document" || fail "root-research contract missing: $document"
+  grep -Fqi 'source references' "$document" || fail "source-reference contract missing: $document"
+  grep -Fqi 'zero-tool' "$document" || fail "zero-tool contract missing: $document"
+  grep -Fqi 'non-read-only' "$document" || fail "non-read-only block contract missing: $document"
 done
 grep -Fq 'Never send both or inherit' "$skill" || fail "fresh-context exclusion missing"
 grep -Fq 'never substitute a role other than the policy-selected' "$skill" || fail "no-substitution rule missing"
 grep -Fq 'For `skip`, emit only the existing `ADVISOR DECISION`' "$skill" || fail "skip receipt exclusion missing"
 call_line=$(grep -n '^ADVISOR CALL$' "$skill" | head -1 | cut -d: -f1)
 spawn_line=$(grep -n '^4\. Spawn exactly one selected role\.' "$skill" | head -1 | cut -d: -f1)
-response_line=$(grep -n '^Treat the response as evidence' "$skill" | head -1 | cut -d: -f1)
+response_line=$(grep -n '^7\. Receive the required advisor response' "$skill" | head -1 | cut -d: -f1)
+inspection_line=$(grep -n '^8\. Immediately after every native advisor response' "$skill" | head -1 | cut -d: -f1)
 result_line=$(grep -n '^ADVISOR RESULT$' "$skill" | head -1 | cut -d: -f1)
 [ -n "$call_line" ] && [ -n "$spawn_line" ] && [ "$call_line" -lt "$spawn_line" ] || fail "ADVISOR CALL must precede spawn"
-[ -n "$response_line" ] && [ -n "$result_line" ] && [ "$response_line" -lt "$result_line" ] || fail "ADVISOR RESULT must follow response processing"
-pass "implicit consult/skip boundaries and exact request/response contract"
+[ -n "$response_line" ] && [ -n "$inspection_line" ] && [ -n "$result_line" ] && [ "$response_line" -lt "$inspection_line" ] && [ "$inspection_line" -lt "$result_line" ] || fail "mandatory inspector must follow response and precede completed result"
+grep -Fq '($b|unique)!=["read-only"]' "$inspector" || fail "inspector does not block non-read-only policy"
+grep -Fq '($tool_events|length)!=0' "$inspector" || fail "inspector does not block advisor tool use"
+pass "implicit consult/skip boundaries, root research, zero-tool advice, and mandatory post-response inspection"
 
 for document in "$manifest" "$skill" "$ui" "$operations" "$readme" "$terra_role" "$sol_role"; do
   if grep -Eqi 'SELECTIVE ROUTE|mode: solo|solo \| delegate|sol_advisor_(luna|terra|sol_reviewer)|route selected implementation|fresh final review lane'; then
@@ -152,10 +168,18 @@ replacements={
     terra:("Standard fresh, read-only advisor for material technical decisions and generic advisor requests.","Fresh, read-only GPT-5.6 Terra advisor for Luna, Spark, and lower-capability parents."),
     sol:("Specialist fresh, read-only advisor for narrowly qualified unresolved critical decisions.","Fresh, read-only GPT-5.6 Sol advisor for Terra, Sol, and unknown parents."),
 }
+zero_tool_block='''
+Use zero tools. Do not call any tool or function, inspect files or repositories,
+browse, fetch, or search the web, access external services, or conduct independent
+research. The packet and its cited source references are the complete record. If
+evidence is insufficient, name the specific missing evidence under CHANGE MY MIND;
+do not seek it yourself.
+'''
 for source,(new,old) in replacements.items():
     text=source.read_text(encoding="utf-8")
     if text.count(new)!=1: raise SystemExit(f"current role description fixture mismatch: {source}")
-    target.joinpath(source.name).write_text(text.replace(new,old),encoding="utf-8")
+    if text.count(zero_tool_block)!=1: raise SystemExit(f"current role zero-tool fixture mismatch: {source}")
+    target.joinpath(source.name).write_text(text.replace(new,old).replace(zero_tool_block,""),encoding="utf-8")
 PY
 assert_v110_digest() {
   file=$1 expected=$2
@@ -290,9 +314,22 @@ out=$(TMPDIR=/nonexistent-read-only-path sh "$inspector" --sessions-dir "$tmp/se
 printf '%s\n' "$out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and (keys|sort)==["agent_role","effort","model","parent_thread_id","permission_profile_type","sandbox_policy_type","thread_id"]' >/dev/null || fail "inspector allowlist/pins"
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-terra --expected-model gpt-5.6-terra "$id" >/dev/null 2>&1; then fail "inspector accepted a role/model pair other than the selected pair"; fi
 printf '%s\n' "$out" | grep -Fq DO_NOT_LEAK && fail "inspector leaked payload"
+nonreadonly_id=33333333-3333-7333-8333-333333333333
+nonreadonly=$sessions/rollout-fixture-$nonreadonly_id.jsonl
+printf '%s\n' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$nonreadonly_id\",\"parent_thread_id\":\"00000000-0000-7000-8000-000000000000\",\"agent_role\":\"advisor-sol\"}}" \
+  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"workspace-write"},"permission_profile":{"type":"managed"}}}' >"$nonreadonly"
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$nonreadonly_id" >/dev/null 2>&1; then fail "inspector accepted non-read-only runtime policy"; fi
+tool_id=44444444-4444-7444-8444-444444444444
+tool_rollout=$sessions/rollout-fixture-$tool_id.jsonl
+printf '%s\n' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$tool_id\",\"parent_thread_id\":\"00000000-0000-7000-8000-000000000000\",\"agent_role\":\"advisor-sol\"}}" \
+  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' \
+  '{"type":"response_item","payload":{"type":"function_call","name":"repo_inspection"}}' >"$tool_rollout"
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$tool_id" >/dev/null 2>&1; then fail "inspector accepted advisor tool use"; fi
 printf '%s\n' '{"type":"turn_context","payload":{"model":"gpt-5.6-terra","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >>"$rollout"
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$id" >/dev/null 2>&1; then fail "inspector accepted conflicting model"; fi
-pass "runtime inspector exact allowlist, pin validation, redaction, and conflict refusal"
+pass "runtime inspector exact allowlist, pins, redaction, non-read-only, tool-use, and conflict refusal"
 
 python3 - "$tmp/result.json" "$tmp/rerun-result.json" "$tmp/unnecessary-rerun-result.json" "$tmp/boundary-three-of-four.json" "$tmp/boundary-two-of-four.json" "$fixtures" <<'PY'
 import copy,json,sys

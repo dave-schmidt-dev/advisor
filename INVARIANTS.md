@@ -31,11 +31,11 @@ gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
 rationale: Eligible tasks consult exactly once, while routine and borderline tasks spawn no advisor.
 
-### INV-5 — Exact runtime identity
+### INV-5 — Exact runtime identity and isolation
 area: ["plugins/advisor/agents/**", "plugins/advisor/scripts/evaluate-triggers.sh", "plugins/advisor/scripts/inspect-agent-runtime.sh"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
-rationale: A successful consultation requires the event-proven decision-risk-selected model-pinned role/model pair, effort, freshness, and read-only isolation; Standard defaults to Terra, Specialist is narrowly limited to unresolved critical risks, and missing evidence is unavailable.
+rationale: A successful consultation requires the event-proven decision-risk-selected model-pinned role/model pair, effort, freshness, read-only runtime policy, and zero tool-use evidence; inspection is mandatory after every native response and before a completed result, while missing or conflicting evidence is unavailable.
 
 ### INV-6 — Switchyard separation
 area: ["plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]
@@ -66,3 +66,9 @@ area: ["plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
 rationale: Every consult emits a visible running `ADVISOR CALL` receipt and a completed or unavailable `ADVISOR RESULT` receipt; unavailable evidence records `decision: blocked` and remains fail-closed, receipts do not replace runtime proof, the native child thread remains inspectable, and skips emit neither receipt nor spawn.
+
+### INV-11 — Bounded zero-tool consultation
+area: ["plugins/advisor/agents/**", "plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]
+gate_test: plugins/advisor/scripts/verify.sh
+threshold: 3
+rationale: The root completes repository and web research before consultation and supplies only relevant evidence and source references; advisors make no tool call, file inspection, web fetch, or independent research attempt, and identify missing evidence under CHANGE MY MIND.

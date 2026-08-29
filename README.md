@@ -45,19 +45,23 @@ decision, or a credible unresolved High-severity disagreement. Security adjacenc
 and project importance alone do not qualify; a borderline role choice uses Terra.
 The parent model is irrelevant, and the parent does not pass a model override. The
 completed spawn event must prove the exact selected role/model pair, effort, and
-distinct receiver thread. If it does not,
-evidence is unavailable and the consult route blocks rather than continuing
-independently.
+distinct receiver thread. The root performs any repository or web research before
+consultation and includes only relevant evidence and source references in the
+five-section packet. Advisors use zero tools: they do not inspect files, fetch the
+web, or conduct independent research; insufficient evidence belongs under `CHANGE MY
+MIND`. If spawn evidence is missing or conflicts, the consult route blocks.
 
 Every consult is visible in main chat. Immediately before spawning, `ADVISOR CALL`
 records the selected tier and role, task-specific reason, bounded question, and
-`status: running`. After runtime evidence and advice processing, `ADVISOR RESULT`
-records `completed` or `unavailable`, the tier and role, verified model and High
-effort, read-only isolation, a concise recommendation, and the root's disposition.
-Unavailable evidence records `recommendation: unavailable` and `decision: blocked`
-and remains fail-closed. Receipts summarize verified evidence; the native child thread
-is the inspectable detailed runtime record. A skip emits only `ADVISOR DECISION`,
-with no call/result receipt and no spawn.
+`status: running`. Immediately after every native advisor response, and before any
+completed result, the root must run the runtime inspector for the selected thread.
+It must prove a read-only, zero-tool runtime; a role TOML alone is not proof. Missing,
+conflicting, non-read-only, or tool-use evidence records `recommendation: unavailable`
+and `decision: blocked` and remains fail-closed. Only then may `ADVISOR RESULT`
+record `completed`, the verified model and High effort, read-only isolation, a concise
+recommendation, and the root's disposition. Receipts summarize verified evidence; the
+native child thread is the inspectable detailed runtime record. A skip emits only
+`ADVISOR DECISION`, with no call/result receipt and no spawn.
 
 The companion installer adds only the two exact current advisor roles. During upgrade it
 recoverably retires byte-exact known historical implementation/review roles without

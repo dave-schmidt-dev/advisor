@@ -97,7 +97,8 @@ for phrase in 'ADVISOR DECISION' 'route: consult | skip' 'fork_turns: none' 'for
   'relevant evidence and source references' 'enough relevant evidence' \
   'Use zero tools: do not inspect files, call tools, fetch' 'research-first next step' \
   'specific missing evidence' 'FOLLOW-UP AREAS' 'outside this consultation' \
-  'unavailable result cannot be rescued' \
+  'unavailable result cannot be rescued' 'accepts the returned technical recommendation or' \
+  'research-first plan, never a technical choice' \
   'Immediately after every native advisor response' 'inspection is mandatory, not a metadata fallback' \
   'non-read-only, or tool-use evidence'; do
   grep -Fq "$phrase" "$skill" || fail "consultation contract omits: $phrase"
@@ -112,6 +113,10 @@ for document in "$operations" "$readme" "$repo_dir/SPEC.md"; do
   grep -Fqi 'outside' "$document" || fail "outside-consultation boundary missing: $document"
   grep -Fqi 'unavailable result cannot be rescued' "$document" || fail "unavailable rescue prohibition missing: $document"
 done
+grep -Fqi 'FOLLOW-UP AREAS' "$repo_dir/SPEC.md" || fail "SPEC follow-up placement missing"
+if grep -Fq 'specific missing evidence under CHANGE MY MIND' "$repo_dir/SPEC.md"; then fail "SPEC retains stale missing-evidence placement"; fi
+grep -Fqi 'accepting that plan' "$operations" || fail "research-first disposition semantics missing"
+grep -Fqi '.retired-v1.3.0-zero-tool' "$operations" || fail "1.3.0 zero-tool retirement documentation missing"
 grep -Fq 'Never send both or inherit' "$skill" || fail "fresh-context exclusion missing"
 grep -Fq 'never substitute a role other than the policy-selected' "$skill" || fail "no-substitution rule missing"
 grep -Fq 'For `skip`, emit only the existing `ADVISOR DECISION`' "$skill" || fail "skip receipt exclusion missing"
@@ -269,7 +274,35 @@ assert_v110_digest "$v130/advisor-sol.toml.retired-v1.3.0-zero-tool" 294b5fe7679
 sh "$installer" --target-dir "$v130" --check >/dev/null
 before=$(snapshot "$v130"); sh "$installer" --target-dir "$v130" >/dev/null; after=$(snapshot "$v130")
 [ "$before" = "$after" ] || fail "Advisor 1.3.0 upgraded state is not idempotent"
-pass "exact prior Advisor 1.3.0 upgrade, generation-specific retirement, and idempotency"
+
+v130_early=$tmp/advisor-v130-early; mkdir "$v130_early"
+python3 - "$v130/advisor-terra.toml.retired-v1.3.0-zero-tool" "$v130/advisor-sol.toml.retired-v1.3.0-zero-tool" "$v130_early" <<'PY'
+from pathlib import Path
+import sys
+zero_tool_block='''
+Use zero tools. Do not call any tool or function, inspect files or repositories,
+browse, fetch, or search the web, access external services, or conduct independent
+research. The packet and its cited source references are the complete record. If
+evidence is insufficient, name the specific missing evidence under CHANGE MY MIND;
+do not seek it yourself.
+'''
+for source in map(Path,sys.argv[1:3]):
+    text=source.read_text(encoding="utf-8")
+    if text.count(zero_tool_block)!=1: raise SystemExit(f"zero-tool predecessor fixture mismatch: {source}")
+    active_name=source.name.removesuffix(".retired-v1.3.0-zero-tool")
+    Path(sys.argv[3],active_name).write_text(text.replace(zero_tool_block,""),encoding="utf-8")
+PY
+assert_v110_digest "$v130_early/advisor-terra.toml" 4ad79cb613cc9865cb3d1db02f2e98b3b117524153c075a2de3d6bd249798c5e
+assert_v110_digest "$v130_early/advisor-sol.toml" 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4
+cp "$v110/advisor-terra.toml.retired-v1.1.0" "$v130_early/advisor-terra.toml.retired-v1.1.0"
+cp "$v110/advisor-sol.toml.retired-v1.1.0" "$v130_early/advisor-sol.toml.retired-v1.1.0"
+sh "$installer" --target-dir "$v130_early" >/dev/null
+cmp -s "$terra_role" "$v130_early/advisor-terra.toml" || fail "early Advisor 1.3.0 Terra upgrade did not install current role exactly"
+cmp -s "$sol_role" "$v130_early/advisor-sol.toml" || fail "early Advisor 1.3.0 Sol upgrade did not install current role exactly"
+assert_v110_digest "$v130_early/advisor-terra.toml.retired-v1.3.0" 4ad79cb613cc9865cb3d1db02f2e98b3b117524153c075a2de3d6bd249798c5e
+assert_v110_digest "$v130_early/advisor-sol.toml.retired-v1.3.0" 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4
+sh "$installer" --target-dir "$v130_early" --check >/dev/null
+pass "both prior Advisor 1.3.0 generations upgrade to separate retirement paths"
 
 # Exercise all three v0.6.0 historical role types using their original exact bytes.
 historical=$tmp/historical; mkdir "$historical"

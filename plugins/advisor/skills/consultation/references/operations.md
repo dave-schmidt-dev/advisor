@@ -26,7 +26,9 @@ idempotent, refuses symlinks/nonregular files/modified content/collisions/dual p
 and never edits Codex configuration. An exact Advisor 1.1.0 upgrade recoverably
 retires the prior model-pinned roles to `advisor-terra.toml.retired-v1.1.0` and
 `advisor-sol.toml.retired-v1.1.0`, then installs the risk-described 1.3.0 roles at
-their original active paths. Exact retired-only interrupted states resume safely;
+their original active paths. Later exact 1.3.0 generations retire separately to
+`.retired-v1.3.0` and `.retired-v1.3.0-zero-tool`, preserving both predecessor
+files without collision. Exact retired-only interrupted states resume safely;
 modified, dual, or colliding states refuse all mutation.
 
 ## Root and advisor records
@@ -89,7 +91,9 @@ insufficient, the advisor names the specific missing evidence or research questi
 under `FOLLOW-UP AREAS` instead of researching. A valid processed response contains
 either a recommendation grounded in the packet or a concrete `FOLLOW-UP AREAS`
 entry. Only then does the root verify the response's cited source references and
-record `accept`, `modify`, or `reject`. The advisor is never authoritative.
+record `accept`, `modify`, or `reject`. For a research-first response, the concise
+research-first plan is the recommendation and `accept` means accepting that plan,
+not a technical choice the advisor did not make. The advisor is never authoritative.
 
 After a valid, runtime-inspected completed result, the root may route only its
 research or brainstorming follow-up to an appropriate Luna or Terra subagent outside

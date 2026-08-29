@@ -211,8 +211,8 @@ retire_upgrade() {
 }
 retire_upgrade Terra "$terra_current" "$terra_current_retired" "$terra_current_state" active-known-v110 "$terra_advisor_v110"
 retire_upgrade Sol "$sol_current" "$sol_current_retired" "$sol_current_state" active-known-v110 "$sol_advisor_v110"
-retire_upgrade Terra "$terra_current" "$terra_v130_retired" "$terra_current_state" active-known-v130 "$terra_advisor_v130" "$terra_advisor_v130_zero"
-retire_upgrade Sol "$sol_current" "$sol_v130_retired" "$sol_current_state" active-known-v130 "$sol_advisor_v130" "$sol_advisor_v130_zero"
+retire_upgrade Terra "$terra_current" "$terra_v130_retired" "$terra_current_state" active-known-v130 "$terra_advisor_v130"
+retire_upgrade Sol "$sol_current" "$sol_v130_retired" "$sol_current_state" active-known-v130 "$sol_advisor_v130"
 retire_upgrade Terra "$terra_current" "$terra_v130_zero_retired" "$terra_current_state" active-known-v130-zero "$terra_advisor_v130_zero"
 retire_upgrade Sol "$sol_current" "$sol_v130_zero_retired" "$sol_current_state" active-known-v130-zero "$sol_advisor_v130_zero"
 

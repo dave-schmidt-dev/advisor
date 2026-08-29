@@ -73,7 +73,9 @@ The companion installer adds only the two exact current advisor roles. During up
 recoverably retires byte-exact known historical implementation/review roles without
 editing Codex configuration or overwriting modified or unsafe files. It also retires
 exact Advisor 1.1.0 role files to `.retired-v1.1.0` paths before installing the
-risk-described 1.3.0 roles; modified, dual, or colliding states fail closed.
+risk-described 1.3.0 roles. Later exact 1.3.0 generations use separate
+`.retired-v1.3.0` and `.retired-v1.3.0-zero-tool` paths; modified, dual, or
+colliding states fail closed.
 
 ## Verify
 

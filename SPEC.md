@@ -180,11 +180,12 @@ BOUNDARIES
 <owned files, excluded scope, compatibility, security, and authority limits>
 
 REQUEST
-Challenge the tentative choice. Recommend one path, identify the strongest
-counterargument, name evidence that would change the recommendation, and give
-specific acceptance checks. Use zero tools: do not inspect files, call tools, fetch
-the web, or conduct independent research. If the packet is insufficient, name the
-specific missing evidence under CHANGE MY MIND instead of researching.
+Challenge the tentative choice. Recommend one path when the packet supports a
+decision; otherwise recommend a research-first next step and identify the specific
+missing evidence, research questions, or bounded brainstorming areas under
+FOLLOW-UP AREAS. Identify the strongest counterargument, name evidence that would
+change the recommendation, and give specific acceptance checks. Use zero tools: do
+not inspect files, call tools, fetch the web, or conduct independent research.
 ```
 
 ### Advisor output
@@ -200,6 +201,11 @@ RISKS: <material residual risks, or none>
 FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence,
 research questions, or bounded brainstorming areas>
 ```
+
+For a research-first response, `RECOMMENDATION` is the concise research-first plan
+and `FOLLOW-UP AREAS` contains its concrete inquiries. In `ADVISOR RESULT`, `accept`
+means the root accepts the returned technical recommendation or research-first plan;
+it never implies that a technical choice was accepted when no technical choice was made.
 
 ## Boundaries
 

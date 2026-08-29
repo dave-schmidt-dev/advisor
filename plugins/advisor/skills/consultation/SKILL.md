@@ -111,9 +111,13 @@ research questions, or bounded brainstorming areas>
    read-only and that the advisor made no tool call. Any missing, conflicting,
    non-read-only, or tool-use evidence makes the advisor unavailable and blocks the
    consult route.
-9. Treat a response that passed mandatory runtime inspection as evidence, verify its
-   cited source references, then record `accept`, `modify`, or `reject` with one
-   reason. After runtime evidence and advice processing, always emit this visible
+9. Treat a response that passed mandatory runtime inspection as evidence and verify
+   its cited source references. For a research-first response, treat the concise
+   research-first plan as the recommendation and its concrete inquiries as
+   `FOLLOW-UP AREAS`. Then record `accept`, `modify`, or `reject` with one reason:
+   `accept` means the root accepts the returned technical recommendation or
+   research-first plan, never a technical choice that the advisor did not make.
+   After runtime evidence and advice processing, always emit this visible
    main-chat receipt:
 
 ```text

@@ -130,6 +130,13 @@ for document in "$operations" "$readme" "$repo_dir/SPEC.md"; do
 done
 grep -Fqi 'FOLLOW-UP AREAS' "$repo_dir/SPEC.md" || fail "SPEC follow-up placement missing"
 if grep -Fq 'specific missing evidence under CHANGE MY MIND' "$repo_dir/SPEC.md"; then fail "SPEC retains stale missing-evidence placement"; fi
+for document in "$manifest" "$skill" "$operations" "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
+  grep -Fqi 'trailing spaces or tabs' "$document" || fail "trailing-whitespace contract missing: $document"
+  grep -Fqi 'exactly one fresh retry' "$document" || fail "single-retry contract missing: $document"
+  grep -Fqi 'empty-valued' "$document" || fail "empty-valued-field contract missing: $document"
+done
+grep -Fq 'Missing, duplicate, renamed, misordered, or empty-valued fields remain malformed.' "$readme" || fail "README full malformed-field list missing"
+pass "retry, trailing-whitespace, and empty-valued-field documentation parity"
 grep -Fqi 'accepting that plan' "$operations" || fail "research-first disposition semantics missing"
 grep -Fqi '.retired-v1.3.0-zero-tool' "$operations" || fail "1.3.0 zero-tool retirement documentation missing"
 grep -Fq 'never substitute a role other than the policy-selected' "$skill" || fail "no-substitution rule missing"
@@ -145,7 +152,7 @@ grep -Fq '($b|unique)!=["read-only"]' "$inspector" || fail "inspector does not b
 grep -Fq '($tool_events|length)!=0' "$inspector" || fail "inspector does not block advisor tool use"
 grep -Fq 'parent_thread_id=${CODEX_THREAD_ID-}' "$parent_inspector" || fail "parent inspector does not require CODEX_THREAD_ID"
 if grep -Fq 'CODEX_SESSION_ID' "$parent_inspector"; then fail "parent inspector falls back to CODEX_SESSION_ID"; fi
-for phrase in 'codex exec --json --ignore-user-config --ignore-rules' '--sandbox read-only --model "$model"' 'model_reasoning_effort="high"' '--skip-git-repo-check' '--output-last-message' 'ADVISOR TRANSPORT:' '--expected-parent "$parent_thread_id"' 'jq -cn' 'consultation reused the parent thread'; do
+for phrase in 'codex exec --json --ignore-user-config --ignore-rules' '--sandbox read-only --model "$model"' 'model_reasoning_effort="high"' '--skip-git-repo-check' '--output-last-message' 'ADVISOR TRANSPORT:' '--expected-parent "$parent_thread_id"' 'jq -cn' 'consultation reused the parent thread' 'LC_ALL=C sed' 'response normalization failed' 'advisor response was not verified'; do
   grep -Fq -- "$phrase" "$transport" || fail "transport contract omits: $phrase"
 done
 if grep -Eq 'auth\.json|bws|get secret|CODEX_HOME=' "$transport"; then fail "transport handles authentication or secrets"; fi
@@ -538,33 +545,69 @@ while [ "$#" -gt 0 ]; do
 done
 [ "$sandbox" = read-only ] && [ "$effort" = 'model_reasoning_effort="high"' ] || exit 91
 case "$model" in gpt-5.6-terra|gpt-5.6-sol) ;; *) exit 92 ;; esac
-case "$output" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/response.txt) ;; *) exit 94 ;; esac
-case "$workdir" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/workdir) ;; *) exit 95 ;; esac
+case "$output" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/response.*.txt) ;; *) exit 94 ;; esac
+case "$workdir" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/workdir.*) ;; *) exit 95 ;; esac
 dd of=/dev/null 2>/dev/null
 [ -z "${FAKE_CODEX_MARKER-}" ] || : >"$FAKE_CODEX_MARKER"
-case "${FAKE_CODEX_CASE-valid}" in
-  valid) child=dddddddd-dddd-7ddd-8ddd-dddddddddddd ;;
-  response-misordered) child=eeeeeeee-eeee-7eee-8eee-eeeeeeeeeeee ;;
-  response-missing) child=ffffffff-ffff-7fff-8fff-ffffffffffff ;;
-  duplicate-thread) child=12121212-1212-7121-8121-121212121212 ;;
-  same-session) child=${FAKE_PARENT_ID:?} ;;
-  *) exit 93 ;;
+attempt=1
+if [ -n "${FAKE_CODEX_COUNT_FILE-}" ]; then
+  [ ! -f "$FAKE_CODEX_COUNT_FILE" ] || attempt=$(($(cat "$FAKE_CODEX_COUNT_FILE") + 1))
+  printf '%s\n' "$attempt" >"$FAKE_CODEX_COUNT_FILE"
+fi
+case "$attempt" in
+  1) child=dddddddd-dddd-7ddd-8ddd-dddddddddddd ;;
+  2) child=abababab-abab-7aba-8aba-abababababab ;;
+  *) exit 96 ;;
 esac
-case "${FAKE_CODEX_CASE-valid}" in
-  response-misordered)
+case "${FAKE_CODEX_CASE-valid}:$attempt" in
+  launcher-failure:*) exit 97 ;;
+  same-session:*) child=${FAKE_PARENT_ID:?} ;;
+  retry-reused-child:2) child=dddddddd-dddd-7ddd-8ddd-dddddddddddd ;;
+esac
+case "${FAKE_CODEX_CASE-valid}:$attempt" in
+  response-misordered:*|malformed-twice:*|malformed-first-valid-second:1|retry-reused-child:1)
     printf '%s\n' 'ADVISOR RESPONSE' 'WHY: reason' 'RECOMMENDATION: path' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
     ;;
-  response-missing)
+  response-missing:*)
     printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY: reason' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'FOLLOW-UP AREAS: none' >"$output"
+    ;;
+  trailing-whitespace-valid:*)
+    {
+      printf '%s  \n' 'ADVISOR RESPONSE'
+      printf '%s\t\n' 'RECOMMENDATION: path'
+      printf '%s  \n' 'WHY: reason'
+      printf '%s\t\n' 'STRONGEST OBJECTION: objection'
+      printf '%s \n' 'CHANGE MY MIND: evidence'
+      printf '%s  \n' 'ACCEPTANCE CHECKS: checks'
+      printf '%s\t\n' 'RISKS: none'
+      printf '%s \n' 'FOLLOW-UP AREAS: none'
+    } >"$output"
+    ;;
+  indented-continuation:*)
+    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY: reason' '  WHY: indented continuation' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
+    ;;
+  response-duplicate:*)
+    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY: reason' 'WHY: duplicate' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
+    ;;
+  response-renamed:*)
+    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'RATIONALE: reason' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
+    ;;
+  response-empty-valued:*)
+    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY:' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
+    ;;
+  runtime-invalid-malformed:*)
+    printf '%s\n' 'ADVISOR RESPONSE' 'WHY: reason' 'RECOMMENDATION: path' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
     ;;
   *)
     printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY: reason' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
     ;;
 esac
 rollout=$CODEX_HOME/sessions/2026/08/30/rollout-fake-$child.jsonl
+runtime_policy=read-only
+case "${FAKE_CODEX_CASE-valid}" in runtime-invalid|runtime-invalid-malformed) runtime_policy=workspace-write ;; esac
 printf '%s\n' \
   "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$child\",\"source\":\"exec\",\"originator\":\"codex_exec\"}}" \
-  "{\"type\":\"turn_context\",\"payload\":{\"model\":\"$model\",\"effort\":\"high\",\"sandbox_policy\":{\"type\":\"read-only\"},\"permission_profile\":{\"type\":\"managed\"}}}" >"$rollout"
+  "{\"type\":\"turn_context\",\"payload\":{\"model\":\"$model\",\"effort\":\"high\",\"sandbox_policy\":{\"type\":\"$runtime_policy\"},\"permission_profile\":{\"type\":\"managed\"}}}" >"$rollout"
 printf '%s\n' "{\"type\":\"thread.started\",\"thread_id\":\"$child\"}"
 if [ "${FAKE_CODEX_CASE-valid}" = duplicate-thread ]; then
   printf '%s\n' '{"type":"thread.started","thread_id":"34343434-3434-7343-8343-343434343434"}'
@@ -589,6 +632,57 @@ for progress_line in 'launching advisor-terra (gpt-5.6-terra, high, read-only)' 
   grep -Fq "$progress_line" "$transport_err" || fail "transport stderr progress missing: $progress_line"
 done
 
+whitespace_count=$tmp/whitespace-count
+whitespace_out=$tmp/whitespace-out.json
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=trailing-whitespace-valid FAKE_CODEX_COUNT_FILE="$whitespace_count" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$whitespace_out" 2>/dev/null || fail "trailing-whitespace response failed"
+[ "$(cat "$whitespace_count")" -eq 1 ] || fail "trailing-whitespace response retried"
+whitespace_expected=$tmp/whitespace-expected.txt
+{
+  printf '%s  \n' 'ADVISOR RESPONSE'
+  printf '%s\t\n' 'RECOMMENDATION: path'
+  printf '%s  \n' 'WHY: reason'
+  printf '%s\t\n' 'STRONGEST OBJECTION: objection'
+  printf '%s \n' 'CHANGE MY MIND: evidence'
+  printf '%s  \n' 'ACCEPTANCE CHECKS: checks'
+  printf '%s\t\n' 'RISKS: none'
+  printf '%s \n' 'FOLLOW-UP AREAS: none'
+} >"$whitespace_expected"
+jq -j '.response' "$whitespace_out" >"$tmp/whitespace-actual.txt"
+cmp -s "$whitespace_expected" "$tmp/whitespace-actual.txt" || fail "transport changed raw trailing-whitespace response bytes"
+
+continuation_count=$tmp/continuation-count
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=indented-continuation FAKE_CODEX_COUNT_FILE="$continuation_count" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/continuation-out.json" 2>/dev/null || fail "indented field-like continuation was treated as a structural duplicate"
+[ "$(cat "$continuation_count")" -eq 1 ] || fail "indented field-like continuation triggered a retry"
+
+retry_count=$tmp/retry-count
+retry_err=$tmp/retry-err.txt
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=malformed-first-valid-second FAKE_CODEX_COUNT_FILE="$retry_count" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/retry-out.json" 2>"$retry_err" || fail "runtime-valid malformed response did not retry successfully"
+[ "$(cat "$retry_count")" -eq 2 ] || fail "malformed-first response did not launch exactly one retry"
+jq -e '.status=="completed" and (.response|startswith("ADVISOR RESPONSE\nRECOMMENDATION:"))' "$tmp/retry-out.json" >/dev/null || fail "retry did not return only the valid second response"
+grep -Fq 'runtime-valid response was empty or malformed; launching one fresh retry' "$retry_err" || fail "retry progress missing from stderr"
+
+twice_count=$tmp/twice-count
+if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=malformed-twice FAKE_CODEX_COUNT_FILE="$twice_count" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>&1; then fail "transport accepted two malformed responses"; fi
+[ "$(cat "$twice_count")" -eq 2 ] || fail "malformed-twice did not stop after one retry"
+
+reused_count=$tmp/reused-count
+reused_err=$tmp/reused-err.txt
+if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=retry-reused-child FAKE_CODEX_COUNT_FILE="$reused_count" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>"$reused_err"; then fail "transport accepted a retry that reused the first child"; fi
+[ "$(cat "$reused_count")" -eq 2 ] || fail "reused-child retry did not stop after exactly two launches"
+grep -Fq 'retry reused the first child thread' "$reused_err" || fail "reused-child retry was not classified as terminal identity failure"
+
+for terminal_case in launcher-failure duplicate-thread same-session runtime-invalid runtime-invalid-malformed; do
+  terminal_count=$tmp/terminal-count-$terminal_case
+  if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE="$terminal_case" FAKE_CODEX_COUNT_FILE="$terminal_count" FAKE_PARENT_ID="$transport_parent" \
+    sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>&1; then fail "transport accepted terminal case: $terminal_case"; fi
+  [ "$(cat "$terminal_count")" -eq 1 ] || fail "transport retried terminal case: $terminal_case"
+done
+
 misordered_packet=$tmp/misordered-packet.txt
 printf '%s\n' CONTEXT 'evidence' DECISION 'question' OPTIONS 'choice' BOUNDARIES 'limits' REQUEST 'challenge' >"$misordered_packet"
 marker=$tmp/fake-codex-called
@@ -596,13 +690,15 @@ if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_MARKER="$marker" FA
   sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$misordered_packet" >/dev/null 2>&1; then fail "transport accepted misordered packet headings"; fi
 [ ! -e "$marker" ] || fail "transport invoked codex before rejecting packet order"
 
-for rejected_case in response-misordered response-missing duplicate-thread same-session; do
-  if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE="$rejected_case" FAKE_PARENT_ID="$transport_parent" \
+for rejected_case in response-misordered response-missing response-duplicate response-renamed response-empty-valued; do
+  rejected_count=$tmp/rejected-count-$rejected_case
+  if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE="$rejected_case" FAKE_CODEX_COUNT_FILE="$rejected_count" FAKE_PARENT_ID="$transport_parent" \
     sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>&1; then
     fail "transport accepted fake case: $rejected_case"
   fi
+  [ "$(cat "$rejected_count")" -eq 2 ] || fail "malformed response case did not exercise exactly one fresh retry: $rejected_case"
 done
-pass "run-advisor behavioral transport: Codex-home private files, ordered packet, pinned read-only exec, stderr progress, single JSON stdout, malformed response, duplicate thread, and same-session refusal"
+pass "run-advisor behavioral transport: raw trailing-whitespace preservation, indented continuation, exact field grammar, one runtime-gated malformed retry, fresh retry identity, second-malformed refusal, terminal no-retry, pinned read-only exec, stderr progress, and single JSON stdout"
 
 audit_sessions=$tmp/audit-sessions; mkdir -p "$audit_sessions/2026/01/01"
 python3 - "$audit_sessions/2026/01/01" <<'PY'

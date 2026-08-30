@@ -48,11 +48,6 @@ trap cleanup 0 HUP INT TERM
 
 packet=$transport_dir/packet.txt
 prompt=$transport_dir/prompt.txt
-events=$transport_dir/events.jsonl
-response=$transport_dir/response.txt
-evidence=$transport_dir/evidence.json
-workdir=$transport_dir/workdir
-mkdir "$workdir" || fail "isolated work directory creation failed"
 dd of="$packet" 2>/dev/null || fail "decision packet capture failed"
 [ -s "$packet" ] || fail "decision packet is empty"
 
@@ -75,36 +70,70 @@ done
   printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: <one path>' 'WHY: <decisive evidence and reasoning>' 'STRONGEST OBJECTION: <best case against the recommendation>' 'CHANGE MY MIND: <specific missing or contrary evidence>' 'ACCEPTANCE CHECKS: <concrete checks>' 'RISKS: <material residual risks, or none>' 'FOLLOW-UP AREAS: <none, or concrete follow-up>'
 } >"$prompt"
 
-progress "launching $role ($model, high, read-only)"
-if ! codex exec --json --ignore-user-config --ignore-rules \
-  --sandbox read-only --model "$model" -c 'model_reasoning_effort="high"' \
-  -C "$workdir" --skip-git-repo-check --output-last-message "$response" \
-  - <"$prompt" >"$events"; then
-  fail "codex exec failed"
-fi
-
-child_thread_id=$(jq -r 'select(.type == "thread.started") | .thread_id' "$events" 2>/dev/null) || fail "malformed transport events"
-[ "$(printf '%s\n' "$child_thread_id" | awk 'NF { count += 1 } END { print count + 0 }')" -eq 1 ] || fail "ambiguous child thread"
-[ "$child_thread_id" != "$parent_thread_id" ] || fail "consultation reused the parent thread"
-[ -s "$response" ] || fail "advisor response is empty"
-
-previous=0
-for label in 'ADVISOR RESPONSE' 'RECOMMENDATION:' 'WHY:' 'STRONGEST OBJECTION:' 'CHANGE MY MIND:' 'ACCEPTANCE CHECKS:' 'RISKS:' 'FOLLOW-UP AREAS:'; do
-  if [ "$label" = 'ADVISOR RESPONSE' ]; then
-    line=$(grep -n -F -x "$label" "$response" | cut -d: -f1)
-  else
-    line=$(grep -n -E "^${label} .+" "$response" | cut -d: -f1)
-  fi
-  [ "$(printf '%s\n' "$line" | awk 'NF { count += 1 } END { print count + 0 }')" -eq 1 ] || fail "malformed advisor response"
-  [ "$line" -gt "$previous" ] || fail "misordered advisor response"
-  previous=$line
-done
-
 script_dir=$(CDPATH= cd "$(dirname "$0")" && pwd) || fail "script directory unavailable"
-progress "inspecting persisted runtime evidence"
-set -- --expected-role "$role" --expected-model "$model" --expected-parent "$parent_thread_id"
-[ -z "$sessions_dir" ] || set -- --sessions-dir "$sessions_dir" "$@"
-sh "$script_dir/inspect-agent-runtime.sh" "$@" "$child_thread_id" >"$evidence" || fail "runtime inspection failed"
+
+response_is_well_formed() {
+  candidate=$1 normalized=$2
+  [ -s "$candidate" ] || return 1
+  # Normalize only trailing ASCII spaces/tabs for recognition.
+  # The original candidate remains untouched and is the only response emitted.
+  LC_ALL=C sed 's/[[:blank:]]*$//' "$candidate" >"$normalized" || return 2
+  previous=0
+  for label in 'ADVISOR RESPONSE' 'RECOMMENDATION:' 'WHY:' 'STRONGEST OBJECTION:' 'CHANGE MY MIND:' 'ACCEPTANCE CHECKS:' 'RISKS:' 'FOLLOW-UP AREAS:'; do
+    if [ "$label" = 'ADVISOR RESPONSE' ]; then
+      line=$(LC_ALL=C grep -n -F -x "$label" "$normalized" | LC_ALL=C cut -d: -f1)
+    else
+      line=$(LC_ALL=C grep -n -E "^${label} .+" "$normalized" | LC_ALL=C cut -d: -f1)
+    fi
+    [ "$(printf '%s\n' "$line" | LC_ALL=C awk 'NF { count += 1 } END { print count + 0 }')" -eq 1 ] || return 1
+    [ "$line" -gt "$previous" ] || return 1
+    previous=$line
+  done
+}
+
+attempt=1
+first_child_thread_id=''
+response_verified=false
+while [ "$attempt" -le 2 ]; do
+  events=$transport_dir/events.$attempt.jsonl
+  response=$transport_dir/response.$attempt.txt
+  evidence=$transport_dir/evidence.$attempt.json
+  normalized=$transport_dir/normalized.$attempt.txt
+  workdir=$transport_dir/workdir.$attempt
+  mkdir "$workdir" || fail "isolated work directory creation failed"
+
+  progress "launching $role ($model, high, read-only), attempt $attempt of 2"
+  if ! codex exec --json --ignore-user-config --ignore-rules \
+    --sandbox read-only --model "$model" -c 'model_reasoning_effort="high"' \
+    -C "$workdir" --skip-git-repo-check --output-last-message "$response" \
+    - <"$prompt" >"$events"; then
+    fail "codex exec failed"
+  fi
+
+  child_thread_id=$(jq -r 'select(.type == "thread.started") | .thread_id' "$events" 2>/dev/null) || fail "malformed transport events"
+  [ "$(printf '%s\n' "$child_thread_id" | awk 'NF { count += 1 } END { print count + 0 }')" -eq 1 ] || fail "ambiguous child thread"
+  [ "$child_thread_id" != "$parent_thread_id" ] || fail "consultation reused the parent thread"
+  [ "$attempt" -eq 1 ] || [ "$child_thread_id" != "$first_child_thread_id" ] || fail "retry reused the first child thread"
+  [ "$attempt" -ne 1 ] || first_child_thread_id=$child_thread_id
+
+  progress "inspecting persisted runtime evidence for attempt $attempt"
+  set -- --expected-role "$role" --expected-model "$model" --expected-parent "$parent_thread_id"
+  [ -z "$sessions_dir" ] || set -- --sessions-dir "$sessions_dir" "$@"
+  sh "$script_dir/inspect-agent-runtime.sh" "$@" "$child_thread_id" >"$evidence" || fail "runtime inspection failed"
+
+  response_status=0
+  response_is_well_formed "$response" "$normalized" || response_status=$?
+  case "$response_status" in
+    0) response_verified=true; break ;;
+    1)
+      [ "$attempt" -eq 1 ] || fail "advisor response remained empty or malformed after retry"
+      progress "runtime-valid response was empty or malformed; launching one fresh retry"
+      attempt=2
+      ;;
+    *) fail "response normalization failed" ;;
+  esac
+done
+[ "$response_verified" = true ] || fail "advisor response was not verified"
 
 progress "consultation verified"
 jq -cn --argjson evidence "$(cat "$evidence")" --rawfile response "$response" '{status:"completed",runtime:$evidence,response:$response}'

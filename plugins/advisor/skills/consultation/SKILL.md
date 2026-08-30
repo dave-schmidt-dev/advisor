@@ -139,11 +139,20 @@ ADVISOR_PACKET
    stdin; do not stage it in a workspace-writable file.
 
    The wrapper writes progress only to stderr and emits one verified JSON object on
-   stdout. It returns no result unless the response is well formed and mandatory
-   post-response inspection proves an exact selected model, High effort, a
-   read-only runtime, a thread distinct from the parent, `codex_exec` provenance,
-   and zero tool calls. Missing, conflicting, same-session, non-read-only,
-   wrong-model, wrong-effort, malformed-response, or tool-use evidence fails closed.
+   stdout. It runtime-inspects every launched child before classifying that child's
+   response. Structural recognition tolerates only trailing spaces or tabs on response
+   lines, using a separate validation copy so successful response bytes are preserved
+   exactly. Leading indentation, a nonliteral-space separator, and missing, duplicate,
+   renamed, misordered, or empty-valued fields remain
+   malformed. Mandatory post-response inspection proves the exact selected model,
+   High effort, read-only isolation, distinct-thread identity, `codex_exec` provenance,
+   and zero tool calls before parsing can succeed. When the first child proves the exact selected model, High effort,
+   read-only runtime, distinct thread, `codex_exec` provenance, and zero tool calls but
+   returns an empty or malformed response, the wrapper emits retry progress on stderr
+   and performs exactly one fresh retry by launching a new child. Packet, launcher, event, identity,
+   same-session, runtime, wrong-model, wrong-effort, non-read-only, normalization, or tool-use failure
+   is terminal and never retries. A second empty or malformed response fails closed;
+   the rejected first response is never accepted or merged.
 6. Receive the required advisor response from the verified JSON without supplying
    more context or asking it to research. A valid processed response contains either
    a recommendation grounded in the packet or a concrete research-first follow-up
@@ -176,8 +185,9 @@ reason: <one sentence>
    fresh consultation with a new `ADVISOR CALL` and `ADVISOR RESULT` receipt. Those
    subagents do not rescue or alter the original consultation result. An unavailable result cannot be rescued by follow-up work.
 9. The advisor may not spawn, route, research, implement, or review final work. Do
-   not spawn a replacement, second advisor, implementer, or final reviewer as part of
-   this consultation.
+   not independently spawn a replacement or second advisor, implementer, or final
+   reviewer as part of this consultation. The wrapper-owned response retry above is
+   the only permitted second child.
 
 `completed` requires a processed advisor response with either a recommendation or a
 concrete `FOLLOW-UP AREAS` entry, plus mandatory post-response runtime inspection.

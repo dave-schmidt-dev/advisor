@@ -110,6 +110,8 @@ ordinary `route: skip` path remains unchanged.
    effort override. The wrapper maps the role to its pinned Terra/Sol model, forces
    High effort and `--sandbox read-only`, starts a distinct persisted Codex exec
    thread, and uses existing Codex authentication without reading or copying secrets.
+   The single wrapper invocation may launch exactly one additional fresh child only
+   under the response-retry rule below; the root does not launch a replacement itself.
    Deliver the packet only through a single-quoted heredoc whose delimiter is absent
    from the packet. Never use a workspace-writable packet file, unquoted heredoc,
    `eval`, or shell-interpolated packet text. Store all transport files beneath the
@@ -121,14 +123,21 @@ ordinary `route: skip` path remains unchanged.
    files, fetch the web, or conduct independent research. If the packet cannot settle
    the question, it identifies the specific missing evidence or research questions
    under `FOLLOW-UP AREAS` instead of researching.
-7. Before returning successful machine stdout, the wrapper runs
-   `inspect-agent-runtime.sh` for the selected and parent threads. This inspection is
-   mandatory, not a metadata fallback, and must prove exact `codex_exec` provenance,
-   role/model, High effort, a thread distinct from the parent, read-only isolation,
-   zero-tool behavior, and a well-formed response. Missing, conflicting, same-session,
-   wrong-model, wrong-effort, malformed, non-read-only, or tool-use evidence makes
-   the advisor unavailable and blocks the consult route. Progress is stderr-only;
-   successful stdout is one verified JSON object.
+7. For every launched child, before response classification or successful machine
+   stdout, the wrapper runs `inspect-agent-runtime.sh` for that child and the parent.
+   This inspection is mandatory, not a metadata fallback, and must prove exact
+   `codex_exec` provenance, role/model, High effort, a thread distinct from the parent,
+   read-only isolation, and zero-tool behavior. Structural response recognition strips
+   only trailing spaces or tabs from a separate validation copy; leading indentation,
+   a nonliteral-space separator, and missing, duplicate, renamed, misordered, or
+   empty-valued fields remain malformed, while successful output
+   preserves the original response bytes. Exactly one fresh retry is allowed only when
+   the first child's runtime proof passes and its response is empty or structurally
+   malformed or misordered. Packet, launcher, event, identity, same-session, runtime,
+   wrong-model, wrong-effort, non-read-only, normalization, or tool-use failure is terminal and never
+   retries. A second empty or malformed response is unavailable, and no rejected first
+   response is accepted or merged. Progress is stderr-only; successful stdout is one
+   verified JSON object.
 8. Treat a response that passed runtime inspection as advice, not authority. A valid
    processed response contains either a recommendation grounded in the packet or a
    concrete `FOLLOW-UP AREAS` entry. The root checks its cited source references and
@@ -144,8 +153,9 @@ ordinary `route: skip` path remains unchanged.
     fresh consultation with fresh `ADVISOR CALL` and `ADVISOR RESULT` receipts. This
     does not rescue or alter the original result; an unavailable result cannot be
     rescued by follow-up work. The advisor may not spawn or conduct that work.
-11. Do not start a replacement, second advisor, implementer, or final reviewer as
-    part of this skill.
+11. Do not independently start a replacement or second advisor, implementer, or final
+    reviewer as part of this skill. The only permitted second child is the wrapper-owned
+    retry in step 7.
 
 If the exact completed transport evidence is unavailable, report `advisor unavailable`,
 block the consult route, and never continue independently or silently substitute

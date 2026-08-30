@@ -116,13 +116,19 @@ FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence
 research questions, or bounded brainstorming areas>
 ```
 
-Immediately after every advisor response, before returning machine output, the wrapper
-runs `inspect-agent-runtime.sh` for the selected thread, expected role/model, and
-parent thread. This mandatory inspection verifies `codex_exec` provenance, a thread
-distinct from the parent, High effort, read-only isolation, and zero tool use; it is
-not a metadata fallback. Missing, conflicting, same-session, malformed, wrong-model,
-wrong-effort, non-read-only, or tool-use evidence makes the advisor unavailable and
-blocks the consult route. If packet evidence is
+Immediately after every launched child, before response classification or machine
+output, the wrapper runs `inspect-agent-runtime.sh` for that thread, expected
+role/model, and parent thread. This mandatory inspection verifies `codex_exec`
+provenance, a thread distinct from the parent, High effort, read-only isolation, and
+zero tool use; it is not a metadata fallback. Structural recognition trims only
+trailing spaces or tabs from a separate validation copy and preserves the successful
+response bytes. Leading indentation, a nonliteral-space separator, and missing,
+duplicate, renamed, misordered, or empty-valued fields remain
+malformed. A runtime-valid empty or malformed first response receives exactly one fresh retry
+with stderr progress. Packet, launcher, event, identity, same-session,
+runtime, wrong-model, wrong-effort, non-read-only, normalization, or tool-use failure is terminal and
+never retries. A second empty or malformed response is unavailable; the rejected first
+response is never accepted or merged. If packet evidence is
 insufficient, the advisor names the specific missing evidence or research questions
 under `FOLLOW-UP AREAS` instead of researching. A valid processed response contains
 either a recommendation grounded in the packet or a concrete `FOLLOW-UP AREAS`
@@ -188,7 +194,10 @@ isolation. Missing, conflicting, unexpected, non-read-only, or tool-use evidence
 unavailable, never approval. No substitute advisor role or replacement consultation
 is allowed; any root-routed follow-up remains outside this consultation. Progress is
 stderr-only and successful stdout is one verified JSON object containing the allowlisted
-runtime evidence and response.
+runtime evidence and the byte-preserved successful response. Every launched child is
+inspected before retry eligibility is decided. Exactly one retry is permitted only for
+a runtime-valid empty or structurally malformed first response; terminal transport or
+runtime failures never retry.
 
 ## Local advisor audit
 

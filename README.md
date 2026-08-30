@@ -72,11 +72,17 @@ If runtime evidence is missing or conflicts, the consult route blocks.
 
 Every consult is visible in main chat. Immediately before transport invocation, `ADVISOR CALL`
 records the selected tier and role, task-specific reason, bounded question, and
-`status: running`. Before returning any successful machine-readable result, the
-wrapper runs the runtime inspector for the selected and parent threads. It must prove
-exact `codex_exec` provenance, selected model, High effort, a distinct read-only,
-zero-tool runtime, and a well-formed response. Missing, conflicting, same-session,
-wrong-model, wrong-effort, malformed, non-read-only, or tool-use evidence records `recommendation: unavailable`
+`status: running`. Before classifying every response or returning any successful
+machine-readable result, the wrapper runs the runtime inspector for that fresh child
+and the parent thread. It must prove exact `codex_exec` provenance, selected model,
+High effort, a distinct read-only, zero-tool runtime. Response labels tolerate only
+trailing spaces or tabs for structural recognition; leading indentation and a
+nonliteral-space separator remain invalid. Missing, duplicate, renamed, misordered, or empty-valued fields remain malformed.
+Successful output preserves the original response bytes. Only a runtime-valid first child with an empty
+or structurally malformed or misordered response receives exactly one fresh retry,
+with progress on stderr. Packet, launcher, event, identity, same-session, runtime,
+wrong-model, wrong-effort, non-read-only, normalization, and tool-use failures are terminal and never
+retry. A second empty or malformed response records `recommendation: unavailable`
 and `decision: blocked` and remains fail-closed. Only then may `ADVISOR RESULT`
 record `completed`, the verified model and High effort, read-only isolation, a concise
 recommendation or follow-up, and the root's disposition. After a valid inspected

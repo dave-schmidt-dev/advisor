@@ -90,14 +90,23 @@ def entry_time(entry):
             return parsed
     return None
 
-def receipt_fields(text, heading):
-    if not isinstance(text, str) or heading not in {line.strip() for line in text.splitlines()}:
+def receipt_fields(text, heading, allowed_fields):
+    if not isinstance(text, str):
         return {}
-    # Retain only fixed receipt enums; receipt prose is never retained or emitted.
+    lines = text.splitlines()
+    indexes = [index for index, line in enumerate(lines) if line.strip() == heading]
+    if len(indexes) != 1:
+        return {}
+    # Retain only allowlisted receipt fields from this receipt block. Receipt prose
+    # and fields after another Advisor heading are never retained or emitted.
     fields = {}
-    for line in text.splitlines():
-        match = re.fullmatch(r"\s*(tier|role|status|decision)\s*:\s*(\S+)\s*", line)
-        if match:
+    for line in lines[indexes[0] + 1:]:
+        if line.strip() in ("ADVISOR DECISION", "ADVISOR CALL", "ADVISOR RESULT"):
+            break
+        match = re.fullmatch(r"\s*([a-z_]+)\s*:\s*(\S+)\s*", line)
+        if match and match.group(1) in allowed_fields:
+            if match.group(1) in fields:
+                return {}
             fields[match.group(1)] = match.group(2)
     return fields
 
@@ -115,14 +124,58 @@ def receipt_texts(entry):
         if isinstance(item, dict) and item.get("type") == "output_text" and isinstance(item.get("text"), str)
     )
 
-def nested_objects(value):
-    if isinstance(value, dict):
-        yield value
-        for child in value.values():
-            yield from nested_objects(child)
-    elif isinstance(value, list):
-        for child in value:
-            yield from nested_objects(child)
+def completed_spawn_item(entry):
+    """Return an allowlisted completed spawn item from persisted or exported records."""
+    payload = entry.get("payload")
+    if not isinstance(payload, dict):
+        return None
+    if entry.get("type") == "event_msg" and payload.get("type") == "item_completed":
+        item = payload.get("item")
+    elif entry.get("type") == "response_item":
+        item = payload
+    elif entry.get("type") == "item.completed":
+        item = entry.get("item")
+    else:
+        return None
+    if not isinstance(item, dict):
+        return None
+    if item.get("type") not in ("CollabAgentToolCall", "collab_tool_call"):
+        return None
+    if item.get("tool") != "spawn_agent" or item.get("status") != "completed":
+        return None
+    return item
+
+def advisor_spawn_request(entry):
+    """Return an advisor role only from a current parent function-call request."""
+    payload = entry.get("payload")
+    if entry.get("type") != "response_item" or not isinstance(payload, dict):
+        return None
+    if payload.get("type") != "function_call" or payload.get("name") != "spawn_agent":
+        return None
+    arguments = payload.get("arguments")
+    if not isinstance(arguments, str):
+        return None
+    try:
+        parsed = json.loads(arguments)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(parsed, dict):
+        return None
+    role = parsed.get("agent_type")
+    return role if role in ("advisor-terra", "advisor-sol") else None
+
+def subagent_activity_item(entry):
+    payload = entry.get("payload")
+    if entry.get("type") != "event_msg" or not isinstance(payload, dict):
+        return None
+    if payload.get("type") != "item_completed":
+        return None
+    item = payload.get("item")
+    if not isinstance(item, dict) or item.get("type") != "SubAgentActivity":
+        return None
+    if item.get("kind") not in ("started", "interacted", "completed", "interrupted"):
+        return None
+    return item
 
 files = []
 try:
@@ -135,7 +188,42 @@ except OSError:
     fail("session enumeration unavailable")
 print("ADVISOR AUDIT: session parsing started", file=sys.stderr)
 
-attempts = actual_calls = standard = specialist = 0
+# Current SubAgentActivity records do not carry a role. Correlate them only to
+# exact current child IDs established independently from full-file session_meta.
+advisor_child_ids = set()
+for path in files:
+    metadata_roles = set()
+    metadata_ids = set()
+    try:
+        with open(path, encoding="utf-8") as handle:
+            for raw in handle:
+                try:
+                    entry = json.loads(raw)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(entry, dict) or entry.get("type") != "session_meta":
+                    continue
+                role = string_at(entry, "payload", "agent_role")
+                session_id = string_at(entry, "payload", "id")
+                if role is not None:
+                    metadata_roles.add(role)
+                if session_id is not None:
+                    metadata_ids.add(session_id)
+    except OSError:
+        continue
+    if len(metadata_roles) == 1 and metadata_roles.issubset(("advisor-terra", "advisor-sol")) and len(metadata_ids) == 1:
+        advisor_child_ids.update(metadata_ids)
+
+attempts = standard = specialist = 0
+decision_routes = {"consult": 0, "skip": 0, "unavailable": 0}
+decision_evidence = False
+child_sessions = {"advisor-terra": 0, "advisor-sol": 0}
+parent_spawns = {"advisor-terra": 0, "advisor-sol": 0}
+parent_completion_evidence = False
+parent_spawn_requests = 0
+parent_request_evidence = False
+parent_activity = {"started": 0, "interacted": 0, "completed": 0, "interrupted": 0}
+parent_activity_evidence = False
 stale_underscore = stale_hyphen = 0
 completed = unavailable = blocked = accept = modify = reject = 0
 sandbox = {"read_only": 0, "workspace_write": 0, "other": 0}
@@ -145,6 +233,11 @@ tool_evidence = False
 durations = []
 tokens = {"input": 0, "cached_input": 0, "output": 0, "reasoning": 0}
 token_evidence = False
+seen_receipts = set()
+seen_spawns = set()
+seen_child_sessions = set()
+seen_requests = set()
+seen_activity = set()
 
 for path in files:
     entries = []
@@ -159,12 +252,31 @@ for path in files:
                     entries.append(entry)
     except OSError:
         continue
+    # Session identity and child role are full-file metadata. Apply the requested
+    # window only after extracting them so a child created before the window is
+    # still counted when it has activity inside the window.
+    session_ids = {
+        value for entry in entries
+        if entry.get("type") == "session_meta"
+        and (value := string_at(entry, "payload", "id")) is not None
+    }
+    metadata_roles = {
+        value for entry in entries
+        if entry.get("type") == "session_meta"
+        and (value := string_at(entry, "payload", "agent_role")) is not None
+    }
+    child_roles = metadata_roles.intersection(("advisor-terra", "advisor-sol"))
+    child_role = next(iter(child_roles)) if len(child_roles) == 1 and len(metadata_roles) == 1 and len(session_ids) == 1 else None
     in_window = [entry for entry in entries if (stamp := entry_time(entry)) is not None and since <= stamp < until]
     if not in_window:
         continue
 
-    child_role = next((string_at(entry, "payload", "agent_role") for entry in in_window if string_at(entry, "payload", "agent_role") in ("advisor-terra", "advisor-sol")), None)
     if child_role is not None:
+        child_session_id = next(iter(session_ids))
+        if child_session_id in seen_child_sessions:
+            continue
+        seen_child_sessions.add(child_session_id)
+        child_sessions[child_role] += 1
         tool_evidence = True
         stamps = [entry_time(entry) for entry in in_window]
         stamps = [stamp for stamp in stamps if stamp is not None]
@@ -200,28 +312,67 @@ for path in files:
                     tokens[target] += value
                     token_evidence = True
 
-    for entry in in_window:
-        item = entry.get("payload", {}).get("item") if isinstance(entry.get("payload"), dict) else {}
-        item = item if isinstance(item, dict) else {}
-        if entry.get("type") == "event_msg" and string_at(entry, "payload", "type") == "item_completed" and string_at(item, "type") == "CollabAgentToolCall" and string_at(item, "tool") == "spawn_agent" and string_at(item, "status") == "completed":
+    session_key = next(iter(session_ids)) if len(session_ids) == 1 else path
+    for entry_index, entry in enumerate(in_window):
+        item = completed_spawn_item(entry)
+        if item is not None and child_role is None:
             receivers = item.get("receiver_agents")
             if isinstance(receivers, list):
                 for receiver in receivers:
                     role = string_at(receiver, "agent_role")
+                    receiver_thread = string_at(receiver, "thread_id")
+                    spawn_id = string_at(item, "id")
+                    spawn_key = (session_key, spawn_id or entry_index, role, receiver_thread)
+                    if spawn_key in seen_spawns:
+                        continue
+                    seen_spawns.add(spawn_key)
                     if role in ("advisor-terra", "advisor-sol"):
-                        actual_calls += 1
+                        parent_spawns[role] += 1
+                        parent_completion_evidence = True
                     elif role == "sol_advisor":
                         stale_underscore += 1
                     elif role == "sol-advisor":
                         stale_hyphen += 1
-        for text in receipt_texts(entry):
-            call = receipt_fields(text, "ADVISOR CALL")
-            if call and call.get("status") == "running":
+        requested_role = advisor_spawn_request(entry) if child_role is None else None
+        if requested_role is not None:
+            payload = entry["payload"]
+            request_id = string_at(payload, "call_id") or string_at(payload, "id")
+            request_key = (session_key, request_id or entry_index)
+            if request_key not in seen_requests:
+                seen_requests.add(request_key)
+                parent_spawn_requests += 1
+                parent_request_evidence = True
+        activity = subagent_activity_item(entry) if child_role is None else None
+        if activity is not None:
+            activity_thread = string_at(activity, "agent_thread_id")
+            kind = string_at(activity, "kind")
+            if activity_thread in advisor_child_ids and kind in parent_activity:
+                activity_id = string_at(activity, "id")
+                activity_key = (session_key, activity_id or entry_index, activity_thread, kind)
+                if activity_key not in seen_activity:
+                    seen_activity.add(activity_key)
+                    parent_activity[kind] += 1
+                    parent_activity_evidence = True
+        for text in receipt_texts(entry) if child_role is None else ():
+            stamp = entry_time(entry)
+            decision = receipt_fields(text, "ADVISOR DECISION", {"route"})
+            route = decision.get("route")
+            decision_key = (session_key, stamp, "decision", route)
+            if route in decision_routes and decision_key not in seen_receipts:
+                seen_receipts.add(decision_key)
+                decision_routes[route] += 1
+                decision_evidence = True
+            call = receipt_fields(text, "ADVISOR CALL", {"tier", "role", "status"})
+            call_key = (session_key, stamp, "call", tuple(sorted(call.items())))
+            if call and call.get("status") == "running" and call_key not in seen_receipts:
+                seen_receipts.add(call_key)
                 attempts += 1
                 if call.get("tier") == "Standard" and call.get("role") == "advisor-terra": standard += 1
                 if call.get("tier") == "Specialist" and call.get("role") == "advisor-sol": specialist += 1
-            result = receipt_fields(text, "ADVISOR RESULT")
-            if result:
+            result = receipt_fields(text, "ADVISOR RESULT", {"status", "decision"})
+            result_key = (session_key, stamp, "result", tuple(sorted(result.items())))
+            if result and result_key not in seen_receipts:
+                seen_receipts.add(result_key)
                 if result.get("status") == "completed": completed += 1
                 elif result.get("status") == "unavailable": unavailable += 1
                 if result.get("decision") == "blocked": blocked += 1
@@ -231,11 +382,35 @@ for path in files:
 
 duration_report = {"count": len(durations), "total_ms": sum(durations) if durations else None, "minimum_ms": min(durations) if durations else None, "maximum_ms": max(durations) if durations else None, "average_ms": round(sum(durations) / len(durations)) if durations else None, "availability": "evidenced" if durations else "unavailable"}
 disposition_evidence = (completed + unavailable + blocked + accept + modify + reject) > 0
+child_total = sum(child_sessions.values())
+parent_spawn_total = sum(parent_spawns.values())
 report = {
-    "schema_version": 1,
+    "schema_version": 2,
     "redacted": True,
     "window": {"since": iso(since), "until": iso(until)},
-    "consultations": {"attempted": attempts, "advisor_child_calls": actual_calls, "selected_roles": {"standard": standard, "specialist": specialist}, "dispositions": {"completed": completed, "unavailable": unavailable, "blocked": blocked, "accept": accept, "modify": modify, "reject": reject}, "availability": {"dispositions": "evidenced" if disposition_evidence else "unavailable"}},
+    "decisions": decision_routes,
+    "availability": {"decisions": "evidenced" if decision_evidence else "unavailable"},
+    "consultations": {
+        "attempted": attempts,
+        "advisor_child_sessions": {"total": child_total, "by_role": child_sessions},
+        "parent_spawn_completions": {
+            "total": parent_spawn_total if parent_completion_evidence else None,
+            "by_role": parent_spawns if parent_completion_evidence else None,
+            "availability": "evidenced" if parent_completion_evidence else "unavailable",
+        },
+        "parent_spawn_requests": {
+            "count": parent_spawn_requests if parent_request_evidence else None,
+            "availability": "evidenced" if parent_request_evidence else "unavailable",
+        },
+        "parent_subagent_activity": {
+            "count": sum(parent_activity.values()) if parent_activity_evidence else None,
+            "by_kind": parent_activity if parent_activity_evidence else None,
+            "availability": "evidenced" if parent_activity_evidence else "unavailable",
+        },
+        "selected_roles": {"standard": standard, "specialist": specialist},
+        "dispositions": {"completed": completed, "unavailable": unavailable, "blocked": blocked, "accept": accept, "modify": modify, "reject": reject},
+        "availability": {"dispositions": "evidenced" if disposition_evidence else "unavailable"},
+    },
     "runtime": {"sandbox_counts": sandbox if sandbox_evidence else None, "advisor_tool_calls": tool_calls if tool_evidence else None, "child_durations": duration_report, "tokens": tokens if token_evidence else None, "availability": {"sandbox_counts": "evidenced" if sandbox_evidence else "unavailable", "advisor_tool_calls": "evidenced" if tool_evidence else "unavailable", "tokens": "evidenced" if token_evidence else "unavailable"}},
     "stale_role_attempts": {"sol_advisor": stale_underscore, "sol-advisor": stale_hyphen},
 }

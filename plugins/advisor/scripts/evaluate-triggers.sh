@@ -46,6 +46,10 @@ model_for_role() {
   case "$1" in advisor-terra) printf '%s\n' gpt-5.6-terra ;; advisor-sol) printf '%s\n' gpt-5.6-sol ;; *) return 1 ;; esac
 }
 
+require_ephemeral_unavailable_route() {
+  [ "$1" = unavailable ]
+}
+
 parse_runtime_evidence() {
   raw_path=$1
   evidence_path=$2
@@ -79,16 +83,18 @@ for event in events:
     if event.get("type") == "item.completed" and isinstance(item, dict) and item.get("type") == "agent_message":
         text = item.get("text")
         if isinstance(text, str):
-            markers.extend(re.findall(r"(?m)^ADVISOR_EVAL route=(consult|skip)[ \t]*$", text))
+            markers.extend(re.findall(r"(?m)^ADVISOR_EVAL route=(consult|skip|unavailable)[ \t]*$", text))
 if len(markers) != 1:
     raise SystemExit("missing or ambiguous route marker")
 route = markers[0]
 
 collab = []
-for event in events:
+collab_positions = []
+for position, event in enumerate(events):
     item = event.get("item")
     if isinstance(item, dict) and item.get("type") == "collab_tool_call":
         collab.append((event.get("type"), item))
+        collab_positions.append((position, item))
 for _, item in collab:
     if item.get("tool") == "wait" and item.get("receiver_thread_ids") == []:
         raise SystemExit("empty wait is not runtime evidence")
@@ -96,7 +102,22 @@ for _, item in collab:
 spawn_events = [(outer,item) for outer,item in collab if item.get("tool") == "spawn_agent"]
 completed = [item for outer, item in spawn_events if outer == "item.completed"]
 all_spawns = [item for _, item in spawn_events]
-if route == "skip":
+if route == "unavailable":
+    decision_positions = []
+    call_positions = []
+    for position, event in enumerate(events):
+        item = event.get("item")
+        if event.get("type") == "item.completed" and isinstance(item, dict) and item.get("type") == "agent_message":
+            text = item.get("text")
+            if isinstance(text, str):
+                if re.search(r"(?m)^ADVISOR DECISION[ \t]*\nroute: unavailable[ \t]*$", text):
+                    decision_positions.append(position)
+                if re.search(r"(?m)^ADVISOR CALL[ \t]*$", text):
+                    call_positions.append(position)
+    if len(decision_positions) != 1 or call_positions or all_spawns or any(position < decision_positions[0] for position, _ in collab_positions):
+        raise SystemExit("unavailable preflight did not precede call or spawn")
+    evidence = {"route":"unavailable","advisor_count":0,"roles":[],"freshness":"none","model":"none","effort":"none","sandbox":"none"}
+elif route == "skip":
     if all_spawns:
         raise SystemExit("skip spawned an advisor")
     evidence = {"route":"skip","advisor_count":0,"roles":[],"freshness":"none","model":"none","effort":"none","sandbox":"none"}
@@ -154,6 +175,11 @@ if [ "${ADVISOR_VALIDATE_FEATURE_STATE+x}" = x ]; then
   validate_feature_state "$ADVISOR_VALIDATE_FEATURE_STATE" "$ADVISOR_EXPECTED_FEATURE_STATE"
   exit
 fi
+if [ "${ADVISOR_VALIDATE_EPHEMERAL_ROUTE+x}" = x ]; then
+  [ "$#" -eq 0 ] || fail "ephemeral-route fixture accepts no arguments"
+  require_ephemeral_unavailable_route "$ADVISOR_VALIDATE_EPHEMERAL_ROUTE"
+  exit
+fi
 if [ "${ADVISOR_PARSE_RUNTIME_EVIDENCE+x}" = x ]; then
   [ "$#" -eq 0 ] || fail "runtime-evidence fixture accepts no arguments"
   [ "${ADVISOR_RUNTIME_EVIDENCE_OUT+x}" = x ] || fail "runtime-evidence fixture requires an output path"
@@ -202,7 +228,7 @@ def selected_pair(risk):
 if data.get("status") == "unavailable":
     if not allow:
         raise SystemExit("typed unavailable result requires --allow-unavailable")
-    if data.get("reason_type") not in {"cli_incompatible","feature_state_unavailable","role_unavailable","runtime_evidence_unavailable"}:
+    if data.get("reason_type") not in {"cli_incompatible","feature_state_unavailable","role_unavailable","runtime_evidence_unavailable","parent_runtime_unavailable"}:
         raise SystemExit("invalid unavailable reason_type")
     if data.get("redacted") is not True:
         raise SystemExit("unavailable artifact is not marked redacted")
@@ -385,7 +411,7 @@ run_trial() {
   raw=$work/raw-$schema-$id-$attempt.jsonl
   evidence=$work/evidence-$schema-$id-$attempt.json
   progress "$schema: session $sessions_run/40, case $id, trial $attempt"
-  eval_prompt="Classify this task under the installed Advisor consultation contract. Emit the required ADVISOR DECISION before any implementation. Do not implement. If consulting, choose advisor-terra for Standard material architecture/interface/data-model/compatibility/cross-boundary/competing-diagnosis or a generic advisor request. Choose advisor-sol only for unresolved security/trust boundaries, irreversible migration or data-loss decisions, or credible unresolved High-severity disagreement. Security adjacency or project importance alone does not qualify; borderline role choice uses advisor-terra. Parent model is irrelevant. Spawn exactly one selected role in a new thread; its installed profile pins model and high effort. Do not pass a model override. Finish with exactly one line: ADVISOR_EVAL route=consult|skip. TASK: $prompt_text"
+  eval_prompt="Classify this task under the installed Advisor consultation contract. For a consult candidate, run plugins/advisor/scripts/inspect-parent-runtime.sh before ADVISOR DECISION. This ephemeral evaluation has no persisted parent rollout, so emit exactly one ADVISOR DECISION with route: unavailable, do not emit ADVISOR CALL, and do not spawn a child. Do not implement. Finish with exactly one line: ADVISOR_EVAL route=unavailable. TASK: $prompt_text"
   codex exec --json --ignore-user-config --ignore-rules --ephemeral "$feature_switch" multi_agent_v2 \
     -c "agents.advisor-terra.description=Advisor Terra read-only consultation" \
     -c "agents.advisor-terra.config_file=\"$runtime_home/agents/advisor-terra.toml\"" \
@@ -394,6 +420,8 @@ run_trial() {
     -c "shell_environment_policy.set={CODEX_HOME=\"$runtime_home\"}" \
     -C "$project" --sandbox read-only --skip-git-repo-check "$eval_prompt" </dev/null >"$raw" 2>/dev/null || write_unavailable runtime_evidence_unavailable
   parse_runtime_evidence "$raw" "$evidence" "$selected_role" "$selected_model" || write_unavailable runtime_evidence_unavailable
+  require_ephemeral_unavailable_route "$(jq -r '.route' "$evidence")" || fail "ephemeral trial bypassed unavailable parent preflight"
+  write_unavailable parent_runtime_unavailable
   python3 - "$evidence" "$trials" "$schema" "$feature" "$id" "$expected" "$risk" "$attempt" "$selected_role" "$selected_model" <<'PY' || write_unavailable runtime_evidence_unavailable
 import json, sys
 evidence, out, schema, feature, cid, expected, risk, attempt, selected_role, selected_model = sys.argv[1:]

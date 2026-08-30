@@ -35,8 +35,15 @@ discovered. Implicit matching handles eligible decisions; an explicit request ca
 Use $advisor:consultation for a fresh, read-only second opinion on this decision.
 ```
 
-Before implementation, the root emits `ADVISOR DECISION` with `consult` or `skip`, a
-task-specific reason, and a bounded question when consulting. A valid consult uses
+For a consult candidate, before `ADVISOR DECISION`, the root runs
+`inspect-parent-runtime.sh`. It identifies the parent only with `CODEX_THREAD_ID` and
+permits consultation only when one regular, nonsymlinked persisted rollout proves an
+effective read-only sandbox and unambiguous permission metadata; it never falls back
+to `CODEX_SESSION_ID`. Missing, conflicting, malformed, duplicate, or non-read-only
+evidence emits one `ADVISOR DECISION` with `route: unavailable`, no `ADVISOR CALL`,
+and no child spawn, without blocking root-owned work. Ordinary work still emits
+`route: skip`. A proven read-only parent emits `route: consult`, with a task-specific
+reason and bounded question. A valid consult uses
 exactly one model-pinned role selected by decision risk. Standard consultation,
 including generic advisor requests, uses `advisor-terra` (`gpt-5.6-terra` / High).
 Specialist consultation uses `advisor-sol` (`gpt-5.6-sol` / High) only for an
@@ -66,7 +73,7 @@ result, the root may route only its research or brainstorming follow-up to a Lun
 Terra subagent outside consultation, synthesize it, and optionally start a fresh
 separately receipted consultation. An unavailable result cannot be rescued by that work.
 Receipts summarize verified evidence; the native child thread is the inspectable
-detailed runtime record. A skip emits only
+detailed runtime record. A skip or unavailable preflight emits only
 `ADVISOR DECISION`, with no call/result receipt and no spawn.
 
 The companion installer adds only the two exact current advisor roles. During upgrade it
@@ -87,8 +94,9 @@ The no-argument verifier is byte-identical to `--static` and does not start Code
 use the network. Live trigger evaluation is a separate attended workflow documented
 in [consultation operations](plugins/advisor/skills/consultation/references/operations.md).
 That workflow keeps the parent's authenticated Codex home, uses two isolated temporary
-project/child-runtime fixtures, and accepts consultation identity only from completed
-`spawn_agent` events with a receiver thread distinct from the root.
+project/child-runtime fixtures, and intentionally expects `route: unavailable` because
+ephemeral runs have no persisted parent rollout. Deterministic persisted fixtures prove
+the read-only consult path separately.
 
 For a local, read-only aggregate audit of recent advisor runtime evidence:
 
@@ -98,7 +106,13 @@ sh plugins/advisor/scripts/advisor-audit.sh --window-hours 24
 
 It reports only redacted counts and totals, with stderr progress before session
 enumeration and parsing. Use `--since`/`--until` for an explicit RFC3339 window or
-`--sessions-dir` for an isolated fixture; it never changes sessions or configuration.
+`--sessions-dir` for an isolated fixture. Schema v2 exposes exact `consult`, `skip`,
+and `unavailable` counts at top level, identifies current advisor child sessions from
+full-file metadata before windowing activity, and reports deduplicated parent spawn
+completion evidence separately with explicit availability. Current parent spawn
+requests and role-free subagent lifecycle activity are corroborating aggregate counts
+only; neither can establish selected role or completion. It never changes sessions or
+configuration.
 
 ## Origin and maintenance
 

@@ -64,19 +64,30 @@ Before the first implementation write, emit exactly one decision record:
 
 ```text
 ADVISOR DECISION
-route: consult | skip
+route: consult | skip | unavailable
 reason: <one task-specific sentence>
 question: <bounded decision question, or none>
 ```
 
 Read-only discovery may precede this declaration so the question can be grounded
-in repository evidence.
+in repository evidence. For a consult candidate, first run
+`inspect-parent-runtime.sh`. It identifies the current parent only with
+`CODEX_THREAD_ID`, resolves exactly one regular, nonsymlinked persisted rollout in a
+caller-supplied/default sessions root, and accepts only unambiguous effective
+read-only sandbox and permission metadata. It never falls back to `CODEX_SESSION_ID`.
+Missing, duplicate, malformed, conflicting, or non-read-only evidence must emit one
+`route: unavailable` decision with no `ADVISOR CALL` and no child spawn; this does not
+block root-owned work. A proven read-only parent uses `route: consult`; the ordinary
+`route: skip` path remains unchanged.
 
 ### Consult route
 
-1. Verify installed `advisor-terra` and `advisor-sol` custom roles exactly match
+1. Before the `ADVISOR DECISION`, run the parent-runtime preflight. Continue only
+   when it returns `status: available` and `sandbox_policy_type: read-only`; otherwise
+   emit the required unavailable decision and do not call or spawn an advisor.
+2. Verify installed `advisor-terra` and `advisor-sol` custom roles exactly match
    both shipped profiles.
-2. Select the role from decision risk. Standard consultation uses
+3. Select the role from decision risk. Standard consultation uses
    `advisor-terra`, pinned GPT-5.6 Terra / high, for material architecture,
    interface, data-model, compatibility, cross-boundary, competing-diagnosis,
    and generic advisor requests. Specialist consultation uses `advisor-sol`,
@@ -84,47 +95,47 @@ in repository evidence.
    an irreversible migration or data-loss decision, or a credible unresolved
    High-severity disagreement. Security adjacency and project importance alone
    do not qualify; a borderline role choice uses Terra. Parent model is irrelevant.
-3. Immediately before spawning, emit a visible `ADVISOR CALL` receipt containing
+4. Immediately before spawning, emit a visible `ADVISOR CALL` receipt containing
    the selected tier and role, task-specific reason, bounded question, and
    `status: running`.
-4. Spawn exactly one fresh subagent with the selected role and no model/effort
+5. Spawn exactly one fresh subagent with the selected role and no model/effort
    override; live Codex may ignore per-spawn overrides, so the model-pinned role is
    the enforcement boundary. Use the
    fresh-context field exposed by the host schema: `fork_turns: none` for the v2
    schema or `fork_context: false` for the v1 schema. Never send both, inherit
    context, or pass model or effort overrides.
-5. Verify the completed spawn event first. Accept only the selected model, high
+6. Verify the completed spawn event first. Accept only the selected model, high
    reasoning, named role, and distinct receiver thread. Missing or conflicting spawn
    evidence blocks the consult route.
-6. Before consultation, the root performs any repository or web research. Send only
+7. Before consultation, the root performs any repository or web research. Send only
    the bounded packet below, with enough relevant root-gathered evidence and source
    references for a decision; do not send secrets, credentials, personal data, or
    irrelevant conversation history. The advisor uses zero tools: it does not inspect
    files, fetch the web, or conduct independent research. If the packet cannot settle
    the question, it identifies the specific missing evidence or research questions
    under `FOLLOW-UP AREAS` instead of researching.
-7. Immediately after every native advisor response, run
+8. Immediately after every native advisor response, run
    `inspect-agent-runtime.sh` for the selected thread and expected role/model. This
    inspection is mandatory, not a metadata fallback, and must complete before any
    `ADVISOR RESULT` with `status: completed`. It must prove a read-only, zero-tool
    runtime; any missing, conflicting, non-read-only, or tool-use evidence makes the
    advisor unavailable and blocks the consult route.
-8. Treat a response that passed runtime inspection as advice, not authority. A valid
+9. Treat a response that passed runtime inspection as advice, not authority. A valid
    processed response contains either a recommendation grounded in the packet or a
    concrete `FOLLOW-UP AREAS` entry. The root checks its cited source references and
    records `accept`, `modify`, or `reject` with one reason.
-9. After runtime evidence and advice processing, always emit a visible
+10. After runtime evidence and advice processing, always emit a visible
    `ADVISOR RESULT` receipt containing completed/unavailable status, tier, role,
    verified model and high effort, read-only isolation, a concise recommendation
    or unavailable, the accept/modify/reject/blocked disposition, and one-sentence
    reason.
-10. After a valid, runtime-inspected completed result, the root may route only the
+11. After a valid, runtime-inspected completed result, the root may route only the
     identified research or brainstorming follow-up to an appropriate Luna or Terra
     subagent outside this consultation, synthesize the result, and optionally start a
     fresh consultation with fresh `ADVISOR CALL` and `ADVISOR RESULT` receipts. This
     does not rescue or alter the original result; an unavailable result cannot be
     rescued by follow-up work. The advisor may not spawn or conduct that work.
-11. Do not spawn a replacement, second advisor, implementer, or final reviewer as
+12. Do not spawn a replacement, second advisor, implementer, or final reviewer as
     part of this skill.
 
 If the exact completed spawn evidence is unavailable, report `advisor unavailable`,
@@ -137,8 +148,9 @@ entry. Unavailable runtime evidence, a non-read-only runtime policy, tool-use
 evidence, or required advice must visibly produce
 `status: unavailable`, `recommendation: unavailable`, and `decision: blocked`, and
 remain fail-closed. Receipts summarize verified evidence and are not runtime proof;
-the native child thread remains the inspectable detailed record. The skip route emits
-only the existing `ADVISOR DECISION`, with no call/result receipt and no spawn.
+the native child thread remains the inspectable detailed record. The skip or
+unavailable route emits only the existing `ADVISOR DECISION`, with no call/result
+receipt and no spawn.
 
 ### Main-chat consultation receipts
 
@@ -222,6 +234,11 @@ it never implies that a technical choice was accepted when no technical choice w
   runtime evidence cannot be rescued this way. An unavailable result cannot be rescued by follow-up work.
 - Every native advisor response receives mandatory runtime inspection before a
   completed result; missing, conflicting, non-read-only, or tool-use evidence blocks.
+- Every consult candidate receives parent-runtime preflight before its decision
+  receipt. It uses only `CODEX_THREAD_ID`, never `CODEX_SESSION_ID`, and fails closed
+  on missing identity or rollout, symlinks/nonregular files, malformed, ambiguous, or
+  conflicting metadata, and every non-read-only sandbox. Its typed unavailable result
+  prevents a call or child spawn but does not block root-owned work.
 - Switchyard remains the implementation router; the plugin must not contain an
   implementation role or bypass repository routing policy.
 - The advisor is pre-decision consultation, not post-implementation review.
@@ -233,7 +250,20 @@ it never implies that a technical choice was accepted when no technical choice w
   emits stable redacted JSON only. It may parse only allowlisted metadata, fixed
   receipt enums, event kinds, timestamps, and usage counters; it must not emit
   content, identifiers, paths, filenames, contact data, secret-shaped values, or
-  cost estimates. Unknown runtime evidence is unavailable, never inferred.
+  cost estimates. Schema v2 must derive exact current `advisor-terra` and
+  `advisor-sol` child-session identity from full-file `session_meta` before applying
+  the half-open window to session activity. It must parse only allowlisted
+  `ADVISOR DECISION` routes (`consult`, `skip`, and `unavailable`) in an exact
+  top-level `decisions` object with separate availability, deduplicate repeated
+  records, and report child sessions separately from parent `spawn_agent` completion
+  evidence. Parent completion evidence has explicit `evidenced`/`unavailable`
+  availability and JSON `null` counts unless a completed role-bearing spawn event
+  exists. Current parent `response_item` `function_call` spawn requests and role-free
+  `event_msg` `SubAgentActivity` kinds (`started`, `interacted`, `completed`, and
+  `interrupted`) are separate corroborating aggregate coverage. Requests may not
+  establish selected role or completion; activity may be counted only by correlation
+  to an exact current child ID.
+  Unknown runtime evidence is unavailable, never inferred.
 - Installation may add only the exact `advisor-terra` and `advisor-sol` custom-agent TOMLs through a
   fail-closed, idempotent companion installer. An attended upgrade must also
   deactivate byte-exact known historical Sol Advisor role files by recoverably renaming
@@ -276,6 +306,7 @@ plugins/advisor/
   agents/advisor-terra.toml
   agents/advisor-sol.toml
   scripts/install-agents.sh
+  scripts/inspect-parent-runtime.sh
   scripts/inspect-agent-runtime.sh
   scripts/evaluate-triggers.sh
   scripts/verify.sh
@@ -310,12 +341,17 @@ The repository verifier must prove:
 7. Upgrade fixtures prove byte-exact retired roles become recoverable inactive
    files, a second run is idempotent, and modified, unsafe, or conflicting
    historical roles stop migration.
-8. Mandatory post-response runtime inspection emits only allowlisted routing fields
-   and fails on missing, conflicting, non-read-only, or tool-use evidence.
+8. Parent preflight and mandatory post-response runtime inspection emit only
+   allowlisted identity/isolation fields and fail closed on missing, conflicting,
+   malformed, non-read-only, or tool-use evidence.
 9. README, manifest UI text, skill metadata, operations reference, and examples
    describe the same workflow.
 10. Every consult emits visible `ADVISOR CALL` and `ADVISOR RESULT` receipts; a
     skip emits neither, and unavailable evidence is visibly blocked fail-closed.
+11. Audit schema v2 fixtures cover current and legacy session shapes, full-file
+    child metadata followed by windowed activity, all allowlisted decision routes,
+    unavailable parent completion evidence, current spawn-request and role-free
+    activity corroboration, duplicate records, and adversarial redaction.
 
 `verify.sh` with no arguments is exactly equivalent to `verify.sh --static` and
 never starts Codex, performs network work, or requires a runtime result. Live
@@ -324,14 +360,14 @@ typed unavailable artifact only when `--allow-unavailable` is explicit.
 
 ### Trigger evaluation
 
-Run fresh Codex sessions against a checked-in table of at least twelve prompts:
+Static fixtures exercise the checked-in table of at least twelve prompts:
 
 - four clear consult cases;
 - four clear skip cases;
 - four adversarial boundary cases, including explicit no-delegation, an explicit
   advisor request, a routine implementation, and a high-risk decision.
 
-Pass criteria:
+Persisted-fixture pass criteria:
 
 - all clear cases choose the expected route;
 - in each schema independently, each boundary case runs once; a mismatch receives
@@ -346,6 +382,9 @@ Pass criteria:
 - no case spawns an implementation worker or final reviewer through the plugin;
 - unavailable or unverified advisor evidence is reported as unavailable, never
   counted as a successful consultation.
+- ephemeral evaluation expects parent preflight unavailable because it has no
+  persisted rollout; deterministic persisted fixtures separately prove the read-only
+  consult path.
 
 The live evaluation is a native host-runtime step because it uses the installed
 subscription-authenticated Codex CLI. It records the exact version. The parent
@@ -355,9 +394,11 @@ with `--ignore-user-config`, `--ignore-rules`, `--ephemeral`, and a read-only
 sandbox. The project links only the repository-local consultation skill and plugin,
 and `install-agents.sh --target-dir` installs and checks both exact roles in the child
 runtime. The evaluator applies `--disable multi_agent_v2` and `--enable
-multi_agent_v2` in separate runs and confirms each effective state with `codex
-features list`. A completed `spawn_agent` event, not model-authored output, must
-prove the exact receiver role, model, effort, and a thread distinct from the root.
+multi_agent_v2` in separate runs when a persisted-runtime evaluation is available.
+Its current ephemeral preflight must instead emit `route: unavailable`, with no
+`ADVISOR CALL` or child spawn, because no parent rollout persists. Deterministic
+persisted fixtures, not the ephemeral CLI run, prove a completed `spawn_agent` event,
+the exact receiver role/model/effort, and a thread distinct from the root.
 An unrecognized flag, unavailable custom role, absent or malformed spawn event, or
 mismatched effective state is typed unavailable, not a test failure or pass.
 The evaluator must stream progress and preserve one redacted machine-readable

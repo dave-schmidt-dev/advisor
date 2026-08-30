@@ -33,14 +33,31 @@ modified, dual, or colliding states refuse all mutation.
 
 ## Root and advisor records
 
-Before the first implementation write, emit:
+For a consult candidate, before the first implementation write and before the
+decision record, run:
+
+```sh
+sh plugins/advisor/scripts/inspect-parent-runtime.sh
+```
+
+This preflight identifies the parent only with `CODEX_THREAD_ID`; it never falls back
+to `CODEX_SESSION_ID`. It resolves one regular, nonsymlinked rollout in the
+caller-supplied/default sessions root and accepts only an effective `read-only`
+sandbox with unambiguous permission metadata. Missing, malformed, duplicate,
+conflicting, or non-read-only evidence is typed unavailable.
+
+Then emit:
 
 ```text
 ADVISOR DECISION
-route: consult | skip
+route: consult | skip | unavailable
 reason: <one task-specific sentence>
 question: <bounded decision question, or none>
 ```
+
+A read-only preflight permits `consult`. Any unavailable or `workspace-write`
+preflight emits `route: unavailable`, with no `ADVISOR CALL`, no child spawn, and no
+block on root-owned work. The ordinary `skip` route remains unchanged.
 
 For a consult, verify both exact installed roles, select the role from decision
 risk, then use one schema only:
@@ -169,10 +186,21 @@ sh plugins/advisor/scripts/advisor-audit.sh --window-hours 24
 allowlisted runtime metadata, fixed receipt enums, tool-event kinds, timestamps, and
 usage counters. Missing sandbox, tool, token, or duration evidence is JSON `null`
 with an `unavailable` availability value, never an inferred value. It reports receipt
-attempts separately from completed `spawn_agent` advisor child calls, Standard and
-Specialist selections, evidenced dispositions, stale `sol_advisor`/`sol-advisor`
+attempts and allowlisted `ADVISOR DECISION` routes (`consult`, `skip`, and
+`unavailable`) in an exact top-level `decisions` object; decision availability is a
+separate field. Schema v2 identifies exact current `advisor-terra` and `advisor-sol`
+child sessions from full-file `session_meta` before applying the half-open window to
+their activity. It reports those child sessions separately from deduplicated parent
+`spawn_agent` completion evidence; parent completion counts are JSON `null` with
+explicit `unavailable` availability unless a completed role-bearing spawn event
+exists. Current parent `function_call` spawn requests and role-free
+`SubAgentActivity` lifecycle events (`started`, `interacted`, `completed`, and
+`interrupted`) are separate corroborating counts. A request never establishes a
+selected role or completion, and activity is counted only by correlation to an exact
+current child ID. Standard
+and Specialist selections, evidenced dispositions, stale `sol_advisor`/`sol-advisor`
 attempts, sandbox counts, advisor tool-call counts, duration aggregates, and token
-totals. It never changes sessions or Codex configuration.
+totals remain aggregate-only. It never changes sessions or Codex configuration.
 
 ## Trigger evaluation
 
@@ -191,13 +219,15 @@ plugin, while the companion installer places and checks both exact roles in the 
 runtime. The evaluator does not copy or link authentication and does not add a plugin
 or marketplace during live evaluation.
 
-The two schemas confirm `multi_agent_v2=false/true`, but feature-state coverage is not
-freshness evidence: both require a completed `spawn_agent` event whose sole receiver
-thread differs from the root. A route marker classifies consult/skip only; claimed
-advisor metadata, an empty wait, or consultation without that event is typed
-`runtime_evidence_unavailable` and blocks the consult route. The evaluator runs the 24-session base matrix and
-permits only boundary mismatches to receive two additional trials per schema, with a
-pooled cap of 40 root sessions. Progress goes to stderr; the result is redacted JSON
+The two `multi_agent_v2` schemas remain configured, but ephemeral feature-state coverage is not
+freshness evidence. A route marker classifies `consult`, `skip`, or `unavailable`;
+claimed advisor metadata, an empty wait, or consultation without a completed
+`spawn_agent` event is typed `runtime_evidence_unavailable` and blocks the consult
+route. Because the evaluator uses `--ephemeral`, its first trial has no persisted
+parent rollout and expects the preflight's `route: unavailable`, with no `ADVISOR
+CALL` or child spawn; it writes a typed unavailable artifact instead of continuing the
+matrix. Deterministic persisted fixtures in `verify.sh` separately prove the read-only
+consult path. Progress goes to stderr; the result is redacted JSON
 without prompts, raw events, or thread identifiers. Each run records paired
 before/after digests for contract-owned live state (`config.toml`, `agents/`,
 `skills/`, and `plugins/`) and marketplace state, including unavailable exits.

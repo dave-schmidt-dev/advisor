@@ -16,12 +16,21 @@ inspect files, call tools, fetch the web, or conduct independent research.
 
 ## Declare the route
 
-Read-only discovery may ground the decision. Before the first implementation write,
-emit exactly one record:
+Read-only discovery may ground the decision. For a consult candidate, run the parent
+runtime preflight before the first implementation write and before its decision record:
+
+```sh
+sh plugins/advisor/scripts/inspect-parent-runtime.sh
+```
+
+The preflight uses only `CODEX_THREAD_ID` and the caller-supplied/default sessions
+root. It must return `status: available` with `sandbox_policy_type: read-only`; a
+missing, ambiguous, malformed, conflicting, or non-read-only parent runtime is
+unavailable. Do not use `CODEX_SESSION_ID` as a fallback. Emit exactly one record:
 
 ```text
 ADVISOR DECISION
-route: consult | skip
+route: consult | skip | unavailable
 reason: <one task-specific sentence>
 question: <bounded decision question, or none>
 ```
@@ -29,6 +38,11 @@ question: <bounded decision question, or none>
 Consult when at least one positive trigger in the description applies. Skip when all
 applicable work is routine, the user forbids delegation, or eligibility is borderline.
 General quality is not a decision question.
+
+A proven read-only parent uses `route: consult`. An unavailable parent, including
+`workspace-write`, uses `route: unavailable`, emits no `ADVISOR CALL`, spawns no
+child, and does not block the root's own work. The ordinary `route: skip` path is
+unchanged.
 
 ## Consult exactly
 
@@ -156,8 +170,9 @@ or add an implementer or final reviewer after choosing `consult`.
 In all cases, never substitute a role other than the policy-selected
 `advisor-terra` or `advisor-sol`.
 
-For `skip`, emit only the existing `ADVISOR DECISION`; do not emit `ADVISOR CALL` or
-`ADVISOR RESULT`, and do not spawn.
+For `skip` or `unavailable`, emit only the existing `ADVISOR DECISION`; do not emit
+`ADVISOR CALL` or `ADVISOR RESULT`, and do not spawn. An unavailable parent does not
+block root-owned work.
 
 See [operations](references/operations.md) for installation, runtime evidence, and
 evaluation details.

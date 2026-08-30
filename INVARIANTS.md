@@ -32,10 +32,10 @@ threshold: 3
 rationale: Eligible tasks consult exactly once, while routine and borderline tasks spawn no advisor.
 
 ### INV-5 — Exact runtime identity and isolation
-area: ["plugins/advisor/agents/**", "plugins/advisor/scripts/evaluate-triggers.sh", "plugins/advisor/scripts/inspect-agent-runtime.sh"]
+area: ["plugins/advisor/agents/**", "plugins/advisor/scripts/evaluate-triggers.sh", "plugins/advisor/scripts/inspect-agent-runtime.sh", "plugins/advisor/scripts/inspect-parent-runtime.sh"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
-rationale: A successful consultation requires the event-proven decision-risk-selected model-pinned role/model pair, effort, freshness, read-only runtime policy, and zero tool-use evidence; inspection is mandatory after every native response and before a completed result, while missing or conflicting evidence is unavailable.
+rationale: A successful consultation requires a preflight-proven read-only parent plus the event-proven decision-risk-selected model-pinned role/model pair, effort, freshness, read-only runtime policy, and zero tool-use evidence; inspection is mandatory after every native response and before a completed result, while missing or conflicting evidence is unavailable.
 
 ### INV-6 — Switchyard separation
 area: ["plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]
@@ -77,7 +77,7 @@ rationale: The root completes repository and web research before consultation an
 area: ["plugins/advisor/scripts/advisor-audit.sh", "plugins/advisor/scripts/verify.sh", "plugins/advisor/skills/consultation/references/operations.md", "README.md", "SPEC.md"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
-rationale: The local advisor audit is read-only, progress-visible, window-bounded, and aggregate-only; it reports unavailable evidence as unavailable and never emits session content, identifiers, filenames, paths, contact data, secret-shaped values, or costs.
+rationale: Audit schema v2 is read-only, progress-visible, window-bounded, and aggregate-only; it resolves exact current child identity from full-file metadata before windowing activity, keeps exact top-level decision counts, child sessions, completed role-bearing parent spawns, request coverage, and role-free child-correlated activity separate, never infers completion or selected role from corroboration, reports unavailable completion evidence explicitly, and never emits session content, identifiers, filenames, paths, contact data, secret-shaped values, or costs.
 
 ### INV-13 — Inspected-result follow-up boundary
 area: ["plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]

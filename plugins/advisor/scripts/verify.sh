@@ -19,18 +19,19 @@ operations=$plugin_dir/skills/consultation/references/operations.md
 fixtures=$plugin_dir/evals/trigger-cases.json
 installer=$script_dir/install-agents.sh
 inspector=$script_dir/inspect-agent-runtime.sh
+parent_inspector=$script_dir/inspect-parent-runtime.sh
 audit=$script_dir/advisor-audit.sh
 evaluator=$script_dir/evaluate-triggers.sh
 readme=$repo_dir/README.md
 notice=$repo_dir/NOTICE.md
 license=$repo_dir/LICENSE
 
-for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$audit" "$evaluator" "$readme" "$notice" "$license"; do
+for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$audit" "$evaluator" "$readme" "$notice" "$license"; do
   [ -f "$file" ] || fail "missing required file: $file"
 done
 [ "$(find "$plugin_dir/agents" -maxdepth 1 -type f -name '*.toml' | wc -l | tr -d ' ')" -eq 2 ] || fail "expected exactly two active roles"
 [ "$(find "$plugin_dir/skills" -type f -name SKILL.md | wc -l | tr -d ' ')" -eq 1 ] || fail "expected exactly one skill"
-pass "required inventory: one skill, two model-pinned roles, evaluator, documentation"
+pass "required inventory: one skill, two model-pinned roles, parent/child inspectors, evaluator, documentation"
 
 python3 - "$manifest" "$marketplace" "$terra_role" "$sol_role" "$fixtures" "$ui" <<'PY'
 import json, re, sys, tomllib
@@ -78,7 +79,7 @@ for phrase in \
   'settled-plan execution' 'final review owned elsewhere' 'no-delegation' 'borderline case'; do
   grep -Fqi "$phrase" "$skill" || fail "skill description/contract omits: $phrase"
 done
-for phrase in 'ADVISOR DECISION' 'route: consult | skip' 'fork_turns: none' 'fork_context: false' \
+for phrase in 'ADVISOR DECISION' 'route: consult | skip | unavailable' 'inspect-parent-runtime.sh' 'CODEX_THREAD_ID' 'CODEX_SESSION_ID' 'fork_turns: none' 'fork_context: false' \
   'agent_type: advisor-terra' 'agent_type: advisor-sol' 'gpt-5.6-terra' 'gpt-5.6-sol' \
   'Standard consultation' 'Specialist consultation' 'generic advisor requests' \
   'unresolved security or trust boundary' 'irreversible migration or data-loss decision' \
@@ -119,7 +120,7 @@ grep -Fqi 'accepting that plan' "$operations" || fail "research-first dispositio
 grep -Fqi '.retired-v1.3.0-zero-tool' "$operations" || fail "1.3.0 zero-tool retirement documentation missing"
 grep -Fq 'Never send both or inherit' "$skill" || fail "fresh-context exclusion missing"
 grep -Fq 'never substitute a role other than the policy-selected' "$skill" || fail "no-substitution rule missing"
-grep -Fq 'For `skip`, emit only the existing `ADVISOR DECISION`' "$skill" || fail "skip receipt exclusion missing"
+grep -Fq 'For `skip` or `unavailable`, emit only the existing `ADVISOR DECISION`' "$skill" || fail "skip/unavailable receipt exclusion missing"
 call_line=$(grep -n '^ADVISOR CALL$' "$skill" | head -1 | cut -d: -f1)
 spawn_line=$(grep -n '^4\. Spawn exactly one selected role\.' "$skill" | head -1 | cut -d: -f1)
 response_line=$(grep -n '^7\. Receive the required advisor response' "$skill" | head -1 | cut -d: -f1)
@@ -129,7 +130,9 @@ result_line=$(grep -n '^ADVISOR RESULT$' "$skill" | head -1 | cut -d: -f1)
 [ -n "$response_line" ] && [ -n "$inspection_line" ] && [ -n "$result_line" ] && [ "$response_line" -lt "$inspection_line" ] && [ "$inspection_line" -lt "$result_line" ] || fail "mandatory inspector must follow response and precede completed result"
 grep -Fq '($b|unique)!=["read-only"]' "$inspector" || fail "inspector does not block non-read-only policy"
 grep -Fq '($tool_events|length)!=0' "$inspector" || fail "inspector does not block advisor tool use"
-pass "implicit consult/skip boundaries, root research, zero-tool advice, and mandatory post-response inspection"
+grep -Fq 'parent_thread_id=${CODEX_THREAD_ID-}' "$parent_inspector" || fail "parent inspector does not require CODEX_THREAD_ID"
+if grep -Fq 'CODEX_SESSION_ID' "$parent_inspector"; then fail "parent inspector falls back to CODEX_SESSION_ID"; fi
+pass "implicit consult/skip/unavailable boundaries, root research, zero-tool advice, and mandatory parent/post-response inspection"
 
 for document in "$manifest" "$skill" "$ui" "$operations" "$readme" "$terra_role" "$sol_role"; do
   if grep -Eqi 'SELECTIVE ROUTE|mode: solo|solo \| delegate|sol_advisor_(luna|terra|sol_reviewer)|route selected implementation|fresh final review lane'; then
@@ -429,6 +432,50 @@ printf '%s\n' '{"type":"turn_context","payload":{"model":"gpt-5.6-terra","effort
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$id" >/dev/null 2>&1; then fail "inspector accepted conflicting model"; fi
 pass "runtime inspector exact allowlist, pins, redaction, non-read-only, tool-use, and conflict refusal"
 
+parent_home=$tmp/parent-home
+parent_sessions=$parent_home/sessions
+parent_dir=$parent_sessions/2026/08/28
+mkdir -p "$parent_dir"
+parent_id=55555555-5555-7555-8555-555555555555
+parent_rollout=$parent_dir/rollout-fixture-$parent_id.jsonl
+printf '%s\n' \
+  '{"type":"response_item","payload":{"text":"DO_NOT_LEAK_PARENT_SOURCE"}}' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$parent_id\",\"agent_role\":\"root\"}}" \
+  '{"type":"turn_context","payload":{"sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$parent_rollout"
+parent_out=$(CODEX_HOME="$parent_home" CODEX_THREAD_ID="$parent_id" sh "$parent_inspector")
+printf '%s\n' "$parent_out" | jq -e '.status=="available" and .sandbox_policy_type=="read-only" and .permission_profile_type=="managed" and (keys|sort)==["permission_profile_type","sandbox_policy_type","status","thread_id"]' >/dev/null || fail "parent inspector did not prove read-only default-root runtime"
+if printf '%s\n' "$parent_out" | grep -Fq DO_NOT_LEAK_PARENT_SOURCE; then fail "parent inspector leaked source content"; fi
+parent_unavailable() {
+  candidate=$1
+  result=$(CODEX_THREAD_ID="$candidate" sh "$parent_inspector" --sessions-dir "$parent_sessions")
+  printf '%s\n' "$result" | jq -e '.status=="unavailable" and .reason_type=="parent_runtime_unavailable" and .redacted==true and (keys|sort)==["reason_type","redacted","status"]' >/dev/null || fail "parent inspector did not return typed unavailable: $candidate"
+  if printf '%s\n' "$result" | grep -Fq DO_NOT_LEAK_PARENT_SOURCE; then fail "parent inspector leaked unavailable source content"; fi
+}
+missing_id=66666666-6666-7666-8666-666666666666
+parent_unavailable "$missing_id"
+session_fallback=$(CODEX_SESSION_ID="$parent_id" CODEX_THREAD_ID= sh "$parent_inspector" --sessions-dir "$parent_sessions")
+printf '%s\n' "$session_fallback" | jq -e '.status=="unavailable" and .reason_type=="parent_runtime_unavailable"' >/dev/null || fail "parent inspector used CODEX_SESSION_ID fallback"
+duplicate_dir=$parent_sessions/2026/08/29; mkdir -p "$duplicate_dir"
+cp "$parent_rollout" "$duplicate_dir/rollout-duplicate-$parent_id.jsonl"
+parent_unavailable "$parent_id"
+rm "$duplicate_dir/rollout-duplicate-$parent_id.jsonl"
+conflict_id=77777777-7777-7777-8777-777777777777
+printf '%s\n' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$conflict_id\"}}" \
+  '{"type":"turn_context","payload":{"sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' \
+  '{"type":"turn_context","payload":{"sandbox_policy":{"type":"workspace-write"},"permission_profile":{"type":"managed"}}}' >"$parent_dir/rollout-fixture-$conflict_id.jsonl"
+parent_unavailable "$conflict_id"
+malformed_id=88888888-8888-7888-8888-888888888888
+printf '%s\n' '{not-json' >"$parent_dir/rollout-fixture-$malformed_id.jsonl"
+parent_unavailable "$malformed_id"
+symlink_id=99999999-9999-7999-8999-999999999999
+ln -s "$parent_rollout" "$parent_dir/rollout-fixture-$symlink_id.jsonl"
+parent_unavailable "$symlink_id"
+nonregular_id=aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa
+mkdir "$parent_dir/rollout-fixture-$nonregular_id.jsonl"
+parent_unavailable "$nonregular_id"
+pass "parent preflight read-only success plus missing identity/rollout, duplicate, conflicting, malformed, symlink, nonregular, and no-session-fallback refusal"
+
 audit_sessions=$tmp/audit-sessions; mkdir -p "$audit_sessions/2026/01/01"
 python3 - "$audit_sessions/2026/01/01" <<'PY'
 import json,sys
@@ -440,31 +487,68 @@ def write(name, entries):
 def stamp(second):
     return f"2026-01-01T00:00:{second:02d}Z"
 def receipt(heading, **fields):
-    return heading+"\n"+"\n".join(f"{key}: {value}" for key,value in fields.items())+"\nDO_NOT_LEAK_SECRET_PROMPT"
+    return heading+"\n"+"\n".join(f"{key}: {value}" for key,value in fields.items())+"\nDO_NOT_LEAK_SECRET_PROMPT api_key=sk-forbidden contact@example.test"
 def message(text, second):
     return {"timestamp":stamp(second),"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":text}]}}
 def spawn(role, second):
-    return {"timestamp":stamp(second),"type":"event_msg","payload":{"type":"item_completed","item":{"id":f"spawn-{role}-{second}","type":"CollabAgentToolCall","tool":"spawn_agent","status":"completed","receiver_agents":[{"agent_role":role,"thread_id":"00000000-0000-7000-8000-000000000000"}]}}}
+    return {"timestamp":stamp(second),"type":"event_msg","payload":{"type":"item_completed","item":{"id":f"spawn-{role}-{second}","type":"CollabAgentToolCall","tool":"spawn_agent","status":"completed","receiver_agents":[{"agent_role":role,"thread_id":f"receiver-{role}-{second}"}]}}}
+def legacy_spawn(role, second):
+    return {"timestamp":stamp(second),"type":"response_item","payload":{"id":f"legacy-{role}-{second}","type":"collab_tool_call","tool":"spawn_agent","status":"completed","receiver_agents":[{"agent_role":role,"thread_id":f"legacy-receiver-{role}-{second}"}]}}
+def request(role, second, call_id):
+    arguments=json.dumps({"agent_type":role,"fork_turns":"none","message":"DO_NOT_LEAK_REQUEST_PROMPT api_key=sk-request-secret","task_name":"private-task"})
+    return {"timestamp":stamp(second),"type":"response_item","payload":{"type":"function_call","name":"spawn_agent","namespace":"functions","call_id":call_id,"arguments":arguments}}
+def activity(thread_id, kind, second, item_id):
+    return {"timestamp":stamp(second),"type":"event_msg","payload":{"type":"item_completed","item":{"type":"SubAgentActivity","id":item_id,"agent_thread_id":thread_id,"agent_path":"DO_NOT_LEAK_AGENT_PATH","kind":kind}}}
+root_meta={"timestamp":"2025-12-31T23:59:00Z","type":"session_meta","payload":{"id":"root-private-id","agent_role":"root","source":{"private":"DO_NOT_LEAK_SOURCE"}}}
+duplicate_call=message(receipt("ADVISOR CALL",tier="Standard",role="advisor-terra",status="running"),2)
 write("root.jsonl",[
-    message(receipt("ADVISOR CALL",tier="Standard",role="advisor-terra",status="running"),1),
-    spawn("advisor-terra",2),
-    message(receipt("ADVISOR RESULT",status="completed",decision="accept"),3),
-    message(receipt("ADVISOR CALL",tier="Specialist",role="advisor-sol",status="running"),4),
-    spawn("advisor-sol",5),
-    message(receipt("ADVISOR RESULT",status="unavailable",decision="blocked"),6),
-    spawn("sol_advisor",7), spawn("sol-advisor",8),
+    root_meta,
+    message(receipt("ADVISOR DECISION",route="consult"),1),
+    duplicate_call, duplicate_call,
+    spawn("advisor-terra",3), spawn("advisor-terra",3),
+    message(receipt("ADVISOR RESULT",status="completed",decision="accept"),4),
+    message(receipt("ADVISOR DECISION",route="skip"),5),
+    message(receipt("ADVISOR DECISION",route="unavailable"),6),
+    message(receipt("ADVISOR DECISION",route="forbidden"),7),
+    message("ADVISOR DECISION\nroute: consult\nroute: skip\nDO_NOT_LEAK_DUPLICATE_ROUTE",7),
+    message(receipt("ADVISOR CALL",tier="Specialist",role="advisor-sol",status="running"),8),
+    legacy_spawn("advisor-sol",9),
+    message(receipt("ADVISOR RESULT",status="unavailable",decision="blocked"),10),
+    spawn("sol_advisor",11), spawn("sol-advisor",12),
+    request("advisor-terra",13,"request-terra"), request("advisor-terra",13,"request-terra"),
+    request("advisor-sol",14,"request-sol"),
+    activity("terra-private-id","started",15,"activity-terra-started"),
+    activity("terra-private-id","interacted",15,"activity-terra-interacted"),
+    activity("terra-private-id","completed",16,"activity-terra-completed"),
+    activity("sol-private-id","started",17,"activity-sol-started"),
+    activity("sol-private-id","interrupted",17,"activity-sol-interrupted"),
+    activity("sol-private-id","completed",18,"activity-sol-completed"),
+    activity("sol-private-id","completed",18,"activity-sol-completed"),
 ])
-write("terra.jsonl",[
-    {"timestamp":stamp(10),"type":"session_meta","payload":{"agent_role":"advisor-terra","id":"00000000-0000-7000-8000-000000000000"}},
+terra_entries=[
+    {"timestamp":"2025-12-31T23:59:59Z","type":"session_meta","payload":{"agent_role":"advisor-terra","id":"terra-private-id","source":{"subagent":{"thread_spawn":{"agent_role":"advisor-terra"}}},"prompt":"DO_NOT_LEAK_TERRA_META"}},
     {"timestamp":stamp(11),"type":"turn_context","payload":{"sandbox_policy":{"type":"read-only"}}},
+    message(receipt("ADVISOR DECISION",route="unavailable"),12),
     {"timestamp":stamp(12),"type":"response_item","payload":{"type":"custom_tool_call","text":"DO_NOT_LEAK_TOOL"}},
     {"timestamp":stamp(13),"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_output_tokens":4}}}},
-])
+]
+write("terra.jsonl",terra_entries)
+write("terra-duplicate-session.jsonl",terra_entries)
 write("sol.jsonl",[
-    {"timestamp":stamp(20),"type":"session_meta","payload":{"agent_role":"advisor-sol","id":"00000000-0000-7000-8000-000000000000"}},
+    {"timestamp":stamp(20),"type":"session_meta","payload":{"agent_role":"advisor-sol","id":"sol-private-id","source":{"subagent":{"thread_spawn":{"agent_role":"advisor-sol"}}}}},
     {"timestamp":stamp(22),"type":"turn_context","payload":{"sandbox_policy":{"type":"workspace-write"}}},
     {"timestamp":stamp(23),"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"DO_NOT_LEAK_RESPONSE"}]}},
     {"timestamp":stamp(24),"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":20,"cached_input_tokens":5,"output_tokens":6,"reasoning_output_tokens":7}}}},
+])
+# A legacy nested role mention is parent metadata, not exact current child metadata.
+write("legacy-nested-role.jsonl",[
+    {"timestamp":stamp(30),"type":"session_meta","payload":{"id":"legacy-private-id","source":{"subagent":{"thread_spawn":{"agent_role":"advisor-sol"}}}}},
+    {"timestamp":stamp(31),"type":"turn_context","payload":{"sandbox_policy":{"type":"read-only"}}},
+])
+# Exact child metadata with no activity in the selected window must not count.
+write("outside-window.jsonl",[
+    {"timestamp":"2026-01-02T00:00:00Z","type":"session_meta","payload":{"agent_role":"advisor-terra","id":"outside-private-id"}},
+    {"timestamp":"2026-01-02T00:00:01Z","type":"turn_context","payload":{"sandbox_policy":{"type":"read-only"}}},
 ])
 PY
 audit_out=$tmp/advisor-audit.json
@@ -474,25 +558,70 @@ sh "$audit" --sessions-dir "$audit_sessions" --since 2026-01-01T00:00:00Z --unti
 audit_after=$(snapshot "$audit_sessions/2026/01/01")
 [ "$audit_before" = "$audit_after" ] || fail "advisor audit modified session fixtures"
 jq -e '
-  .schema_version==1 and .redacted==true and
-  .consultations.attempted==2 and .consultations.advisor_child_calls==2 and
+  .schema_version==2 and .redacted==true and
+  .decisions=={"consult":1,"skip":1,"unavailable":1} and
+  .availability.decisions=="evidenced" and
+  .consultations.attempted==2 and
+  .consultations.advisor_child_sessions=={"total":2,"by_role":{"advisor-terra":1,"advisor-sol":1}} and
+  .consultations.parent_spawn_completions=={"total":2,"by_role":{"advisor-terra":1,"advisor-sol":1},"availability":"evidenced"} and
+  .consultations.parent_spawn_requests=={"count":2,"availability":"evidenced"} and
+  .consultations.parent_subagent_activity=={"count":6,"by_kind":{"started":2,"interacted":1,"completed":2,"interrupted":1},"availability":"evidenced"} and
   .consultations.selected_roles=={"standard":1,"specialist":1} and
   .consultations.dispositions=={"completed":1,"unavailable":1,"blocked":1,"accept":1,"modify":0,"reject":0} and
   .runtime.sandbox_counts=={"read_only":1,"workspace_write":1,"other":0} and
   .runtime.advisor_tool_calls==1 and
-  .runtime.child_durations=={"count":2,"total_ms":7000,"minimum_ms":3000,"maximum_ms":4000,"average_ms":3500,"availability":"evidenced"} and
+  .runtime.child_durations=={"count":2,"total_ms":6000,"minimum_ms":2000,"maximum_ms":4000,"average_ms":3000,"availability":"evidenced"} and
   .runtime.tokens=={"input":30,"cached_input":7,"output":9,"reasoning":11} and
   .runtime.availability=={"sandbox_counts":"evidenced","advisor_tool_calls":"evidenced","tokens":"evidenced"} and
   .stale_role_attempts=={"sol_advisor":1,"sol-advisor":1}
 ' "$audit_out" >/dev/null || fail "advisor audit aggregate report mismatch"
 grep -Fq 'ADVISOR AUDIT: session enumeration started' "$audit_err" || fail "advisor audit lacks enumeration progress"
 grep -Fq 'ADVISOR AUDIT: session parsing started' "$audit_err" || fail "advisor audit lacks parsing progress"
-if grep -Eqi 'DO_NOT_LEAK|00000000|root\.jsonl|secret_prompt' "$audit_out" "$audit_err"; then fail "advisor audit leaked fixture content or identifiers"; fi
+if grep -Eqi 'DO_NOT_LEAK|private-id|receiver-|request-|activity-|root\.jsonl|secret_prompt|api_key|contact@example|sk-forbidden|private-task' "$audit_out" "$audit_err"; then fail "advisor audit leaked fixture content or identifiers"; fi
 empty_sessions=$tmp/empty-audit-sessions; mkdir "$empty_sessions"
 empty_audit=$tmp/empty-advisor-audit.json
 sh "$audit" --sessions-dir "$empty_sessions" --since 2026-01-01T00:00:00Z --until 2026-01-02T00:00:00Z >"$empty_audit" 2>/dev/null
-jq -e '.runtime.sandbox_counts==null and .runtime.advisor_tool_calls==null and .runtime.tokens==null and .runtime.child_durations.availability=="unavailable" and .runtime.availability=={"sandbox_counts":"unavailable","advisor_tool_calls":"unavailable","tokens":"unavailable"}' "$empty_audit" >/dev/null || fail "advisor audit guessed unavailable evidence"
-pass "advisor audit aggregate fixtures, fail-safe redaction, unavailable evidence, and stderr progress"
+jq -e '
+  .decisions=={"consult":0,"skip":0,"unavailable":0} and .availability.decisions=="unavailable" and
+  .consultations.advisor_child_sessions=={"total":0,"by_role":{"advisor-terra":0,"advisor-sol":0}} and
+  .consultations.parent_spawn_completions=={"total":null,"by_role":null,"availability":"unavailable"} and
+  .consultations.parent_spawn_requests=={"count":null,"availability":"unavailable"} and
+  .consultations.parent_subagent_activity=={"count":null,"by_kind":null,"availability":"unavailable"} and
+  .runtime.sandbox_counts==null and .runtime.advisor_tool_calls==null and
+  .runtime.tokens==null and .runtime.child_durations.availability=="unavailable" and
+  .runtime.availability=={"sandbox_counts":"unavailable","advisor_tool_calls":"unavailable","tokens":"unavailable"}
+' "$empty_audit" >/dev/null || fail "advisor audit guessed unavailable evidence"
+
+corroboration_sessions=$tmp/corroboration-audit-sessions; mkdir -p "$corroboration_sessions/2026/01/01"
+python3 - "$corroboration_sessions/2026/01/01" <<'PY'
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1])
+def write(name,entries): root.joinpath(name).write_text("".join(json.dumps(entry)+"\n" for entry in entries),encoding="utf-8")
+def entry(second,type_,payload): return {"timestamp":f"2026-01-01T00:00:{second:02d}Z","type":type_,"payload":payload}
+child_id="corroborated-child-private-id"
+write("child.jsonl",[
+  entry(1,"session_meta",{"id":child_id,"agent_role":"advisor-terra"}),
+  entry(2,"turn_context",{"sandbox_policy":{"type":"read-only"}}),
+])
+arguments=json.dumps({"agent_type":"advisor-sol","fork_turns":"none","message":"DO_NOT_LEAK_REQUEST_ONLY","task_name":"private-request"})
+write("parent.jsonl",[
+  entry(1,"session_meta",{"id":"corroboration-parent-private-id","agent_role":"root"}),
+  entry(2,"response_item",{"type":"function_call","name":"spawn_agent","call_id":"request-only-private-id","arguments":arguments}),
+  entry(3,"event_msg",{"type":"item_completed","item":{"type":"SubAgentActivity","id":"started-private-id","agent_thread_id":child_id,"agent_path":"DO_NOT_LEAK_PATH","kind":"started"}}),
+  entry(4,"event_msg",{"type":"item_completed","item":{"type":"SubAgentActivity","id":"completed-private-id","agent_thread_id":child_id,"agent_path":"DO_NOT_LEAK_PATH","kind":"completed"}}),
+])
+PY
+corroboration_audit=$tmp/corroboration-audit.json
+sh "$audit" --sessions-dir "$corroboration_sessions" --since 2026-01-01T00:00:00Z --until 2026-01-02T00:00:00Z >"$corroboration_audit" 2>/dev/null
+jq -e '
+  .consultations.advisor_child_sessions.total==1 and
+  .consultations.parent_spawn_completions=={"total":null,"by_role":null,"availability":"unavailable"} and
+  .consultations.parent_spawn_requests=={"count":1,"availability":"evidenced"} and
+  .consultations.parent_subagent_activity=={"count":2,"by_kind":{"started":1,"interacted":0,"completed":1,"interrupted":0},"availability":"evidenced"}
+' "$corroboration_audit" >/dev/null || fail "advisor audit inferred completion or role counts from current parent corroboration"
+if grep -Eqi 'DO_NOT_LEAK|private-id|private-request' "$corroboration_audit"; then fail "advisor audit leaked corroboration fixture content"; fi
+pass "advisor audit schema v2 current/legacy fixtures, exact decisions, current parent corroboration, fail-closed completion availability, window ordering, deduplication, redaction, unavailable evidence, and stderr progress"
 
 python3 - "$tmp/result.json" "$tmp/rerun-result.json" "$tmp/unnecessary-rerun-result.json" "$tmp/boundary-three-of-four.json" "$tmp/boundary-two-of-four.json" "$fixtures" <<'PY'
 import copy,json,sys
@@ -558,6 +687,8 @@ fi
 printf '%s\n' '{"status":"unavailable","reason_type":"role_unavailable","redacted":true}' >"$tmp/unavailable.json"
 if sh "$evaluator" --verify-result --result "$tmp/unavailable.json" >/dev/null 2>&1; then fail "unavailable accepted without flag"; fi
 sh "$evaluator" --verify-result --result "$tmp/unavailable.json" --allow-unavailable >/dev/null
+printf '%s\n' '{"status":"unavailable","reason_type":"parent_runtime_unavailable","redacted":true}' >"$tmp/parent-unavailable.json"
+sh "$evaluator" --verify-result --result "$tmp/parent-unavailable.json" --allow-unavailable >/dev/null
 printf '%s\n' '{"status":"unavailable","reason_type":"runtime_evidence_unavailable","redacted":true,"nonmutation":{"live_home":{"before":"a","after":"a","unchanged":true},"marketplace":{"before":"b","after":"b","unchanged":true}}}' >"$tmp/unavailable-with-pair.json"
 sh "$evaluator" --verify-result --result "$tmp/unavailable-with-pair.json" --allow-unavailable >/dev/null
 printf '%s\n' '{"status":"unavailable","reason_type":"runtime_evidence_unavailable","redacted":true,"nonmutation":{"live_home":{"before":"a","after":"changed","unchanged":false},"marketplace":{"before":"b","after":"b","unchanged":true}}}' >"$tmp/unavailable-bad-pair.json"
@@ -613,6 +744,15 @@ if ADVISOR_VALIDATE_FEATURE_STATE='multi_agent_v2 stable false' ADVISOR_EXPECTED
   fail "evaluator accepted an invalid requested feature state"
 fi
 grep -Fq 'validate_feature_state "$feature_output" "$feature" || write_unavailable feature_state_unavailable' "$evaluator" || fail "live feature-state path bypasses the tested validator"
+ADVISOR_VALIDATE_EPHEMERAL_ROUTE=unavailable sh "$evaluator" ||
+  fail "evaluator rejected the required ephemeral unavailable route"
+for rejected_ephemeral_route in consult skip invalid ''; do
+  if ADVISOR_VALIDATE_EPHEMERAL_ROUTE=$rejected_ephemeral_route sh "$evaluator" >/dev/null 2>&1; then
+    fail "evaluator accepted a non-unavailable ephemeral route"
+  fi
+done
+grep -Fq 'require_ephemeral_unavailable_route "$(jq -r '\''.route'\'' "$evidence")" || fail "ephemeral trial bypassed unavailable parent preflight"' "$evaluator" ||
+  fail "live ephemeral route bypasses the tested fail-closed validator"
 
 python3 - "$tmp/runtime-events" <<'PY'
 import copy, json, sys
@@ -635,6 +775,9 @@ started=copy.deepcopy(base[1]); started["type"]="item.started"; started["item"][
 write("valid-lifecycle",[base[0],started,base[1],base[2]])
 write("valid-terra",[{"type":"thread.started","thread_id":root_id},spawn("advisor-terra","gpt-5.6-terra"),message("consult")])
 write("valid-skip",[{"type":"thread.started","thread_id":root_id},message("skip")])
+write("valid-unavailable",[{"type":"thread.started","thread_id":root_id},message("unavailable","ADVISOR DECISION\nroute: unavailable\n")])
+write("unavailable-call",[{"type":"thread.started","thread_id":root_id},message("unavailable","ADVISOR DECISION\nroute: unavailable\nADVISOR CALL\n")])
+write("unavailable-spawn",[{"type":"thread.started","thread_id":root_id},message("unavailable","ADVISOR DECISION\nroute: unavailable\n"),spawn(),message("unavailable")])
 write("fabricated-no-spawn",[{"type":"thread.started","thread_id":root_id},message("consult","advisor_count=1 role=advisor-sol model=gpt-5.6-sol\n")])
 write("empty-wait",[{"type":"thread.started","thread_id":root_id},{"type":"item.completed","item":{"type":"collab_tool_call","tool":"wait","receiver_thread_ids":[]}},message("consult")])
 write("duplicate-spawn",base[:2]+[copy.deepcopy(base[1]),base[2]])
@@ -659,13 +802,17 @@ ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-terra.jsonl" ADVISOR_RUNTIME_EVIDE
 jq -e '.role==null and .roles==["advisor-terra"] and .model=="gpt-5.6-terra" and .effort=="high"' "$tmp/valid-terra.json" >/dev/null || fail "valid Terra consult spawn evidence was not derived exactly"
 ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-skip.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-skip.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
 jq -e '.route=="skip" and .advisor_count==0 and .roles==[]' "$tmp/valid-skip.json" >/dev/null || fail "valid skip/no-spawn evidence was not derived exactly"
-for rejected_events in fabricated-no-spawn empty-wait duplicate-spawn duplicate-started extra-uncompleted-spawn wrong-role wrong-model wrong-effort root-equals-child noncompleted; do
+ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-unavailable.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-unavailable.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
+jq -e '.route=="unavailable" and .advisor_count==0 and .roles==[] and .freshness=="none"' "$tmp/valid-unavailable.json" >/dev/null || fail "valid unavailable/no-spawn preflight evidence was not derived exactly"
+for rejected_events in unavailable-call unavailable-spawn fabricated-no-spawn empty-wait duplicate-spawn duplicate-started extra-uncompleted-spawn wrong-role wrong-model wrong-effort root-equals-child noncompleted; do
   if ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/$rejected_events.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/rejected.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator" >/dev/null 2>&1; then
     fail "runtime evidence parser accepted: $rejected_events"
   fi
 done
 if grep -Eq '11111111|22222222|PRIVATE PROMPT' "$tmp/valid-consult.json"; then fail "runtime evidence output leaked raw prompt or thread identifiers"; fi
 grep -Fq 'parse_runtime_evidence "$raw" "$evidence" "$selected_role" "$selected_model" || write_unavailable runtime_evidence_unavailable' "$evaluator" || fail "live path bypasses the tested runtime evidence parser"
+grep -Fq 'route=unavailable' "$evaluator" || fail "ephemeral evaluator does not expect unavailable preflight"
+grep -Fq 'do not emit ADVISOR CALL, and do not spawn a child' "$evaluator" || fail "ephemeral evaluator permits a call or child spawn"
 
 for policy_case in \
   'standard:advisor-terra gpt-5.6-terra' 'STANDARD:advisor-terra gpt-5.6-terra' \
@@ -724,8 +871,8 @@ for phrase in \
   'marketplace after snapshot started' 'marketplace after snapshot complete (1 file)'; do
   grep -Fq "$phrase" "$evaluator" || fail "marketplace snapshot progress omits: $phrase"
 done
-for phrase in 'multi_agent_v2=false/true' 'pooled cap of 40' 'subscription-only' 'overage' 'Progress goes' 'before/after digests'; do grep -Fqi "$phrase" "$operations" || fail "operations omits evaluator parity: $phrase"; done
-pass "deterministic evaluator base path, exact pinned-role/model spawn evidence, lifecycle duplicate and extra-logical-spawn refusal, redaction, authenticated-parent isolation flags, mismatch reruns, 2-of-3 majority, unnecessary-rerun refusal, exact 3-of-4 boundary threshold, 2-of-4 rejection, Codex CLI and feature-state compatibility/refusal, typed unavailable, schemas, cap, progress-visible snapshots, and nonmutation"
+for phrase in 'multi_agent_v2' 'ephemeral' 'route: unavailable' 'no `ADVISOR CALL`' 'persisted fixtures' 'subscription-only' 'overage' 'Progress goes' 'before/after digests'; do grep -Fqi "$phrase" "$operations" || fail "operations omits evaluator parity: $phrase"; done
+pass "deterministic evaluator parsing, parent-unavailable ephemeral path, persisted read-only fixtures, exact pinned-role/model spawn evidence, lifecycle duplicate and extra-logical-spawn refusal, redaction, authenticated-parent isolation flags, mismatch reruns, Codex CLI and feature-state compatibility/refusal, typed unavailable, progress-visible snapshots, and nonmutation"
 
 grep -Fq 'https://github.com/DannyMac180/sol-advisor' "$notice" || fail "NOTICE upstream URL"
 grep -Fq '37b75cad535abdd46531f0227483a8842d045ab8' "$notice" || fail "NOTICE base"
@@ -742,5 +889,6 @@ done
 pass "README, NOTICE, LICENSE, UI, and operations parity"
 
 sh -n "$script_dir"/*.sh
+[ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"
 pass "all shell syntax and stderr-progress contract"
 printf '%s\n' "VERIFY PASSED: Advisor 1.3.0 consultation-only static contract"

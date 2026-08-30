@@ -20,18 +20,19 @@ fixtures=$plugin_dir/evals/trigger-cases.json
 installer=$script_dir/install-agents.sh
 inspector=$script_dir/inspect-agent-runtime.sh
 parent_inspector=$script_dir/inspect-parent-runtime.sh
+transport=$script_dir/run-advisor.sh
 audit=$script_dir/advisor-audit.sh
 evaluator=$script_dir/evaluate-triggers.sh
 readme=$repo_dir/README.md
 notice=$repo_dir/NOTICE.md
 license=$repo_dir/LICENSE
 
-for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$audit" "$evaluator" "$readme" "$notice" "$license"; do
+for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$transport" "$audit" "$evaluator" "$readme" "$notice" "$license"; do
   [ -f "$file" ] || fail "missing required file: $file"
 done
 [ "$(find "$plugin_dir/agents" -maxdepth 1 -type f -name '*.toml' | wc -l | tr -d ' ')" -eq 2 ] || fail "expected exactly two active roles"
 [ "$(find "$plugin_dir/skills" -type f -name SKILL.md | wc -l | tr -d ' ')" -eq 1 ] || fail "expected exactly one skill"
-pass "required inventory: one skill, two model-pinned roles, parent/child inspectors, evaluator, documentation"
+pass "required inventory: one skill, two model pins, read-only transport, parent/child inspectors, evaluator, documentation"
 
 python3 - "$manifest" "$marketplace" "$terra_role" "$sol_role" "$fixtures" "$ui" <<'PY'
 import json, re, sys, tomllib
@@ -79,12 +80,12 @@ for phrase in \
   'settled-plan execution' 'final review owned elsewhere' 'no-delegation' 'borderline case'; do
   grep -Fqi "$phrase" "$skill" || fail "skill description/contract omits: $phrase"
 done
-for phrase in 'ADVISOR DECISION' 'route: consult | skip | unavailable' 'inspect-parent-runtime.sh' 'CODEX_THREAD_ID' 'CODEX_SESSION_ID' 'fork_turns: none' 'fork_context: false' \
-  'agent_type: advisor-terra' 'agent_type: advisor-sol' 'gpt-5.6-terra' 'gpt-5.6-sol' \
+for phrase in 'ADVISOR DECISION' 'route: consult | skip | unavailable' 'inspect-parent-runtime.sh' 'CODEX_THREAD_ID' 'CODEX_SESSION_ID' 'run-advisor.sh' \
+  '--role advisor-terra' '--role advisor-sol' 'gpt-5.6-terra' 'gpt-5.6-sol' \
   'Standard consultation' 'Specialist consultation' 'generic advisor requests' \
   'unresolved security or trust boundary' 'irreversible migration or data-loss decision' \
   'credible unresolved High-severity disagreement' 'Security adjacency or project importance alone' \
-  'borderline role choice' 'model is irrelevant' \
+  'borderline role choice' 'model and sandbox are irrelevant' \
   'DECISION' 'CONTEXT' 'OPTIONS' 'BOUNDARIES' 'REQUEST' \
   'ADVISOR RESPONSE' 'RECOMMENDATION:' 'WHY:' 'STRONGEST OBJECTION:' 'CHANGE MY MIND:' \
   'ACCEPTANCE CHECKS:' 'RISKS:' 'FOLLOW-UP AREAS:' 'research-first' 'accept' 'modify' 'reject' 'advisor unavailable' \
@@ -93,16 +94,22 @@ for phrase in 'ADVISOR DECISION' 'route: consult | skip | unavailable' 'inspect-
   'model: <verified gpt-5.6-terra | gpt-5.6-sol>' 'effort: high' \
   'isolation: read-only' 'recommendation: <concise recommendation, or unavailable>' \
   'decision: accept | modify | reject | blocked' 'recommendation: unavailable' \
-  'decision: blocked' 'native child thread remains the inspectable detailed record' \
+  'decision: blocked' 'distinct Codex consultation thread remains the inspectable detailed record' \
   'Before consultation, the root performs any repository or web research' \
   'relevant evidence and source references' 'enough relevant evidence' \
   'Use zero tools: do not inspect files, call tools, fetch' 'research-first next step' \
   'specific missing evidence' 'FOLLOW-UP AREAS' 'outside this consultation' \
   'unavailable result cannot be rescued' 'accepts the returned technical recommendation or' \
   'research-first plan, never a technical choice' \
-  'Immediately after every native advisor response' 'inspection is mandatory, not a metadata fallback' \
-  'non-read-only, or tool-use evidence'; do
-  grep -Fq "$phrase" "$skill" || fail "consultation contract omits: $phrase"
+  'sandbox_permissions: require_escalated' 'Do not first try' \
+  'nested Codex app-server' 'elevation applies only to the fixed launcher' \
+  'absolute installed plugin root' 'regular, nonsymlinked files' \
+  'Never elevate a repository-relative or' 'workspace-resolved `plugins/advisor` script' \
+  "<<'ADVISOR_PACKET'" 'Never use `< packet.txt`' 'unquoted heredoc' \
+  '`eval`' 'shell-interpolated' 'workspace-writable file' \
+  'post-response inspection proves' 'same-session' 'wrong-model' 'wrong-effort' \
+  'non-read-only' 'tool-use evidence'; do
+  grep -Fq -- "$phrase" "$skill" || fail "consultation contract omits: $phrase"
 done
 for document in "$operations" "$readme" "$repo_dir/SPEC.md"; do
   grep -Fqi 'repository or web research' "$document" || fail "root-research contract missing: $document"
@@ -113,26 +120,36 @@ for document in "$operations" "$readme" "$repo_dir/SPEC.md"; do
   grep -Fqi 'research-first' "$document" || fail "research-first contract missing: $document"
   grep -Fqi 'outside' "$document" || fail "outside-consultation boundary missing: $document"
   grep -Fqi 'unavailable result cannot be rescued' "$document" || fail "unavailable rescue prohibition missing: $document"
+  grep -Fqi 'require_escalated' "$document" || fail "escalated launcher boundary missing: $document"
+  grep -Fqi 'nested Codex app-server' "$document" || fail "nested app-server boundary missing: $document"
+  grep -Eqi 'installed[- ]plugin' "$document" || fail "installed root boundary missing: $document"
+  grep -Fqi 'workspace-resolved' "$document" || fail "workspace-script elevation refusal missing: $document"
+  grep -Fqi 'single-quoted' "$document" || fail "quoted packet boundary missing: $document"
+  grep -Fqi 'workspace-writable' "$document" || fail "workspace packet refusal missing: $document"
+  grep -Fqi 'Codex home' "$document" || fail "private transport root missing: $document"
 done
 grep -Fqi 'FOLLOW-UP AREAS' "$repo_dir/SPEC.md" || fail "SPEC follow-up placement missing"
 if grep -Fq 'specific missing evidence under CHANGE MY MIND' "$repo_dir/SPEC.md"; then fail "SPEC retains stale missing-evidence placement"; fi
 grep -Fqi 'accepting that plan' "$operations" || fail "research-first disposition semantics missing"
 grep -Fqi '.retired-v1.3.0-zero-tool' "$operations" || fail "1.3.0 zero-tool retirement documentation missing"
-grep -Fq 'Never send both or inherit' "$skill" || fail "fresh-context exclusion missing"
 grep -Fq 'never substitute a role other than the policy-selected' "$skill" || fail "no-substitution rule missing"
 grep -Fq 'For `skip` or `unavailable`, emit only the existing `ADVISOR DECISION`' "$skill" || fail "skip/unavailable receipt exclusion missing"
 call_line=$(grep -n '^ADVISOR CALL$' "$skill" | head -1 | cut -d: -f1)
-spawn_line=$(grep -n '^4\. Spawn exactly one selected role\.' "$skill" | head -1 | cut -d: -f1)
-response_line=$(grep -n '^7\. Receive the required advisor response' "$skill" | head -1 | cut -d: -f1)
-inspection_line=$(grep -n '^8\. Immediately after every native advisor response' "$skill" | head -1 | cut -d: -f1)
+transport_line=$(grep -n '^5\. Run exactly one selected consultation\.' "$skill" | head -1 | cut -d: -f1)
+response_line=$(grep -n '^6\. Receive the required advisor response' "$skill" | head -1 | cut -d: -f1)
+inspection_line=$(grep -n 'post-response inspection proves' "$skill" | head -1 | cut -d: -f1)
 result_line=$(grep -n '^ADVISOR RESULT$' "$skill" | head -1 | cut -d: -f1)
-[ -n "$call_line" ] && [ -n "$spawn_line" ] && [ "$call_line" -lt "$spawn_line" ] || fail "ADVISOR CALL must precede spawn"
-[ -n "$response_line" ] && [ -n "$inspection_line" ] && [ -n "$result_line" ] && [ "$response_line" -lt "$inspection_line" ] && [ "$inspection_line" -lt "$result_line" ] || fail "mandatory inspector must follow response and precede completed result"
+[ -n "$call_line" ] && [ -n "$transport_line" ] && [ "$call_line" -lt "$transport_line" ] || fail "ADVISOR CALL must precede transport"
+[ -n "$response_line" ] && [ -n "$inspection_line" ] && [ -n "$result_line" ] && [ "$inspection_line" -lt "$response_line" ] && [ "$response_line" -lt "$result_line" ] || fail "transport inspection must precede response processing and completed result"
 grep -Fq '($b|unique)!=["read-only"]' "$inspector" || fail "inspector does not block non-read-only policy"
 grep -Fq '($tool_events|length)!=0' "$inspector" || fail "inspector does not block advisor tool use"
 grep -Fq 'parent_thread_id=${CODEX_THREAD_ID-}' "$parent_inspector" || fail "parent inspector does not require CODEX_THREAD_ID"
 if grep -Fq 'CODEX_SESSION_ID' "$parent_inspector"; then fail "parent inspector falls back to CODEX_SESSION_ID"; fi
-pass "implicit consult/skip/unavailable boundaries, root research, zero-tool advice, and mandatory parent/post-response inspection"
+for phrase in 'codex exec --json --ignore-user-config --ignore-rules' '--sandbox read-only --model "$model"' 'model_reasoning_effort="high"' '--skip-git-repo-check' '--output-last-message' 'ADVISOR TRANSPORT:' '--expected-parent "$parent_thread_id"' 'jq -cn' 'consultation reused the parent thread'; do
+  grep -Fq -- "$phrase" "$transport" || fail "transport contract omits: $phrase"
+done
+if grep -Eq 'auth\.json|bws|get secret|CODEX_HOME=' "$transport"; then fail "transport handles authentication or secrets"; fi
+pass "implicit boundaries, root research, exact read-only transport, clean output, and mandatory inspection"
 
 for document in "$manifest" "$skill" "$ui" "$operations" "$readme" "$terra_role" "$sol_role"; do
   if grep -Eqi 'SELECTIVE ROUTE|mode: solo|solo \| delegate|sol_advisor_(luna|terra|sol_reviewer)|route selected implementation|fresh final review lane'; then
@@ -406,31 +423,43 @@ pass "modified, symlink, nonregular, dual-path, destination-collision, obsolete-
 
 sessions=$tmp/sessions/2026/08/27; mkdir -p "$sessions"
 id=11111111-1111-7111-8111-111111111111
+root_id=00000000-0000-7000-8000-000000000000
 rollout=$sessions/rollout-fixture-$id.jsonl
 printf '%s\n' \
  '{"type":"response_item","payload":{"text":"DO_NOT_LEAK"}}' \
- "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$id\",\"parent_thread_id\":\"00000000-0000-7000-8000-000000000000\",\"agent_role\":\"advisor-sol\"}}" \
+ "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$id\",\"source\":\"exec\",\"originator\":\"codex_exec\",\"agent_role\":null,\"parent_thread_id\":null}}" \
  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$rollout"
-out=$(TMPDIR=/nonexistent-read-only-path sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$id")
-printf '%s\n' "$out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and (keys|sort)==["agent_role","effort","model","parent_thread_id","permission_profile_type","sandbox_policy_type","thread_id"]' >/dev/null || fail "inspector allowlist/pins"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-terra --expected-model gpt-5.6-terra "$id" >/dev/null 2>&1; then fail "inspector accepted a role/model pair other than the selected pair"; fi
+out=$(TMPDIR=/nonexistent-read-only-path sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$id")
+printf '%s\n' "$out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and .transport=="codex-exec" and (keys|sort)==["agent_role","effort","model","parent_thread_id","permission_profile_type","sandbox_policy_type","thread_id","transport"]' >/dev/null || fail "inspector allowlist/pins"
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-terra --expected-model gpt-5.6-terra --expected-parent "$root_id" "$id" >/dev/null 2>&1; then fail "inspector accepted a role/model pair other than the selected pair"; fi
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$id" "$id" >/dev/null 2>&1; then fail "inspector accepted the parent session as the advisor session"; fi
 printf '%s\n' "$out" | grep -Fq DO_NOT_LEAK && fail "inspector leaked payload"
 nonreadonly_id=33333333-3333-7333-8333-333333333333
 nonreadonly=$sessions/rollout-fixture-$nonreadonly_id.jsonl
 printf '%s\n' \
-  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$nonreadonly_id\",\"parent_thread_id\":\"00000000-0000-7000-8000-000000000000\",\"agent_role\":\"advisor-sol\"}}" \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$nonreadonly_id\",\"source\":\"exec\",\"originator\":\"codex_exec\"}}" \
   '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"workspace-write"},"permission_profile":{"type":"managed"}}}' >"$nonreadonly"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$nonreadonly_id" >/dev/null 2>&1; then fail "inspector accepted non-read-only runtime policy"; fi
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$nonreadonly_id" >/dev/null 2>&1; then fail "inspector accepted non-read-only runtime policy"; fi
 tool_id=44444444-4444-7444-8444-444444444444
 tool_rollout=$sessions/rollout-fixture-$tool_id.jsonl
 printf '%s\n' \
-  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$tool_id\",\"parent_thread_id\":\"00000000-0000-7000-8000-000000000000\",\"agent_role\":\"advisor-sol\"}}" \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$tool_id\",\"source\":\"exec\",\"originator\":\"codex_exec\"}}" \
   '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' \
   '{"type":"response_item","payload":{"type":"function_call","name":"repo_inspection"}}' >"$tool_rollout"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$tool_id" >/dev/null 2>&1; then fail "inspector accepted advisor tool use"; fi
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$tool_id" >/dev/null 2>&1; then fail "inspector accepted advisor tool use"; fi
 printf '%s\n' '{"type":"turn_context","payload":{"model":"gpt-5.6-terra","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >>"$rollout"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol "$id" >/dev/null 2>&1; then fail "inspector accepted conflicting model"; fi
-pass "runtime inspector exact allowlist, pins, redaction, non-read-only, tool-use, and conflict refusal"
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$id" >/dev/null 2>&1; then fail "inspector accepted conflicting model"; fi
+wrong_effort_id=99999999-9999-7999-8999-999999999999
+printf '%s\n' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$wrong_effort_id\",\"source\":\"exec\",\"originator\":\"codex_exec\"}}" \
+  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"medium","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$wrong_effort_id.jsonl"
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$wrong_effort_id" >/dev/null 2>&1; then fail "inspector accepted wrong effort"; fi
+wrong_source_id=aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa
+printf '%s\n' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$wrong_source_id\",\"source\":\"tui\",\"originator\":\"codex-tui\"}}" \
+  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$wrong_source_id.jsonl"
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$wrong_source_id" >/dev/null 2>&1; then fail "inspector accepted non-exec provenance"; fi
+pass "runtime inspector exact allowlist, pins, redaction, distinct session, exec provenance, wrong effort, non-read-only, tool-use, and conflict refusal"
 
 parent_home=$tmp/parent-home
 parent_sessions=$parent_home/sessions
@@ -445,6 +474,16 @@ printf '%s\n' \
 parent_out=$(CODEX_HOME="$parent_home" CODEX_THREAD_ID="$parent_id" sh "$parent_inspector")
 printf '%s\n' "$parent_out" | jq -e '.status=="available" and .sandbox_policy_type=="read-only" and .permission_profile_type=="managed" and (keys|sort)==["permission_profile_type","sandbox_policy_type","status","thread_id"]' >/dev/null || fail "parent inspector did not prove read-only default-root runtime"
 if printf '%s\n' "$parent_out" | grep -Fq DO_NOT_LEAK_PARENT_SOURCE; then fail "parent inspector leaked source content"; fi
+workspace_parent_id=bbbbbbbb-bbbb-7bbb-8bbb-bbbbbbbbbbbb
+printf '%s\n' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$workspace_parent_id\"}}" \
+  '{"type":"turn_context","payload":{"sandbox_policy":{"type":"workspace-write"},"permission_profile":{"type":"managed"}}}' >"$parent_dir/rollout-fixture-$workspace_parent_id.jsonl"
+workspace_parent_out=$(CODEX_THREAD_ID="$workspace_parent_id" sh "$parent_inspector" --sessions-dir "$parent_sessions")
+printf '%s\n' "$workspace_parent_out" | jq -e '.status=="available" and .sandbox_policy_type=="workspace-write"' >/dev/null || fail "parent inspector rejected normal workspace-write root"
+danger_parent_id=cccccccc-cccc-7ccc-8ccc-cccccccccccc
+printf '%s\n' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$danger_parent_id\"}}" \
+  '{"type":"turn_context","payload":{"sandbox_policy":{"type":"danger-full-access"},"permission_profile":{"type":"managed"}}}' >"$parent_dir/rollout-fixture-$danger_parent_id.jsonl"
 parent_unavailable() {
   candidate=$1
   result=$(CODEX_THREAD_ID="$candidate" sh "$parent_inspector" --sessions-dir "$parent_sessions")
@@ -453,6 +492,7 @@ parent_unavailable() {
 }
 missing_id=66666666-6666-7666-8666-666666666666
 parent_unavailable "$missing_id"
+parent_unavailable "$danger_parent_id"
 session_fallback=$(CODEX_SESSION_ID="$parent_id" CODEX_THREAD_ID= sh "$parent_inspector" --sessions-dir "$parent_sessions")
 printf '%s\n' "$session_fallback" | jq -e '.status=="unavailable" and .reason_type=="parent_runtime_unavailable"' >/dev/null || fail "parent inspector used CODEX_SESSION_ID fallback"
 duplicate_dir=$parent_sessions/2026/08/29; mkdir -p "$duplicate_dir"
@@ -474,7 +514,95 @@ parent_unavailable "$symlink_id"
 nonregular_id=aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa
 mkdir "$parent_dir/rollout-fixture-$nonregular_id.jsonl"
 parent_unavailable "$nonregular_id"
-pass "parent preflight read-only success plus missing identity/rollout, duplicate, conflicting, malformed, symlink, nonregular, and no-session-fallback refusal"
+pass "parent preflight read-only/workspace-write success plus danger-full-access, missing identity/rollout, duplicate, conflicting, malformed, symlink, nonregular, and no-session-fallback refusal"
+
+fake_bin=$tmp/fake-bin
+fake_home=$tmp/fake-codex-home
+mkdir -p "$fake_bin" "$fake_home/sessions/2026/08/30"
+python3 - "$fake_bin/codex" <<'PY'
+from pathlib import Path
+import sys
+Path(sys.argv[1]).write_text(r'''#!/bin/sh
+set -eu
+output='' model='' sandbox='' effort='' workdir=''
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --output-last-message) output=$2; shift 2 ;;
+    --model) model=$2; shift 2 ;;
+    --sandbox) sandbox=$2; shift 2 ;;
+    -c) effort=$2; shift 2 ;;
+    -C) workdir=$2; shift 2 ;;
+    exec|--json|--ignore-user-config|--ignore-rules|--skip-git-repo-check|-) shift ;;
+    *) exit 90 ;;
+  esac
+done
+[ "$sandbox" = read-only ] && [ "$effort" = 'model_reasoning_effort="high"' ] || exit 91
+case "$model" in gpt-5.6-terra|gpt-5.6-sol) ;; *) exit 92 ;; esac
+case "$output" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/response.txt) ;; *) exit 94 ;; esac
+case "$workdir" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/workdir) ;; *) exit 95 ;; esac
+dd of=/dev/null 2>/dev/null
+[ -z "${FAKE_CODEX_MARKER-}" ] || : >"$FAKE_CODEX_MARKER"
+case "${FAKE_CODEX_CASE-valid}" in
+  valid) child=dddddddd-dddd-7ddd-8ddd-dddddddddddd ;;
+  response-misordered) child=eeeeeeee-eeee-7eee-8eee-eeeeeeeeeeee ;;
+  response-missing) child=ffffffff-ffff-7fff-8fff-ffffffffffff ;;
+  duplicate-thread) child=12121212-1212-7121-8121-121212121212 ;;
+  same-session) child=${FAKE_PARENT_ID:?} ;;
+  *) exit 93 ;;
+esac
+case "${FAKE_CODEX_CASE-valid}" in
+  response-misordered)
+    printf '%s\n' 'ADVISOR RESPONSE' 'WHY: reason' 'RECOMMENDATION: path' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
+    ;;
+  response-missing)
+    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY: reason' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'FOLLOW-UP AREAS: none' >"$output"
+    ;;
+  *)
+    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY: reason' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
+    ;;
+esac
+rollout=$CODEX_HOME/sessions/2026/08/30/rollout-fake-$child.jsonl
+printf '%s\n' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$child\",\"source\":\"exec\",\"originator\":\"codex_exec\"}}" \
+  "{\"type\":\"turn_context\",\"payload\":{\"model\":\"$model\",\"effort\":\"high\",\"sandbox_policy\":{\"type\":\"read-only\"},\"permission_profile\":{\"type\":\"managed\"}}}" >"$rollout"
+printf '%s\n' "{\"type\":\"thread.started\",\"thread_id\":\"$child\"}"
+if [ "${FAKE_CODEX_CASE-valid}" = duplicate-thread ]; then
+  printf '%s\n' '{"type":"thread.started","thread_id":"34343434-3434-7343-8343-343434343434"}'
+fi
+''', encoding='utf-8')
+PY
+chmod 700 "$fake_bin/codex"
+
+transport_parent=56565656-5656-7565-8565-565656565656
+valid_packet=$tmp/valid-packet.txt
+printf '%s\n' DECISION 'question' CONTEXT 'evidence' OPTIONS 'choice' BOUNDARIES 'limits' REQUEST 'challenge' >"$valid_packet"
+transport_out=$tmp/transport-out.json
+transport_err=$tmp/transport-err.txt
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=valid FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$transport_out" 2>"$transport_err" || {
+    sed -n '1,20p' "$transport_err" >&2
+    fail "valid fake transport failed"
+  }
+[ "$(wc -l <"$transport_out" | tr -d ' ')" -eq 1 ] || fail "transport stdout was not one JSON line"
+jq -e '.status=="completed" and .runtime.agent_role=="advisor-terra" and .runtime.model=="gpt-5.6-terra" and .runtime.effort=="high" and .runtime.sandbox_policy_type=="read-only" and .runtime.transport=="codex-exec" and (.response|startswith("ADVISOR RESPONSE\n"))' "$transport_out" >/dev/null || fail "valid transport JSON mismatch"
+for progress_line in 'launching advisor-terra (gpt-5.6-terra, high, read-only)' 'inspecting persisted runtime evidence' 'consultation verified'; do
+  grep -Fq "$progress_line" "$transport_err" || fail "transport stderr progress missing: $progress_line"
+done
+
+misordered_packet=$tmp/misordered-packet.txt
+printf '%s\n' CONTEXT 'evidence' DECISION 'question' OPTIONS 'choice' BOUNDARIES 'limits' REQUEST 'challenge' >"$misordered_packet"
+marker=$tmp/fake-codex-called
+if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_MARKER="$marker" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$misordered_packet" >/dev/null 2>&1; then fail "transport accepted misordered packet headings"; fi
+[ ! -e "$marker" ] || fail "transport invoked codex before rejecting packet order"
+
+for rejected_case in response-misordered response-missing duplicate-thread same-session; do
+  if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE="$rejected_case" FAKE_PARENT_ID="$transport_parent" \
+    sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>&1; then
+    fail "transport accepted fake case: $rejected_case"
+  fi
+done
+pass "run-advisor behavioral transport: Codex-home private files, ordered packet, pinned read-only exec, stderr progress, single JSON stdout, malformed response, duplicate thread, and same-session refusal"
 
 audit_sessions=$tmp/audit-sessions; mkdir -p "$audit_sessions/2026/01/01"
 python3 - "$audit_sessions/2026/01/01" <<'PY'
@@ -880,9 +1008,9 @@ grep -Fq 'David Schmidt / Zero Delta LLC' "$notice" || fail "NOTICE maintainer"
 grep -Fq 'Daniel McAteer' "$notice" || fail "NOTICE original author"
 grep -Fq 'Copyright (c) 2026 Daniel McAteer' "$license" || fail "LICENSE copyright"
 if grep -Eqi 'substack|attentionheads' "$readme"; then fail "README retains Substack promotion"; fi
-for phrase in 'consultation' 'read-only' 'ADVISOR DECISION' 'ADVISOR CALL' 'ADVISOR RESULT' 'status: running' 'decision: blocked' 'native child thread' 'advisor' 'gpt-5.6-terra' 'gpt-5.6-sol' 'unavailable' 'NOTICE.md'; do grep -Fqi "$phrase" "$readme" || fail "README parity omits: $phrase"; done
+for phrase in 'consultation' 'read-only' 'workspace-write' 'run-advisor.sh' 'ADVISOR DECISION' 'ADVISOR CALL' 'ADVISOR RESULT' 'status: running' 'decision: blocked' 'distinct Codex consultation thread' 'advisor' 'gpt-5.6-terra' 'gpt-5.6-sol' 'unavailable' 'NOTICE.md'; do grep -Fqi "$phrase" "$readme" || fail "README parity omits: $phrase"; done
 for document in "$operations" "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
-  for phrase in 'ADVISOR CALL' 'ADVISOR RESULT' 'unavailable' 'blocked' 'native child thread'; do
+  for phrase in 'ADVISOR CALL' 'ADVISOR RESULT' 'unavailable' 'blocked' 'distinct Codex consultation'; do
     grep -Fqi "$phrase" "$document" || fail "lifecycle documentation omits $phrase: $document"
   done
 done

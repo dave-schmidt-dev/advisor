@@ -35,7 +35,7 @@ rationale: Eligible tasks consult exactly once, while routine and borderline tas
 area: ["plugins/advisor/agents/**", "plugins/advisor/scripts/evaluate-triggers.sh", "plugins/advisor/scripts/inspect-agent-runtime.sh", "plugins/advisor/scripts/inspect-parent-runtime.sh"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
-rationale: A successful consultation requires a preflight-proven read-only parent plus the event-proven decision-risk-selected model-pinned role/model pair, effort, freshness, read-only runtime policy, and zero tool-use evidence; inspection is mandatory after every native response and before a completed result, while missing or conflicting evidence is unavailable.
+rationale: A successful consultation requires an identified parent plus a regular nonsymlinked launcher resolved from the absolute installed-skill root and invoked through the escalated-command boundary, never a workspace-resolved script; packet input uses a non-interpolating quoted heredoc, transport files remain beneath nonsandbox-writable Codex home, and a distinct Codex exec child proves the decision-risk-selected role/model pair, High effort, read-only runtime policy, fresh thread, codex_exec provenance, well-formed response, and zero tool use. Normal workspace-write roots remain eligible, while missing, conflicting, same-session, malformed, wrong-model, wrong-effort, non-read-only, or tool-use evidence is unavailable.
 
 ### INV-6 — Switchyard separation
 area: ["plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]
@@ -65,7 +65,7 @@ rationale: Overnight work stops at a validated local checkpoint without live ins
 area: ["plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
-rationale: Every consult emits a visible running `ADVISOR CALL` receipt and a completed or unavailable `ADVISOR RESULT` receipt; unavailable evidence records `decision: blocked` and remains fail-closed, receipts do not replace runtime proof, the native child thread remains inspectable, and skips emit neither receipt nor spawn.
+rationale: Every consult emits a visible running `ADVISOR CALL` receipt and a completed or unavailable `ADVISOR RESULT` receipt; unavailable evidence records `decision: blocked` and remains fail-closed, receipts do not replace runtime proof, the distinct Codex consultation thread remains inspectable, and skips emit neither receipt nor transport invocation.
 
 ### INV-11 — Bounded zero-tool consultation
 area: ["plugins/advisor/agents/**", "plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]

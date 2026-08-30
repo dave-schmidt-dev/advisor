@@ -55,7 +55,8 @@ jq -ce -s --arg id "$parent_thread_id" '
   else
     [ $contexts[].sandbox_policy_type ] as $sandboxes |
     [ $contexts[].permission_profile_type ] as $permissions |
-    if ($sandboxes | unique) != ["read-only"] or
+    if ($sandboxes | unique | length) != 1 or
+       ($sandboxes[0] | IN("read-only", "workspace-write") | not) or
        ($permissions | unique | length) != 1 or
        any($permissions[]; type != "string" or length == 0)
     then error("unavailable")

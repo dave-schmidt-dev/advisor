@@ -37,44 +37,56 @@ Use $advisor:consultation for a fresh, read-only second opinion on this decision
 
 For a consult candidate, before `ADVISOR DECISION`, the root runs
 `inspect-parent-runtime.sh`. It identifies the parent only with `CODEX_THREAD_ID` and
-permits consultation only when one regular, nonsymlinked persisted rollout proves an
-effective read-only sandbox and unambiguous permission metadata; it never falls back
-to `CODEX_SESSION_ID`. Missing, conflicting, malformed, duplicate, or non-read-only
-evidence emits one `ADVISOR DECISION` with `route: unavailable`, no `ADVISOR CALL`,
-and no child spawn, without blocking root-owned work. Ordinary work still emits
-`route: skip`. A proven read-only parent emits `route: consult`, with a task-specific
-reason and bounded question. A valid consult uses
-exactly one model-pinned role selected by decision risk. Standard consultation,
+requires one regular, nonsymlinked persisted rollout with unambiguous recognized
+sandbox and permission metadata; it never falls back to `CODEX_SESSION_ID`. A normal
+`workspace-write` root is eligible because consultation isolation belongs to a
+distinct process. Missing, conflicting, malformed, or duplicate evidence emits one
+`ADVISOR DECISION` with `route: unavailable`, no `ADVISOR CALL`, and no consultation
+process, without blocking root-owned work. Ordinary work still emits `route: skip`.
+An identified parent emits `route: consult`, with a task-specific reason and bounded
+question. A valid consult uses exactly one role label selected by decision risk. Standard consultation,
 including generic advisor requests, uses `advisor-terra` (`gpt-5.6-terra` / High).
 Specialist consultation uses `advisor-sol` (`gpt-5.6-sol` / High) only for an
 unresolved security or trust boundary, an irreversible migration or data-loss
 decision, or a credible unresolved High-severity disagreement. Security adjacency
 and project importance alone do not qualify; a borderline role choice uses Terra.
-The parent model is irrelevant, and the parent does not pass a model override. The
-completed spawn event must prove the exact selected role/model pair, effort, and
-distinct receiver thread. The root performs any repository or web research before
+The parent model and sandbox are irrelevant to selection. The root sends the bounded
+packet on stdin to `run-advisor.sh`; the wrapper maps the role label to the exact
+pinned model, forces High effort and `--sandbox read-only`, starts a distinct
+persisted `codex exec` thread, and uses existing Codex authentication without reading
+or copying authentication files. Because nested Codex app-server initialization is
+blocked inside the parent sandbox, the root invokes only this fixed installed-plugin
+wrapper through the shell tool's `require_escalated` boundary; the child remains
+read-only and must pass runtime inspection. The elevated path is the absolute plugin
+cache root derived from the loaded skill, never a repository-relative or
+workspace-resolved script. Packet text crosses that elevated boundary only through
+a single-quoted, non-interpolating heredoc on stdin and is never staged in a
+workspace-writable file. Transport files live under the nonsandbox-writable Codex
+home, not `$TMPDIR`. The root performs any repository or web research before
 consultation and supplies enough relevant evidence and source references in the
 five-section packet for a decision. Advisors use zero tools: they do not inspect
 files, fetch the web, or conduct independent research. A valid inspected response
 either recommends a path or identifies a concrete research-first next step, missing
 evidence, research questions, or bounded brainstorming areas under `FOLLOW-UP AREAS`.
-If spawn evidence is missing or conflicts, the consult route blocks.
+If runtime evidence is missing or conflicts, the consult route blocks.
 
-Every consult is visible in main chat. Immediately before spawning, `ADVISOR CALL`
+Every consult is visible in main chat. Immediately before transport invocation, `ADVISOR CALL`
 records the selected tier and role, task-specific reason, bounded question, and
-`status: running`. Immediately after every native advisor response, and before any
-completed result, the root must run the runtime inspector for the selected thread.
-It must prove a read-only, zero-tool runtime; a role TOML alone is not proof. Missing,
-conflicting, non-read-only, or tool-use evidence records `recommendation: unavailable`
+`status: running`. Before returning any successful machine-readable result, the
+wrapper runs the runtime inspector for the selected and parent threads. It must prove
+exact `codex_exec` provenance, selected model, High effort, a distinct read-only,
+zero-tool runtime, and a well-formed response. Missing, conflicting, same-session,
+wrong-model, wrong-effort, malformed, non-read-only, or tool-use evidence records `recommendation: unavailable`
 and `decision: blocked` and remains fail-closed. Only then may `ADVISOR RESULT`
 record `completed`, the verified model and High effort, read-only isolation, a concise
 recommendation or follow-up, and the root's disposition. After a valid inspected
 result, the root may route only its research or brainstorming follow-up to a Luna or
 Terra subagent outside consultation, synthesize it, and optionally start a fresh
 separately receipted consultation. An unavailable result cannot be rescued by that work.
-Receipts summarize verified evidence; the native child thread is the inspectable
-detailed runtime record. A skip or unavailable preflight emits only
-`ADVISOR DECISION`, with no call/result receipt and no spawn.
+Receipts summarize verified evidence; the distinct Codex consultation thread is the
+inspectable detailed runtime record. Progress stays on stderr; successful stdout is
+one verified JSON object. A skip or unavailable preflight emits only
+`ADVISOR DECISION`, with no call/result receipt and no transport invocation.
 
 The companion installer adds only the two exact current advisor roles. During upgrade it
 recoverably retires byte-exact known historical implementation/review roles without

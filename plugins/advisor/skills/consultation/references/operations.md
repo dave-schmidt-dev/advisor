@@ -37,14 +37,15 @@ For a consult candidate, before the first implementation write and before the
 decision record, run:
 
 ```sh
-sh plugins/advisor/scripts/inspect-parent-runtime.sh
+sh <absolute-installed-plugin-root>/scripts/inspect-parent-runtime.sh
 ```
 
 This preflight identifies the parent only with `CODEX_THREAD_ID`; it never falls back
 to `CODEX_SESSION_ID`. It resolves one regular, nonsymlinked rollout in the
-caller-supplied/default sessions root and accepts only an effective `read-only`
-sandbox with unambiguous permission metadata. Missing, malformed, duplicate,
-conflicting, or non-read-only evidence is typed unavailable.
+caller-supplied/default sessions root and accepts an unambiguous recognized sandbox
+and permission profile. The parent may be `workspace-write`; the separate consultation
+transport owns read-only isolation. Missing, malformed, duplicate, or conflicting
+evidence is typed unavailable.
 
 Then emit:
 
@@ -55,12 +56,12 @@ reason: <one task-specific sentence>
 question: <bounded decision question, or none>
 ```
 
-A read-only preflight permits `consult`. Any unavailable or `workspace-write`
-preflight emits `route: unavailable`, with no `ADVISOR CALL`, no child spawn, and no
-block on root-owned work. The ordinary `skip` route remains unchanged.
+An identified parent permits `consult`, including a normal `workspace-write` root.
+An unavailable preflight emits `route: unavailable`, with no `ADVISOR CALL`, no
+consultation process, and no block on root-owned work. The ordinary `skip` route
+remains unchanged.
 
-For a consult, verify both exact installed roles, select the role from decision
-risk, then use one schema only:
+For a consult, select the exact role label from decision risk:
 
 - Standard: `advisor-terra`, pinned `gpt-5.6-terra`, high. This default covers
   material architecture, interface, data-model, compatibility, cross-boundary,
@@ -72,18 +73,34 @@ risk, then use one schema only:
 Security adjacency and project importance alone do not qualify for Specialist.
 A borderline role choice uses Standard. The parent model is irrelevant.
 
-```text
-# host schema v2
-agent_type: advisor-terra | advisor-sol
-fork_turns: none
+Never call `codex exec` directly or pass a model/effort override. Invoke the fixed
+installed-plugin wrapper through the shell tool's
+`sandbox_permissions: require_escalated` boundary with a narrow justification; do
+not first attempt it inside the parent sandbox, where nested Codex app-server
+initialization is blocked. This elevation launches only the fixed wrapper. The child
+remains forced to `--sandbox read-only` and must pass runtime inspection. The wrapper
+maps the selected exact role label to its model pin, forces High effort and a
+read-only sandbox, and creates a distinct persisted consultation thread:
 
-# host schema v1
-agent_type: advisor-terra | advisor-sol
-fork_context: false
+```sh
+/bin/sh <absolute-installed-plugin-root>/scripts/run-advisor.sh --role advisor-terra <<'ADVISOR_PACKET'
+DECISION
+<the complete five-section packet continues here>
+ADVISOR_PACKET
+# or use: --role advisor-sol
 ```
 
-Never inherit context or pass a model/effort override. The selected installed role
-enforces the pair. Send the five-section
+Resolve `<absolute-installed-plugin-root>` from the loaded `SKILL.md` path, two
+directories above its containing directory. Require regular, nonsymlinked scripts
+beneath that root. Never elevate a repository-relative or workspace-resolved
+`plugins/advisor` script.
+Use only the shown single-quoted heredoc after confirming its delimiter is absent from
+the packet. Never use `< packet.txt`, an unquoted heredoc, `eval`, or shell-interpolated
+packet text at the elevated boundary, and never stage the packet in a
+workspace-writable file.
+
+The wrapper uses existing Codex authentication in place; it does not read, copy,
+print, or relink authentication material. Send the five-section
 DECISION/CONTEXT/OPTIONS/BOUNDARIES/REQUEST packet from the skill, with only
 root-gathered relevant evidence and source references. Require:
 
@@ -99,11 +116,13 @@ FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence
 research questions, or bounded brainstorming areas>
 ```
 
-Immediately after every native advisor response, before a completed result, the root
-must run `inspect-agent-runtime.sh` for the selected thread and expected role/model.
-This mandatory inspection verifies the runtime is read-only and zero-tool; it is not
-a metadata fallback. Missing, conflicting, non-read-only, or tool-use evidence makes
-the advisor unavailable and blocks the consult route. If packet evidence is
+Immediately after every advisor response, before returning machine output, the wrapper
+runs `inspect-agent-runtime.sh` for the selected thread, expected role/model, and
+parent thread. This mandatory inspection verifies `codex_exec` provenance, a thread
+distinct from the parent, High effort, read-only isolation, and zero tool use; it is
+not a metadata fallback. Missing, conflicting, same-session, malformed, wrong-model,
+wrong-effort, non-read-only, or tool-use evidence makes the advisor unavailable and
+blocks the consult route. If packet evidence is
 insufficient, the advisor names the specific missing evidence or research questions
 under `FOLLOW-UP AREAS` instead of researching. A valid processed response contains
 either a recommendation grounded in the packet or a concrete `FOLLOW-UP AREAS`
@@ -117,7 +136,7 @@ research or brainstorming follow-up to an appropriate Luna or Terra subagent out
 this consultation, synthesize the result, and optionally begin a fresh consultation
 with fresh `ADVISOR CALL` and `ADVISOR RESULT` receipts. An unavailable result cannot be rescued by follow-up work, and the advisor may not spawn or conduct that work.
 
-Immediately before the spawn, the root emits:
+Immediately before invoking the consultation transport, the root emits:
 
 ```text
 ADVISOR CALL
@@ -147,28 +166,29 @@ Only mandatory post-response runtime inspection plus a processed response can pr
 `completed`. Missing, conflicting, non-read-only, tool-use, or required-advice
 evidence produces `status: unavailable`, `recommendation: unavailable`, and
 `decision: blocked`; the consult route remains fail-closed. These main-chat receipts
-summarize verified evidence but are not runtime proof. The native child thread remains
-the inspectable detailed record. A skip emits only `ADVISOR DECISION`, with no
-call/result receipt and no spawn.
+summarize verified evidence but are not runtime proof. The distinct Codex consultation
+thread remains the inspectable detailed record. A skip emits only `ADVISOR DECISION`,
+with no call/result receipt and no transport invocation.
 
 ## Runtime evidence
 
-Public spawn metadata is primary. A completed `spawn_agent` event must establish one
-receiver agent and thread, the exact decision-risk-selected `advisor-terra`/`gpt-5.6-terra`
-or `advisor-sol`/`gpt-5.6-sol` pair, effort `high`,
-and a receiver thread distinct from the root `thread.started` identifier. After every
-native advisor response, the root must run:
+Persisted `codex exec` runtime metadata is primary. The transport must establish one
+fresh thread, the exact decision-risk-selected `advisor-terra`/`gpt-5.6-terra` or
+`advisor-sol`/`gpt-5.6-sol` pair, effort `high`, a read-only sandbox, `codex_exec`
+provenance, and a thread distinct from the parent. The wrapper runs:
 
 ```sh
-sh plugins/advisor/scripts/inspect-agent-runtime.sh --expected-role <selected-role> --expected-model <selected-model> <thread-id>
+sh <absolute-installed-plugin-root>/scripts/inspect-agent-runtime.sh --expected-role <selected-role> --expected-model <selected-model> --expected-parent <parent-thread-id> <thread-id>
 ```
 
-The inspector emits only thread, parent, role, model, effort, sandbox-policy, and
-permission-profile fields, while rejecting any tool-use event. It must confirm a
+The inspector emits only thread, parent, role, transport, model, effort,
+sandbox-policy, and permission-profile fields, while rejecting any tool-use event. It must confirm a
 read-only runtime policy; a role TOML requesting read-only is not proof of actual
 isolation. Missing, conflicting, unexpected, non-read-only, or tool-use evidence is
 unavailable, never approval. No substitute advisor role or replacement consultation
-is allowed; any root-routed follow-up remains outside this consultation.
+is allowed; any root-routed follow-up remains outside this consultation. Progress is
+stderr-only and successful stdout is one verified JSON object containing the allowlisted
+runtime evidence and response.
 
 ## Local advisor audit
 

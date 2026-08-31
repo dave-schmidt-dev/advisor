@@ -45,6 +45,7 @@ An identified parent uses `route: consult`, including a normal `workspace-write`
 root. An unavailable parent uses `route: unavailable`, emits no `ADVISOR CALL`,
 starts no consultation process, and does not block the root's own work. The ordinary
 `route: skip` path is unchanged.
+A non-Codex surface has no supported local transport, so it takes `route: unavailable` and emits no `ADVISOR CALL` or `ADVISOR RESULT`.
 
 ## Consult exactly
 

@@ -26,6 +26,7 @@ evaluator=$script_dir/evaluate-triggers.sh
 readme=$repo_dir/README.md
 notice=$repo_dir/NOTICE.md
 license=$repo_dir/LICENSE
+compat_doc=$repo_dir/docs/public-directory-compatibility.md
 
 for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$transport" "$audit" "$evaluator" "$readme" "$notice" "$license"; do
   [ -f "$file" ] || fail "missing required file: $file"
@@ -128,6 +129,29 @@ for document in "$operations" "$readme" "$repo_dir/SPEC.md"; do
   grep -Fqi 'workspace-writable' "$document" || fail "workspace packet refusal missing: $document"
   grep -Fqi 'Codex home' "$document" || fail "private transport root missing: $document"
 done
+# The skill sentence must stay on one physical line; grep '.*' does not span newlines.
+grep -Eq 'non-Codex.*route: unavailable' "$skill" || fail "non-Codex unavailable route missing from skill"
+pass "non-Codex surfaces document the unavailable route"
+
+[ -s "$compat_doc" ] || fail "public directory compatibility document missing or empty: $compat_doc"
+python3 - "$compat_doc" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+if not re.search(r"^OWNER DECISION:\s*(pending|approved|rejected)\s*$", text, re.MULTILINE):
+    raise SystemExit("owner decision line missing or not one of pending/approved/rejected")
+supported = ("Codex CLI", "Codex desktop")
+unsupported = ("Generic ChatGPT with no local Codex runtime", "Native Codex subagents", "MCP servers and hosted services")
+for surface in supported:
+    if not re.search(r"\|\s*" + re.escape(surface) + r"\s*\|\s*Supported\s*\|", text):
+        raise SystemExit(f"compatibility matrix does not mark supported: {surface}")
+for surface in unsupported:
+    if not re.search(r"\|\s*" + re.escape(surface) + r"\s*\|\s*Unsupported\b", text):
+        raise SystemExit(f"compatibility matrix does not mark unsupported: {surface}")
+PY
+pass "public directory compatibility document: owner decision recorded and Codex CLI/desktop vs. non-Codex/subagent/MCP verdicts intact"
 python3 - "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md" "$skill" "$operations" <<'PY'
 import re
 import sys

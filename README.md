@@ -8,6 +8,9 @@ accepted, modified, or rejected.
 Supported local Codex hosts: **Codex CLI and Codex desktop**. Generic ChatGPT is not
 a supported runtime.
 
+See [public directory compatibility](docs/public-directory-compatibility.md) for the
+surface matrix and local preflight boundary.
+
 It consults for architecture, interface, data-model, compatibility, cross-boundary,
 competing-diagnosis, security, privacy, authorization, migration, recovery, and
 irreversible-state choices. It skips factual/status/summarization work, determined

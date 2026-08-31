@@ -5,6 +5,9 @@ material technical decision. It does not implement, route implementation, or per
 final review. The root agent owns every decision and records whether advice was
 accepted, modified, or rejected.
 
+Supported local Codex hosts: **Codex CLI and Codex desktop**. Generic ChatGPT is not
+a supported runtime.
+
 It consults for architecture, interface, data-model, compatibility, cross-boundary,
 competing-diagnosis, security, privacy, authorization, migration, recovery, and
 irreversible-state choices. It skips factual/status/summarization work, determined
@@ -74,7 +77,7 @@ Every consult is visible in main chat. Immediately before transport invocation, 
 records the selected tier and role, task-specific reason, bounded question, and
 `status: running`. Before classifying every response or returning any successful
 machine-readable result, the wrapper runs the runtime inspector for that fresh child
-and the parent thread. It must prove exact `codex_exec` provenance, selected model,
+and the parent thread. It must prove allowlisted `codex_exec` or `Codex Desktop` provenance, selected model,
 High effort, a distinct read-only, zero-tool runtime. Response labels tolerate only
 trailing spaces or tabs for structural recognition; leading indentation and a
 nonliteral-space separator remain invalid. Missing, duplicate, renamed, misordered, or empty-valued fields remain malformed.

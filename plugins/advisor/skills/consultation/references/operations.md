@@ -118,8 +118,9 @@ research questions, or bounded brainstorming areas>
 
 Immediately after every launched child, before response classification or machine
 output, the wrapper runs `inspect-agent-runtime.sh` for that thread, expected
-role/model, and parent thread. This mandatory inspection verifies `codex_exec`
-provenance, a thread distinct from the parent, High effort, read-only isolation, and
+role/model, and parent thread. This mandatory inspection verifies allowlisted
+`codex_exec` or `Codex Desktop` provenance, a thread distinct from the parent,
+High effort, read-only isolation, and
 zero tool use; it is not a metadata fallback. Structural recognition trims only
 trailing spaces or tabs from a separate validation copy and preserves the successful
 response bytes. Leading indentation, a nonliteral-space separator, and missing,
@@ -180,8 +181,9 @@ with no call/result receipt and no transport invocation.
 
 Persisted `codex exec` runtime metadata is primary. The transport must establish one
 fresh thread, the exact decision-risk-selected `advisor-terra`/`gpt-5.6-terra` or
-`advisor-sol`/`gpt-5.6-sol` pair, effort `high`, a read-only sandbox, `codex_exec`
-provenance, and a thread distinct from the parent. The wrapper runs:
+`advisor-sol`/`gpt-5.6-sol` pair, effort `high`, a read-only sandbox, allowlisted
+`codex_exec` or `Codex Desktop` provenance, and a thread distinct from the parent.
+The wrapper runs:
 
 ```sh
 sh <absolute-installed-plugin-root>/scripts/inspect-agent-runtime.sh --expected-role <selected-role> --expected-model <selected-model> --expected-parent <parent-thread-id> <thread-id>

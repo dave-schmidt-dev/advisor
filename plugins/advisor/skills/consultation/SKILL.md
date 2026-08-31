@@ -147,7 +147,8 @@ ADVISOR_PACKET
    malformed. Mandatory post-response inspection proves the exact selected model,
    High effort, read-only isolation, distinct-thread identity, `codex_exec` provenance,
    and zero tool calls before parsing can succeed. When the first child proves the exact selected model, High effort,
-   read-only runtime, distinct thread, `codex_exec` provenance, and zero tool calls but
+   read-only runtime, distinct thread, allowlisted `codex_exec` or `Codex Desktop`
+   provenance, and zero tool calls but
    returns an empty or malformed response, the wrapper emits retry progress on stderr
    and performs exactly one fresh retry by launching a new child. Packet, launcher, event, identity,
    same-session, runtime, wrong-model, wrong-effort, non-read-only, normalization, or tool-use failure

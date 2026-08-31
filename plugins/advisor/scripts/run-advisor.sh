@@ -41,7 +41,16 @@ if [ ! -e "$transport_root" ]; then
 fi
 [ -d "$transport_root" ] && [ ! -L "$transport_root" ] || fail "private transport root is unsafe"
 transport_dir=$(mktemp -d "$transport_root/run.XXXXXX") || fail "temporary directory creation failed"
+heartbeat_pid=''
+stop_heartbeat() {
+  if [ -n "$heartbeat_pid" ]; then
+    kill "$heartbeat_pid" 2>/dev/null || :
+    wait "$heartbeat_pid" 2>/dev/null || :
+    heartbeat_pid=''
+  fi
+}
 cleanup() {
+  stop_heartbeat
   case "$transport_dir" in "$transport_root"/run.*) rm -rf "$transport_dir" ;; esac
 }
 trap cleanup 0 HUP INT TERM
@@ -103,12 +112,21 @@ while [ "$attempt" -le 2 ]; do
   mkdir "$workdir" || fail "isolated work directory creation failed"
 
   progress "launching $role ($model, high, read-only), attempt $attempt of 2"
+  (
+    while :; do
+      progress "child invocation still running (attempt $attempt)"
+      sleep 10
+    done
+  ) &
+  heartbeat_pid=$!
   if ! codex exec --json --ignore-user-config --ignore-rules \
     --sandbox read-only --model "$model" -c 'model_reasoning_effort="high"' \
     -C "$workdir" --skip-git-repo-check --output-last-message "$response" \
     - <"$prompt" >"$events"; then
+    stop_heartbeat
     fail "codex exec failed"
   fi
+  stop_heartbeat
 
   child_thread_id=$(jq -r 'select(.type == "thread.started") | .thread_id' "$events" 2>/dev/null) || fail "malformed transport events"
   [ "$(printf '%s\n' "$child_thread_id" | awk 'NF { count += 1 } END { print count + 0 }')" -eq 1 ] || fail "ambiguous child thread"
@@ -119,7 +137,13 @@ while [ "$attempt" -le 2 ]; do
   progress "inspecting persisted runtime evidence for attempt $attempt"
   set -- --expected-role "$role" --expected-model "$model" --expected-parent "$parent_thread_id"
   [ -z "$sessions_dir" ] || set -- --sessions-dir "$sessions_dir" "$@"
-  sh "$script_dir/inspect-agent-runtime.sh" "$@" "$child_thread_id" >"$evidence" || fail "runtime inspection failed"
+  inspection_error=$transport_dir/inspection-error.$attempt
+  if ! sh "$script_dir/inspect-agent-runtime.sh" "$@" "$child_thread_id" >"$evidence" 2>"$inspection_error"; then
+    if grep -Fqx 'ERROR: runtime_provenance_mismatch' "$inspection_error"; then
+      fail "runtime_provenance_mismatch"
+    fi
+    fail "runtime inspection failed"
+  fi
 
   response_status=0
   response_is_well_formed "$response" "$normalized" || response_status=$?

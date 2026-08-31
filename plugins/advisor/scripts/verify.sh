@@ -128,6 +128,17 @@ for document in "$operations" "$readme" "$repo_dir/SPEC.md"; do
   grep -Fqi 'workspace-writable' "$document" || fail "workspace packet refusal missing: $document"
   grep -Fqi 'Codex home' "$document" || fail "private transport root missing: $document"
 done
+python3 - "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md" "$skill" "$operations" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+allowlist = re.compile(r"allowlisted\s+`?codex_exec`?\s+or\s+`?Codex Desktop`?\s+provenance", re.IGNORECASE)
+for filename in sys.argv[1:]:
+    if not allowlist.search(Path(filename).read_text(encoding="utf-8")):
+        raise SystemExit(f"exact runtime provenance allowlist missing: {filename}")
+PY
+pass "exact codex_exec or Codex Desktop provenance allowlist documented across contracts"
 grep -Fqi 'FOLLOW-UP AREAS' "$repo_dir/SPEC.md" || fail "SPEC follow-up placement missing"
 if grep -Fq 'specific missing evidence under CHANGE MY MIND' "$repo_dir/SPEC.md"; then fail "SPEC retains stale missing-evidence placement"; fi
 for document in "$manifest" "$skill" "$operations" "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
@@ -441,6 +452,32 @@ printf '%s\n' "$out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-5.6-so
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-terra --expected-model gpt-5.6-terra --expected-parent "$root_id" "$id" >/dev/null 2>&1; then fail "inspector accepted a role/model pair other than the selected pair"; fi
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$id" "$id" >/dev/null 2>&1; then fail "inspector accepted the parent session as the advisor session"; fi
 printf '%s\n' "$out" | grep -Fq DO_NOT_LEAK && fail "inspector leaked payload"
+desktop_id=22222222-2222-7222-8222-222222222222
+printf '%s\n' \
+  '{"type":"response_item","payload":{"text":"DO_NOT_LEAK_DESKTOP"}}' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$desktop_id\",\"source\":\"exec\",\"originator\":\"Codex Desktop\",\"agent_role\":null,\"parent_thread_id\":null}}" \
+  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$desktop_id.jsonl"
+desktop_out=$(sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$desktop_id")
+printf '%s\n' "$desktop_out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and .permission_profile_type=="managed" and .transport=="codex-exec"' >/dev/null || fail "inspector rejected exact Codex Desktop provenance"
+printf '%s\n' "$desktop_out" | grep -Fq DO_NOT_LEAK && fail "desktop inspector leaked payload"
+assert_provenance_mismatch() {
+  candidate=$1
+  error=$tmp/provenance-error-$candidate.txt
+  if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$candidate" >"$tmp/provenance-out-$candidate.json" 2>"$error"; then
+    fail "inspector accepted mismatched provenance"
+  fi
+  [ "$(cat "$error")" = 'ERROR: runtime_provenance_mismatch' ] || fail "provenance mismatch category was not fixed and stderr-only"
+}
+arbitrary_provenance_id=23232323-2323-7232-8232-232323232323
+printf '%s\n' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$arbitrary_provenance_id\",\"source\":\"exec\",\"originator\":\"desktop\"}}" \
+  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$arbitrary_provenance_id.jsonl"
+assert_provenance_mismatch "$arbitrary_provenance_id"
+near_provenance_id=24242424-2424-7242-8242-242424242424
+printf '%s\n' \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$near_provenance_id\",\"source\":\"exec\",\"originator\":\"Codex desktop\"}}" \
+  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$near_provenance_id.jsonl"
+assert_provenance_mismatch "$near_provenance_id"
 nonreadonly_id=33333333-3333-7333-8333-333333333333
 nonreadonly=$sessions/rollout-fixture-$nonreadonly_id.jsonl
 printf '%s\n' \
@@ -549,6 +586,7 @@ case "$output" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/response.*.txt) ;; 
 case "$workdir" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/workdir.*) ;; *) exit 95 ;; esac
 dd of=/dev/null 2>/dev/null
 [ -z "${FAKE_CODEX_MARKER-}" ] || : >"$FAKE_CODEX_MARKER"
+if [ "${FAKE_CODEX_CASE-valid}" = heartbeat ]; then sleep 1; fi
 attempt=1
 if [ -n "${FAKE_CODEX_COUNT_FILE-}" ]; then
   [ ! -f "$FAKE_CODEX_COUNT_FILE" ] || attempt=$(($(cat "$FAKE_CODEX_COUNT_FILE") + 1))
@@ -605,8 +643,10 @@ esac
 rollout=$CODEX_HOME/sessions/2026/08/30/rollout-fake-$child.jsonl
 runtime_policy=read-only
 case "${FAKE_CODEX_CASE-valid}" in runtime-invalid|runtime-invalid-malformed) runtime_policy=workspace-write ;; esac
+runtime_originator=codex_exec
+case "${FAKE_CODEX_CASE-valid}" in desktop-valid) runtime_originator='Codex Desktop' ;; provenance-mismatch) runtime_originator='Codex desktop' ;; esac
 printf '%s\n' \
-  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$child\",\"source\":\"exec\",\"originator\":\"codex_exec\"}}" \
+  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$child\",\"source\":\"exec\",\"originator\":\"$runtime_originator\"}}" \
   "{\"type\":\"turn_context\",\"payload\":{\"model\":\"$model\",\"effort\":\"high\",\"sandbox_policy\":{\"type\":\"$runtime_policy\"},\"permission_profile\":{\"type\":\"managed\"}}}" >"$rollout"
 printf '%s\n' "{\"type\":\"thread.started\",\"thread_id\":\"$child\"}"
 if [ "${FAKE_CODEX_CASE-valid}" = duplicate-thread ]; then
@@ -631,6 +671,12 @@ jq -e '.status=="completed" and .runtime.agent_role=="advisor-terra" and .runtim
 for progress_line in 'launching advisor-terra (gpt-5.6-terra, high, read-only)' 'inspecting persisted runtime evidence' 'consultation verified'; do
   grep -Fq "$progress_line" "$transport_err" || fail "transport stderr progress missing: $progress_line"
 done
+
+heartbeat_err=$tmp/heartbeat-err.txt
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=heartbeat FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/heartbeat-out.json" 2>"$heartbeat_err" || fail "heartbeat transport fixture failed"
+[ "$(grep -Fc 'child invocation still running (attempt 1)' "$heartbeat_err")" -eq 1 ] || fail "heartbeat was not emitted once and cleaned up"
+[ "$(wc -l <"$tmp/heartbeat-out.json" | tr -d ' ')" -eq 1 ] || fail "heartbeat fixture contaminated stdout"
 
 whitespace_count=$tmp/whitespace-count
 whitespace_out=$tmp/whitespace-out.json
@@ -682,6 +728,13 @@ for terminal_case in launcher-failure duplicate-thread same-session runtime-inva
     sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>&1; then fail "transport accepted terminal case: $terminal_case"; fi
   [ "$(cat "$terminal_count")" -eq 1 ] || fail "transport retried terminal case: $terminal_case"
 done
+
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=desktop-valid FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/desktop-transport-out.json" 2>"$tmp/desktop-transport-err.txt" || fail "transport rejected exact Codex Desktop provenance"
+jq -e '.status=="completed" and .runtime.transport=="codex-exec" and .runtime.sandbox_policy_type=="read-only"' "$tmp/desktop-transport-out.json" >/dev/null || fail "desktop transport result mismatch"
+if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=provenance-mismatch FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>"$tmp/provenance-transport-err.txt"; then fail "transport accepted near-match provenance"; fi
+grep -Fq 'runtime_provenance_mismatch' "$tmp/provenance-transport-err.txt" || fail "transport did not preserve provenance mismatch category"
 
 misordered_packet=$tmp/misordered-packet.txt
 printf '%s\n' CONTEXT 'evidence' DECISION 'question' OPTIONS 'choice' BOUNDARIES 'limits' REQUEST 'challenge' >"$misordered_packet"

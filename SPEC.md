@@ -11,6 +11,9 @@ The distributable plugin identity is `advisor`. Its single skill is `consultatio
 the current release version is `1.3.0`. Local development installs may add
 one `+codex.<cachebuster>` build suffix without changing that release identity.
 
+Supported local Codex hosts are **Codex CLI and Codex desktop**. Generic ChatGPT is
+out of scope.
+
 ## Outcome
 
 When a Codex task contains a material design or diagnostic decision, implicit
@@ -126,7 +129,7 @@ ordinary `route: skip` path remains unchanged.
 7. For every launched child, before response classification or successful machine
    stdout, the wrapper runs `inspect-agent-runtime.sh` for that child and the parent.
    This inspection is mandatory, not a metadata fallback, and must prove exact
-   `codex_exec` provenance, role/model, High effort, a thread distinct from the parent,
+   allowlisted `codex_exec` or `Codex Desktop` provenance, role/model, High effort, a thread distinct from the parent,
    read-only isolation, and zero-tool behavior. Structural response recognition strips
    only trailing spaces or tabs from a separate validation copy; leading indentation,
    a nonliteral-space separator, and missing, duplicate, renamed, misordered, or
@@ -405,8 +408,9 @@ Persisted-fixture pass criteria:
   persisted rollout; deterministic persisted fixtures separately prove the read-only
   consult path.
 
-The live evaluation is a native host-runtime step because it uses the installed
-subscription-authenticated Codex CLI. It records the exact version. The parent
+The live evaluation is a native host-runtime step because it uses an installed
+subscription-authenticated Codex host, either Codex CLI or Codex desktop. It records
+the exact version and surface. The parent
 keeps its authenticated Codex home; the evaluator neither copies nor links auth
 material. Each feature state uses an isolated temporary project and child runtime,
 with `--ignore-user-config`, `--ignore-rules`, `--ephemeral`, and a read-only

@@ -31,6 +31,14 @@ matches=$(find "$sessions_dir" -type f -name "rollout-*-$thread_id.jsonl" -print
 [ "$(printf '%s\n' "$matches" | awk 'NF {count++} END {print count+0}')" -eq 1 ] || fail "expected exactly one rollout match"
 rollout=$matches
 
+if jq -e -s '
+  [ .[] | select(.type=="session_meta") | .payload ] as $s |
+  ($s|length)==1 and ($s[0]|type)=="object" and
+  (($s[0].originator // null) != "codex_exec" and ($s[0].originator // null) != "Codex Desktop")
+' "$rollout" >/dev/null 2>&1; then
+  fail "runtime_provenance_mismatch"
+fi
+
 jq -ce -s --arg id "$thread_id" --arg expected_parent "$expected_parent" --arg expected_role "$expected_role" --arg expected_model "$expected_model" '
   [ .[] | select(.type=="session_meta") | .payload ] as $s |
   [ .[] | select(.type=="turn_context") | .payload ] as $t |
@@ -39,7 +47,8 @@ jq -ce -s --arg id "$thread_id" --arg expected_parent "$expected_parent" --arg e
     [$t[].sandbox_policy.type] as $b | [$t[].permission_profile.type] as $p |
     [ .[] | .. | objects | .type? |
       select(. == "function_call" or . == "custom_tool_call" or . == "collab_tool_call" or . == "tool_call" or . == "tool_use") ] as $tool_events |
-    if $s[0].id!=$id or $s[0].source!="exec" or $s[0].originator!="codex_exec" or
+    if $s[0].id!=$id or $s[0].source!="exec" or
+       ($s[0].originator!="codex_exec" and $s[0].originator!="Codex Desktop") or
        ($s[0].agent_role // null)!=null or ($s[0].parent_thread_id // null)!=null or
        ($m|unique)!=[$expected_model] or ($e|unique)!=["high"] or
        ($b|unique)!=["read-only"] or ($p|unique|length)!=1 or

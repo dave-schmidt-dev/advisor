@@ -2,9 +2,14 @@
 
 ## Distribution and execution
 
-The Plugins Directory distributes a skills-only package. Consultation executes only
-through the **local Codex runtime** on the user's own machine. Publication adds no
-hosted or remote execution path.
+Advisor is not listed in the OpenAI Plugins Directory and has not been submitted for
+review. Today it is installed from its Git repository as a Codex plugin marketplace.
+This document records what a listing would mean so that decision can be made against a
+written runtime boundary; it is not a description of current distribution.
+
+If listed, the Directory would distribute a skills-only package. Consultation would
+still execute only through the **local Codex runtime** on the user's own machine, and
+publication would add no hosted or remote execution path.
 
 ## Surface matrix
 

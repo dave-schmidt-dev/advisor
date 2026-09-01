@@ -41,8 +41,8 @@ rather than assuming a path:
 
 ```sh
 plugin_dir="$(codex plugin list --json | jq -r '.installed[] | select(.pluginId == "advisor@advisor") | .source.path')"
-test -n "$plugin_dir" && test "$plugin_dir" != null && test -d "$plugin_dir"
-sh "$plugin_dir/scripts/install-agents.sh"
+test -n "$plugin_dir" && test "$plugin_dir" != null && test -d "$plugin_dir" \
+  && sh "$plugin_dir/scripts/install-agents.sh"
 ```
 
 Start a new Codex CLI or Codex desktop thread after installation so it discovers the

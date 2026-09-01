@@ -57,7 +57,9 @@ receipt_matches_contract() {
 synthetic() {
   tmp=$(mktemp -d "${TMPDIR:-/tmp}/advisor-clean-host.XXXXXX") || fail "cannot create temporary directory"
   cleanup() { rm -rf "$tmp"; }
-  trap cleanup 0 HUP INT TERM
+  # A signal handler that only cleans up would return and resume with $tmp gone.
+  trap cleanup 0
+  trap 'cleanup; exit 130' HUP INT TERM
 
   observed=$tmp/observed-runtime.json
   receipt=$tmp/receipt.json

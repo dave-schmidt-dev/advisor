@@ -19,6 +19,23 @@ codex
 Finish the session normally, then remove only that temporary directory when the
 owner no longer needs it.
 
+For a guided version of this flow, run the repository helper from a fresh terminal:
+
+```sh
+sh public-release/run-clean-host-receipt.sh
+```
+
+It creates and keeps a fresh `CODEX_HOME`, verifies the local tracked tree is clean,
+derives the current `HEAD` SHA, runs the marketplace add against that SHA,
+runs and verifies the owner-controlled ChatGPT login flow, pauses for one
+consultation, resolves the installed plugin directory, checks the installed and source
+manifest versions match, and binds external evidence to the fresh-root sessions
+before `verify-clean-host.sh` captures. It never runs the consultation or removes
+`CODEX_HOME`;
+the helper prints the manual removal command.
+Save the observed runtime/launcher JSON outside the fresh root when the helper asks
+for its path.
+
 ## Install the candidate
 
 Register the marketplace, then install its Advisor entry. The marketplace itself may
@@ -28,7 +45,7 @@ content always comes from the marketplace checkout rather than from a separate
 download.
 
 ```sh
-codex plugin marketplace add dave-schmidt-dev/advisor --ref main
+codex plugin marketplace add dave-schmidt-dev/advisor --ref "$(git rev-parse HEAD)"
 codex plugin add advisor@advisor
 ```
 
@@ -69,13 +86,59 @@ fresh-host path requires the following conditions. Each missing condition produc
 A correct consultation crosses the narrow `require_escalated` launcher boundary,
 starts a distinct read-only child, and uses an advisor with zero tools. The runtime
 evidence must report the actual transport, model, effort, and sandbox policy; do not
-edit those values to make a check pass.
+edit those values to make a check pass. The captured receipt redacts thread identifiers
+and stores only `agent_role`, `transport`, `model`, `effort`,
+`sandbox_policy_type`, and `permission_profile_type`.
+
+## Candidate-current acceptance record
+
+### Candidate version
+
+The public-listing identity is candidate version `1.3.0`; the installed plugin
+manifest records build metadata as `1.3.0+codex.20260831221407`. The helper pins the
+marketplace candidate to local `HEAD` and verifies installed manifest version parity
+before capture. The candidate content digest is recorded in
+[`release-notes-draft.md`](release-notes-draft.md). Before submission, the release
+owner runs `sh public-release/freeze-candidate.sh --check` and pins the reviewed
+commit with the documented `advisor-v1.3.0` tag.
+
+### Host preflight
+
+The attended clean-host run created an empty `CODEX_HOME`, completed and verified
+the fresh-root ChatGPT login, registered the `advisor` marketplace, installed the
+resolved plugin copy, and installed its two advisor profiles. This host preflight
+was completed before the consultation; it did not reuse a prior Codex root or copy
+credentials into the fresh root.
+
+### Eligible consultation
+
+One eligible consultation then completed in a new fresh-root Codex session. Its
+captured allowlisted runtime receipt identifies `advisor-terra` with `gpt-5.6-terra` or
+`advisor-sol` with `gpt-5.6-sol`, `codex-exec` transport, high effort, a read-only
+sandbox, and a managed permission profile. The receipt is runtime evidence only:
+it intentionally does not preserve conversation content or session identifiers.
+
+### Unavailable evidence
+
+No unavailable evidence was produced by this successful attended run. The supported
+failure contract is nevertheless part of the acceptance record: a missing host
+prerequisite, unsupported surface, incomplete runtime evidence, or a non-read-only
+child produces `route: unavailable` and starts no consultation transport. Receipt
+capture also rejects incomplete or non-read-only evidence without replacing a
+previous valid receipt.
 
 ## Capture the owner receipt
 
 After one attended consultation, save the observed runtime-inspector JSON or the
-launcher result JSON that contains its `runtime` object. Then capture the receipt to
-the intended evidence path explicitly:
+launcher result JSON that contains its `runtime` object. The helper parses only
+`thread_id`, `parent_thread_id`, `agent_role`, and `model` from that file, binds
+those identities to the fresh `CODEX_HOME` sessions via
+`inspect-agent-runtime.sh`, and captures the inspector-emitted runtime JSON to the
+intended evidence path explicitly:
+
+The standalone capture command below validates the supplied runtime evidence file only;
+the identity binding to fresh-root sessions is performed by
+`public-release/run-clean-host-receipt.sh`:
 
 ```sh
 sh public-release/verify-clean-host.sh --capture \
@@ -85,7 +148,6 @@ sh public-release/verify-clean-host.sh --capture \
 
 The capture command has no default destination. It copies only observed allowlisted
 fields into a temporary file, applies the clean-host predicate to that file, and moves
-it into place only when the predicate holds. If the observed child was not read-only,
-or if any observed field is missing, the command exits nonzero and writes no receipt
-at all: the evidence path is never left holding a file that does not represent a valid
-attended consultation.
+it into place only when the predicate holds. No new receipt replaces an existing valid
+receipt; if the observed child was not read-only or evidence is incomplete, the
+command exits nonzero and the previously stored receipt remains unchanged.

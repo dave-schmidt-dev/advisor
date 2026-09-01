@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="primaryShield" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="solAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <linearGradient id="innerGlow" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="#334155" stroke-width="2" stroke-opacity="0.6" />
+
+  <!-- Outer Architectural Shield / Diamond Frame -->
+  <g transform="translate(256, 256)">
+    <!-- Base Shield Silhouette -->
+    <path d="M 0 -160 L 140 -80 L 140 50 C 140 120 70 170 0 190 C -70 170 -140 120 -140 50 L -140 -80 Z"
+          fill="#1e293b"
+          stroke="#475569"
+          stroke-width="6"
+          stroke-linejoin="round" />
+
+    <!-- Dual Tier Chevron Bands (Terra & Sol consultation representation) -->
+    <!-- Left Wing (Terra Tier) -->
+    <path d="M 0 -130 L 110 -65 L 110 40 C 110 95 55 140 0 160 Z"
+          fill="url(#primaryShield)"
+          fill-opacity="0.18"
+          stroke="url(#primaryShield)"
+          stroke-width="5"
+          stroke-linejoin="round" />
+
+    <!-- Right Accent Node (Sol Tier) -->
+    <path d="M 0 -130 L -110 -65 L -110 40 C -110 95 -55 140 0 160 Z"
+          fill="url(#solAccent)"
+          fill-opacity="0.12"
+          stroke="url(#solAccent)"
+          stroke-width="5"
+          stroke-linejoin="round" />
+
+    <!-- Center Consultation Prism / Decision Diamond -->
+    <path d="M 0 -85 L 65 -20 L 0 45 L -65 -20 Z"
+          fill="#0f172a"
+          stroke="#e2e8f0"
+          stroke-width="6"
+          stroke-linejoin="round" />
+
+    <!-- Central Focus Core -->
+    <circle cx="0" cy="-20" r="16" fill="#38bdf8" />
+    <circle cx="0" cy="-20" r="8" fill="#ffffff" />
+
+    <!-- Deliberation Ray Lines (Top, Left, Right, Bottom) -->
+    <line x1="0" y1="-85" x2="0" y2="-125" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" />
+    <line x1="65" y1="-20" x2="105" y2="-20" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" />
+    <line x1="-65" y1="-20" x2="-105" y2="-20" stroke="#fbbf24" stroke-width="4" stroke-linecap="round" />
+    <line x1="0" y1="45" x2="0" y2="100" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Bottom Stable Anchor -->
+    <circle cx="0" cy="105" r="7" fill="#64748b" />
+  </g>
+</svg>

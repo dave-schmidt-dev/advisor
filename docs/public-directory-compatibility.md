@@ -53,7 +53,8 @@ with no MCP server are explicitly permitted.
 
 ## Owner decision
 
-OWNER DECISION: pending
+OWNER DECISION: approved
 
-The owner must replace `pending` with `approved` or `rejected`. Approval authorizes
-only local packaging work; it does not authorize submission or publication.
+Approved by the owner on 2026-08-31: Advisor will be listed when the candidate is
+ready. Approval authorizes local packaging work only; submission and publication
+remain separate owner actions.

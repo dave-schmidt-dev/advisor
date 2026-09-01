@@ -128,7 +128,13 @@ PY
 # documentation rule is therefore stricter: any line naming MCP or a hosted service
 # must also carry a negation, so an affirmative claim cannot reach the listing.
 is_public_document() {
+  # Normalize first: a relative path such as `docs/listing.md` has no leading
+  # component for `*/docs/` to bind to, so the pattern would silently miss it.
   case "$1" in
+    /*) candidate=$1 ;;
+    *) candidate=./$1 ;;
+  esac
+  case "$candidate" in
     */docs/*.md|*/README.md|*/NOTICE.md) return 0 ;;
     *) return 1 ;;
   esac
@@ -136,7 +142,9 @@ is_public_document() {
 
 scan_file() {
   file=$1
-  if grep -E -q '/Users/' "$file"; then
+  # The bracket expression stops this line from matching itself when the
+  # validator scans its own source, and widens the check to a lowercase home.
+  if grep -E -q '/[Uu]sers/' "$file"; then
     fail "disclosure hazard (absolute home path): $file"
   fi
   if grep -E -q 'sk-[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|xoxb-[A-Za-z0-9-]{20,}|BEGIN [A-Z ]*PRIVATE KEY' "$file"; then

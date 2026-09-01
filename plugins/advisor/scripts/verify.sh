@@ -133,6 +133,17 @@ done
 grep -Eq 'non-Codex.*route: unavailable' "$skill" || fail "non-Codex unavailable route missing from skill"
 pass "non-Codex surfaces document the unavailable route"
 
+for document in "$skill" "$repo_dir/SPEC.md" "$operations"; do
+  grep -Fqi 'completion consultation' "$document" || fail "completion-consultation contract missing: $document"
+done
+# Gate the rule itself, not the frontmatter restatement of it: the description alone
+# must not be able to satisfy this check.
+grep -Fq 'Emit a second `ADVISOR DECISION`' "$skill" || fail "skill omits the completion-consultation rule"
+grep -Fq 'Complex work is about to be declared complete' "$repo_dir/SPEC.md" || fail "SPEC omits the completion trigger condition"
+grep -Fqi 'takes one completion consultation before it is declared complete' "$operations" || fail "operations omits the completion-consultation rule"
+if grep -Fqi 'completion consultation is a final diff review' "$skill"; then fail "completion consultation must not claim final review"; fi
+pass "complex work takes one completion consultation that never becomes final review"
+
 [ -s "$compat_doc" ] || fail "public directory compatibility document missing or empty: $compat_doc"
 python3 - "$compat_doc" <<'PY'
 import re

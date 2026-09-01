@@ -50,7 +50,10 @@ distinct process. Missing, conflicting, malformed, or duplicate evidence emits o
 `ADVISOR DECISION` with `route: unavailable`, no `ADVISOR CALL`, and no consultation
 process, without blocking root-owned work. Ordinary work still emits `route: skip`.
 An identified parent emits `route: consult`, with a task-specific reason and bounded
-question. A valid consult uses exactly one role label selected by decision risk. Standard consultation,
+question. Complex work also takes one completion consultation before it is declared
+complete, when the task already consulted or spans multiple phases, files, or
+sessions; it asks whether the finished work meets its stated contract and never
+becomes the final diff review, which stays with its existing owner. A valid consult uses exactly one role label selected by decision risk. Standard consultation,
 including generic advisor requests, uses `advisor-terra` (`gpt-5.6-terra` / High).
 Specialist consultation uses `advisor-sol` (`gpt-5.6-sol` / High) only for an
 unresolved security or trust boundary, an irreversible migration or data-loss

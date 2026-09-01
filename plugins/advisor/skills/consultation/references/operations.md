@@ -235,6 +235,13 @@ totals remain aggregate-only. It never changes sessions or Codex configuration.
 
 ## Trigger evaluation
 
+Complex work takes one completion consultation before it is declared complete: the
+task already consulted, or it spans multiple phases, files, or sessions. It is an
+ordinary bounded consultation with the same records, transport, isolation, and
+inspection, asking whether the finished work meets its stated contract and what
+evidence would falsify that. It never becomes a final diff review or release
+verification, and routine or already-skipped work takes none.
+
 Static verification is non-networked:
 
 ```sh

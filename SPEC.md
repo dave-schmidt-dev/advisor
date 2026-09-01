@@ -33,7 +33,7 @@ Switchyard where applicable.
 The skill description must front-load both positive and negative matching terms.
 `agents/openai.yaml` must explicitly set `policy.allow_implicit_invocation: true`.
 
-Consult once when at least one condition is true:
+Consult once per decision when at least one condition is true:
 
 1. The task requires choosing between viable architectures, interfaces, data
    models, or compatibility behaviors.
@@ -45,6 +45,11 @@ Consult once when at least one condition is true:
    irreversible-state behavior.
 5. The user explicitly asks for an advisor, challenge, second opinion, or
    architecture review.
+6. Complex work is about to be declared complete. This completion consultation
+   applies when the task already consulted, or when it spans multiple phases,
+   files, or sessions. Its decision question is whether the finished work meets
+   its stated contract and what evidence would falsify that. It is not the final
+   diff review of skip condition 4, which stays with its existing owner.
 
 Skip when every applicable condition is routine:
 

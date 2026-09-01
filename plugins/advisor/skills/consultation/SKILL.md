@@ -1,6 +1,6 @@
 ---
 name: consultation
-description: Consult for material architecture, interface, data-model, or compatibility choices; cross-module, process, persistence, trust, or concurrency boundaries; competing diagnoses after evidence; security, privacy, authorization, migration, recovery, or irreversible-state changes; and explicit advisor, challenge, second-opinion, or architecture-review requests. Skip factual/status/summarization work, fully determined mechanical edits, formatting/renaming/docs synchronization, settled-plan execution, final review owned elsewhere, explicit no-delegation/root-only requests, and every borderline case.
+description: Consult for material architecture, interface, data-model, or compatibility choices; cross-module, process, persistence, trust, or concurrency boundaries; competing diagnoses after evidence; security, privacy, authorization, migration, recovery, or irreversible-state changes; and explicit advisor, challenge, second-opinion, or architecture-review requests; and the completion consultation that complex multi-phase or multi-file work takes before it is declared complete. Skip factual/status/summarization work, fully determined mechanical edits, formatting/renaming/docs synchronization, settled-plan execution, final review owned elsewhere, explicit no-delegation/root-only requests, and every borderline case.
 ---
 
 # Advisor consultation
@@ -40,6 +40,16 @@ question: <bounded decision question, or none>
 Consult when at least one positive trigger in the description applies. Skip when all
 applicable work is routine, the user forbids delegation, or eligibility is borderline.
 General quality is not a decision question.
+
+Complex work takes one completion consultation before it is declared complete. This
+applies when the task already took `route: consult`, or when it spans multiple phases,
+files, or sessions. Emit a second `ADVISOR DECISION` and consult before reporting the
+work done. The bounded question is whether the finished work meets its stated contract
+and what evidence would falsify that. It is not a final diff review or release
+verification, which stay outside this plugin and with their existing owner: the root
+still owns verification and acceptance, and the advisor still uses zero tools and sees
+only the packet. Routine, single-step, and already-skipped work takes no completion
+consultation.
 
 An identified parent uses `route: consult`, including a normal `workspace-write`
 root. An unavailable parent uses `route: unavailable`, emits no `ADVISOR CALL`,

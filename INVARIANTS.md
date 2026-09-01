@@ -29,7 +29,7 @@ rationale: The plugin may spawn one fresh read-only advisor but may not implemen
 area: ["plugins/advisor/evals/**", "plugins/advisor/skills/consultation/**"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
-rationale: Eligible tasks consult exactly once, while routine and borderline tasks spawn no advisor.
+rationale: Eligible tasks consult once per decision and complex work adds one completion consultation before it is declared complete, while routine and borderline tasks spawn no advisor.
 
 ### INV-5 — Exact runtime identity and isolation
 area: ["plugins/advisor/agents/**", "plugins/advisor/scripts/evaluate-triggers.sh", "plugins/advisor/scripts/inspect-agent-runtime.sh", "plugins/advisor/scripts/inspect-parent-runtime.sh", "plugins/advisor/scripts/run-advisor.sh", "docs/public-directory-compatibility.md"]

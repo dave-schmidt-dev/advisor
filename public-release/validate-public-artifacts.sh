@@ -33,6 +33,8 @@ manifest=$plugin_dir/.codex-plugin/plugin.json
 marketplace=$repo_dir/.agents/plugins/marketplace.json
 skill=$plugin_dir/skills/consultation/SKILL.md
 operations=$plugin_dir/skills/consultation/references/operations.md
+advisor_terra=$plugin_dir/agents/advisor-terra.toml
+advisor_sol=$plugin_dir/agents/advisor-sol.toml
 
 candidate_contract() {
   [ -f "$manifest" ] || fail "missing manifest: $manifest"
@@ -127,15 +129,34 @@ PY
 # Documentation makes public claims; scripts mention MCP only to forbid it. The
 # documentation rule is therefore stricter: any line naming MCP or a hosted service
 # must also carry a negation, so an affirmative claim cannot reach the listing.
-is_public_document() {
-  # Normalize first: a relative path such as `docs/listing.md` has no leading
-  # component for `*/docs/` to bind to, so the pattern would silently miss it.
+normalize_candidate() {
+  # A relative path such as `docs/listing.md` has no leading component for
+  # `*/docs/` to bind to, so every pattern below matches the normalized form.
   case "$1" in
     /*) candidate=$1 ;;
     *) candidate=./$1 ;;
   esac
+}
+
+is_public_document() {
+  normalize_candidate "$1"
   case "$candidate" in
     */docs/*.md|*/README.md|*/NOTICE.md) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Customer content and model entitlement are claims a reviewer acts on, so they
+# are checked wherever a claim can be made: public documents and the submission
+# pack. They are deliberately not checked in arbitrary scripts, which reference
+# retired models as removal fixtures rather than as entitlement claims. Keying
+# this on the path rather than on the invocation mode keeps one file's verdict
+# the same no matter which way the validator was called.
+is_claim_surface() {
+  is_public_document "$1" && return 0
+  normalize_candidate "$1"
+  case "$candidate" in
+    */public-release/submission-tests/*) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -149,6 +170,19 @@ scan_file() {
   fi
   if grep -E -q 'sk-[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|xoxb-[A-Za-z0-9-]{20,}|BEGIN [A-Z ]*PRIVATE KEY' "$file"; then
     fail "disclosure hazard (credential pattern): $file"
+  fi
+  if is_claim_surface "$file"; then
+    # Synthetic-case tripwire, not a general content classifier. Markers: [Cc]ustomer
+    # [Nn]ame:, [Cc]lient [Nn]ame:, [Rr]eal [Uu]ser [Dd]ata, [Pp]roduction
+    # [Dd]ata, and [Aa]ctual [Tt]ranscript. Brackets prevent source self-matches.
+    if grep -E -i -q '([Cc]ustomer|[Cc]lient)[[:space:]]+[Nn]ame:[[:space:]]*|[Rr]eal[[:space:]]+[Uu]ser[[:space:]]+[Dd]ata|[Pp]roduction[[:space:]]+[Dd]ata|[Aa]ctual[[:space:]]+[Tt]ranscript' "$file"; then
+      fail "disclosure hazard (non-synthetic customer content marker): $file"
+    fi
+    allowed_models=$(awk -F ' = ' '$1 == "model" { gsub(/"/, "", $2); print $2 }' "$advisor_terra" "$advisor_sol" | sort -u)
+    model_references=$(grep -E -i -o '([Gg][Pp][Tt]|[Cc][Ll][Aa][Uu][Dd][Ee]|[Gg][Ee][Mm][Ii][Nn][Ii]|[Gg][Rr][Oo][Kk])-[A-Za-z0-9.]+-[A-Za-z0-9][A-Za-z0-9._-]*' "$file" || true)
+    for model_reference in $model_references; do
+      printf '%s\n' "$allowed_models" | grep -F -x -q "$model_reference" || fail "disclosure hazard (unavailable model entitlement): $file ($model_reference)"
+    done
   fi
   if grep -E -i -q '((codex[[:space:]]+advisor|advisor|the[[:space:]]+plugin)[[:space:]]+(runs|is[[:space:]]+running|operates|hosts|provides|starts)[[:space:]]+(as[[:space:]]+)?(an?[[:space:]]+)?(MCP[[:space:]]+server|hosted[[:space:]]+service))' "$file"; then
     fail "disclosure hazard (MCP or hosted-service claim): $file"

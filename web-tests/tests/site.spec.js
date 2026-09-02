@@ -119,7 +119,6 @@ test('every page uses the shared global navigation', async ({ page }) => {
   const expected = [
     ['Home', 'https://zerodelta.dev/'],
     ['Advisor', 'https://zerodelta.dev/advisor/'],
-    ['GitHub', 'https://github.com/dave-schmidt-dev'],
   ];
 
   for (const { path } of PAGES) {

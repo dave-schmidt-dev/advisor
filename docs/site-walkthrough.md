@@ -5,7 +5,8 @@ Candidate-current review record for `https://zerodelta.dev/advisor/`.
 ## Shared controls
 
 Every public route has the same global navigation: Zero Delta brand, Home,
-Advisor (current), and GitHub. Every route also has a keyboard skip link.
+and Advisor. Advisor is marked current on the landing page. Every route also
+has a keyboard skip link.
 
 ## Landing — `/advisor/`
 

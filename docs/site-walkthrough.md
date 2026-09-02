@@ -104,6 +104,13 @@ Live checks against the deployed site returned HTTP 200 for `/advisor/`,
 `/advisor/assets/style.css`, and `/advisor/sitemap.xml`, with no console error,
 no failed request, and zero horizontal overflow at iPhone 13 width.
 
+All four pages were reviewed as full-page renders at desktop width, not only as
+route checks: heading hierarchy, the doc-head metadata block, code blocks, the
+compatibility and metadata tables, list numbering, the callout, and the footer
+all render as intended, with no clipped or overlapping content. Automated checks
+catch overflow and broken links; they do not catch visual defects, which is why
+this pass is recorded separately.
+
 `public-release/validate-public-artifacts.sh` now treats `site/*.html` as a
 public document, so the deployed pages are held to the same model-entitlement
 rule as the drafts, and to the same rule that no mention of an MCP server or a

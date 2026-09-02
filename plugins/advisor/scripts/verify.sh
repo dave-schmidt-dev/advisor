@@ -45,7 +45,7 @@ sol=tomllib.loads(Path(sys.argv[4]).read_text())
 cases=json.loads(Path(sys.argv[5]).read_text())
 ui=Path(sys.argv[6]).read_text()
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or not re.fullmatch(r"1\.3\.0(?:\+codex\.[0-9A-Za-z.-]+)?",version): raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or version!="1.3.3": raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if "David Schmidt / Zero Delta LLC" not in author_name or "Daniel McAteer" not in author_name: raise SystemExit("maintainer/original-author identity")
@@ -176,11 +176,14 @@ PY
 pass "exact codex_exec or Codex Desktop provenance allowlist documented across contracts"
 grep -Fqi 'FOLLOW-UP AREAS' "$repo_dir/SPEC.md" || fail "SPEC follow-up placement missing"
 if grep -Fq 'specific missing evidence under CHANGE MY MIND' "$repo_dir/SPEC.md"; then fail "SPEC retains stale missing-evidence placement"; fi
-for document in "$manifest" "$skill" "$operations" "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
+for document in "$skill" "$operations" "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
   grep -Fqi 'trailing spaces or tabs' "$document" || fail "trailing-whitespace contract missing: $document"
   grep -Fqi 'exactly one fresh retry' "$document" || fail "single-retry contract missing: $document"
   grep -Fqi 'empty-valued' "$document" || fail "empty-valued-field contract missing: $document"
 done
+grep -Fqi 'read-only' "$manifest" || fail "listing omits read-only boundary"
+grep -Fqi 'tool-free' "$manifest" || fail "listing omits tool-free boundary"
+grep -Fqi 'does not implement' "$manifest" || fail "listing omits implementation boundary"
 grep -Fq 'Missing, duplicate, renamed, misordered, or empty-valued fields remain malformed.' "$readme" || fail "README full malformed-field list missing"
 pass "retry, trailing-whitespace, and empty-valued-field documentation parity"
 grep -Fqi 'accepting that plan' "$operations" || fail "research-first disposition semantics missing"
@@ -1203,4 +1206,4 @@ pass "README, NOTICE, LICENSE, UI, and operations parity"
 sh -n "$script_dir"/*.sh
 [ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.3.0 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.3.3 consultation-only static contract"

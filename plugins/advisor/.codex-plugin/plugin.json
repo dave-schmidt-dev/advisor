@@ -1,6 +1,6 @@
 {
   "name": "advisor",
-  "version": "1.3.0+codex.20260831221407",
+  "version": "1.3.3",
   "description": "One fresh, read-only consultation for material technical decisions in Codex CLI and Codex desktop.",
   "author": {
     "name": "David Schmidt / Zero Delta LLC (maintainer); Daniel McAteer (original author)"
@@ -17,8 +17,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Codex Advisor",
-    "shortDescription": "Read-only second opinions for architecture and technical decisions.",
-    "longDescription": "Advisor implicitly matches material architecture, interface, data-model, compatibility, cross-boundary, and competing-diagnosis decisions. The root declares consult or skip before implementation, then surrounds every consult with visible ADVISOR CALL and ADVISOR RESULT receipts. It selects one of two exact role labels by decision risk and invokes the fixed installed-plugin launcher through the escalated-command boundary so a distinct Codex consultation process can start with the pinned Terra or Sol model, High effort, and an explicit read-only sandbox. Every launched child is runtime-inspected before response classification. Structural labels tolerate only trailing spaces or tabs without changing returned bytes; leading indentation, a nonliteral-space separator, duplicate, renamed, misordered, or empty-valued fields remain malformed. Exactly one fresh retry is allowed only after a runtime-valid empty or malformed first response. Launcher, event, identity, same-session, runtime, model, effort, isolation, normalization, and tool failures never retry, and a second malformed response fails closed. Standard consultation and generic advisor requests use Advisor Terra. Advisor Sol is reserved for unresolved security or trust boundaries, irreversible migration or data-loss decisions, and credible unresolved High-severity disagreement. A normal workspace-write root may consult because isolation belongs to the distinct transport. Unavailable evidence is visibly blocked and fail-closed. Advice is non-authoritative, and the plugin never implements, routes work, or performs final review.",
+    "shortDescription": "Read-only technical advice",
+    "longDescription": "Codex Advisor automatically adds a fresh, read-only second opinion when Codex identifies a material technical decision.\n\nIt activates for architecture, interface and API design, data models, compatibility changes, migrations, security boundaries, and competing diagnoses. Advisor reviews the relevant context, explains the tradeoffs, identifies risks, and recommends a path forward. Routine factual, mechanical, or explicitly no-delegation work is left alone.\n\nEvery consultation runs in a separate read-only, tool-free process. It cannot change your files, run commands, browse the web, or make decisions for you. You remain in control: Advisor does not implement, deploy, or perform final review.",
     "developerName": "David Schmidt / Zero Delta LLC",
     "logo": "./assets/advisor-logo.png",
     "composerIcon": "./assets/advisor-composer-icon.png",
@@ -28,8 +28,9 @@
       "Read"
     ],
     "defaultPrompt": [
-      "Use $advisor:consultation for a material technical decision.",
-      "Ask Advisor for a fresh, read-only second opinion."
+      "Should we split this service into microservices?",
+      "Review this database migration plan.",
+      "Which API design is safer for this integration?"
     ]
   }
 }

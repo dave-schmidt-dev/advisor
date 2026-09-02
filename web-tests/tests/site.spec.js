@@ -7,7 +7,7 @@
 const { test, expect } = require('@playwright/test');
 
 const PAGES = [
-  { path: '/', title: /Codex Advisor/, heading: /Second opinions before you ship/ },
+  { path: '/', title: /Codex Advisor/, heading: /Codex Advisor/ },
   { path: '/privacy/', title: /Privacy Policy/, heading: /Privacy Policy/ },
   { path: '/terms/', title: /Terms of Service/, heading: /Terms of Service/ },
   { path: '/support/', title: /Support/, heading: /Support & Troubleshooting/ },
@@ -115,17 +115,22 @@ test('the site tree is relocatable', async ({ page }) => {
   }
 });
 
-test('cross-page anchors point at real targets', async ({ page }) => {
-  // The nav on subpages links back to the landing page's #install anchor. A
-  // rename there would silently break three pages.
-  await page.goto('/privacy/');
-  const href = await page
-    .locator('.site-nav a', { hasText: 'Install' })
-    .getAttribute('href');
-  expect(href).toBe('../#install');
+test('every page uses the shared global navigation', async ({ page }) => {
+  const expected = [
+    ['Home', 'https://zerodelta.dev/'],
+    ['Advisor', 'https://zerodelta.dev/advisor/'],
+    ['GitHub', 'https://github.com/dave-schmidt-dev'],
+  ];
 
-  await page.goto('/');
-  await expect(page.locator('#install')).toHaveCount(1);
+  for (const { path } of PAGES) {
+    await page.goto(path);
+    const links = await page.locator('.site-nav a').evaluateAll((items) =>
+      items.map((item) => [item.textContent.trim(), item.href])
+    );
+    expect(links).toEqual(expected);
+    const current = await page.locator('.site-nav a[aria-current="page"]').allTextContents();
+    expect(current).toEqual(path === '/' ? ['Advisor'] : []);
+  }
 });
 
 test('canonical URLs point at the deployed path', async ({ page }) => {

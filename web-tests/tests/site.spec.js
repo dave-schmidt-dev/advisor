@@ -163,6 +163,18 @@ test('shared Zero Delta visual system', async ({ page }) => {
   expect(chrome.prefix).toContain('>');
 });
 
+test('landing hero aligns with the shared brand edge', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.locator('.product-mark')).toHaveCount(0);
+  const positions = await page.evaluate(() => ({
+    heading: document.querySelector('.hero h1').getBoundingClientRect().x,
+    brand: document.querySelector('.global-brand').getBoundingClientRect().x,
+  }));
+
+  expect(positions.heading).toBe(positions.brand);
+});
+
 test('claim surface matches the validated listing', async ({ page }) => {
   // These claims are load-checked against docs/public-listing.md. Drift here
   // is a directory-submission problem, not a cosmetic one.

@@ -170,20 +170,6 @@ a:focus-visible {
     background: var(--panel);
 }
 
-.hero-grid {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: start;
-    gap: 18px;
-}
-
-.product-mark {
-    width: 48px;
-    height: 48px;
-    margin-top: 4px;
-    border-radius: 12px;
-}
-
 .status-pill {
     display: inline-flex;
     align-items: center;
@@ -604,8 +590,6 @@ tbody tr:last-child td {
     .hero { padding: 22px 0 26px; }
     main section { padding: 26px 0; }
     .site-nav { gap: 10px; font-size: 0.7rem; }
-    .hero-grid { grid-template-columns: 1fr; gap: 14px; }
-    .product-mark { width: 42px; height: 42px; }
     .steps, .fact-grid { grid-template-columns: 1fr; }
 }
 

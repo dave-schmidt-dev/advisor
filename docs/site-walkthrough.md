@@ -9,7 +9,7 @@ Advisor (current), and GitHub. Every route also has a keyboard skip link.
 
 ## Landing — `/advisor/`
 
-- Hero: product mark, version 1.3.0, one-sentence purpose, Install anchor, and Source link. No cursor animation.
+- Hero: version 1.3.0, one-sentence purpose, Install anchor, and Source link. It starts at the shared content edge with no standalone product icon or cursor animation.
 - What it does: three static steps covering selection, read-only challenge, and disposition, followed by the verified-child and unsupported-direct-profile qualifier.
 - Install: three commands in one horizontally scrollable code block; the companion step is labelled “Advisor support.”
 - Compatibility: the user's Codex/OpenAI account and no-intermediary boundary,
@@ -30,7 +30,7 @@ Reduced-motion mode disables hover motion; the prior blinking cursor was removed
 
 ## Candidate verification
 
-- `npm test`: 42 Playwright checks passed in desktop Chromium and iPhone 13 WebKit profiles.
+- `npm test`: 44 Playwright checks passed in desktop Chromium and iPhone 13 WebKit profiles.
 - All four routes loaded without console or network errors.
 - Every internal link resolved; every page had no horizontal overflow.
 - The global navigation labels and destinations matched on all four routes.

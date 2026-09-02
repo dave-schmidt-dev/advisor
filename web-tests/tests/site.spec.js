@@ -180,7 +180,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
   await page.goto('/');
   const body = await page.locator('body').innerText();
 
-  expect(body).toContain('1.3.0');
+  expect(body).toContain('1.3.4');
   expect(body).toContain('gpt-5.6-terra');
   expect(body).toContain('gpt-5.6-sol');
   expect(body).toContain('advisor-terra');

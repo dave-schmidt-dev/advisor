@@ -8,8 +8,7 @@ technical decisions; it never implements, routes implementation, or performs
 final verification.
 
 The distributable plugin identity is `advisor`. Its single skill is `consultation`, and
-the current release version is `1.3.0`. Local development installs may add
-one `+codex.<cachebuster>` build suffix without changing that release identity.
+the current release version is `1.3.4`. Release archives use that exact version.
 
 Supported local Codex hosts are **Codex CLI and Codex desktop**. Generic ChatGPT is
 out of scope.
@@ -317,13 +316,11 @@ it never implies that a technical choice was accepted when no technical choice w
   `06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d`,
   used by the intermediate v0.3.0/v0.4.0/pre-revert v0.5.0 history. Unknown blobs
   still fail closed.
-- Plugin installation identity is `advisor`. Set version `1.3.0` and make
-  the manifest author identify David Schmidt / Zero Delta LLC as the fork
-  maintainer while crediting original author Daniel McAteer. Preserve Daniel
-  McAteer's MIT copyright in `LICENSE`, add `NOTICE.md` with the upstream URL and
-  audited base commit, and credit the origin in README. Remove the upstream
-  Substack promotion, homepage, and repository values; omit homepage/repository
-  fields until an owner-authorized project remote exists.
+- Plugin installation identity is `advisor`. Set version `1.3.4` and make
+  the manifest author identify David Schmidt / Zero Delta LLC. Preserve Daniel
+  McAteer's MIT copyright in `LICENSE` and keep upstream provenance in root
+  `NOTICE.md`; do not add upstream attribution to the marketplace listing,
+  public site, README, or package. Use the owner-authorized project URLs.
 
 ## Implementation shape
 

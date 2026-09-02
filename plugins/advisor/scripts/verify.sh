@@ -45,7 +45,7 @@ sol=tomllib.loads(Path(sys.argv[4]).read_text())
 cases=json.loads(Path(sys.argv[5]).read_text())
 ui=Path(sys.argv[6]).read_text()
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or version!="1.3.3": raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or version!="1.3.4": raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if author_name!="David Schmidt / Zero Delta LLC": raise SystemExit("plugin developer identity")
@@ -1205,4 +1205,4 @@ pass "customer README, repository attribution, and lifecycle documentation parit
 sh -n "$script_dir"/*.sh
 [ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.3.3 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.3.4 consultation-only static contract"

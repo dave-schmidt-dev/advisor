@@ -1,0 +1,11 @@
+{
+  "name": "advisor-web-tests",
+  "private": true,
+  "description": "Playwright smoke coverage for the Codex Advisor public site in site/.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0"
+  }
+}

@@ -111,6 +111,28 @@ risk-described 1.3.0 roles. Later exact 1.3.0 generations use separate
 `.retired-v1.3.0` and `.retired-v1.3.0-zero-tool` paths; modified, dual, or
 colliding states fail closed.
 
+## Public site
+
+`site/` is the deployed public site: landing page, support guide, privacy policy,
+and terms of service. It is four static pages with no JavaScript and no external
+requests, published to `https://zerodelta.dev/advisor/` from the Opalstack static
+app `zerodelta`.
+
+```sh
+./deploy-site.sh --dry-run   # preview
+./deploy-site.sh             # publish
+cd web-tests && npx playwright test
+```
+
+Links inside `site/` are relative so the tree can be mounted at any path. The
+deploy forces mode `755`/`644`, because Opalstack's nginx runs as a separate user
+and a deploy that preserves restrictive local modes serves a 403.
+`public-release/validate-public-artifacts.sh` treats `site/*.html` as a public
+document, so the published pages are held to the same model-entitlement rule
+as the drafts in `docs/`, and to the same rule that no mention of an MCP server
+or a hosted service may appear without its negation. Screen-by-screen review record:
+[`docs/site-walkthrough.md`](docs/site-walkthrough.md).
+
 ## Verify
 
 ```sh

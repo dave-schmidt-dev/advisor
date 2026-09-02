@@ -1,5 +1,11 @@
 # Codex Advisor Support and Troubleshooting Guide (Draft)
 
+> **Superseded 2026-09-01.** The published version of this document is
+> [`site/support/index.html`](../site/support/index.html), deployed to `https://zerodelta.dev/advisor/`.
+> This draft is kept as the record of what the published page was written
+> from. Edit the published page, not this file.
+
+
 > **Notice:** This document is a pre-release draft. All publisher-specific entries marked `OWNER-PROVIDED` must be populated by the repository owner prior to formal directory submission.
 
 **Support Contact:** OWNER-PROVIDED support email  

@@ -14,12 +14,12 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | **Category** | Productivity |
 | **Capabilities** | Interactive, Read |
 | **Author / Maintainer** | David Schmidt / Zero Delta LLC (maintainer); Daniel McAteer (original author) |
-| **Developer / Publisher Entity** | OWNER-PROVIDED legal entity name |
-| **Publisher Website** | OWNER-PROVIDED website URL |
-| **Support URL** | OWNER-PROVIDED support URL |
-| **Support Email** | OWNER-PROVIDED support email |
-| **Privacy Policy URL** | OWNER-PROVIDED privacy policy URL |
-| **Terms of Service URL** | OWNER-PROVIDED terms URL |
+| **Developer / Publisher Entity** | Zero Delta LLC (Commonwealth of Virginia, United States) |
+| **Publisher Website** | `https://zerodelta.dev/advisor/` |
+| **Support URL** | `https://zerodelta.dev/advisor/support/` |
+| **Support Email** | `advisor@zerodelta.dev` |
+| **Privacy Policy URL** | `https://zerodelta.dev/advisor/privacy/` |
+| **Terms of Service URL** | `https://zerodelta.dev/advisor/terms/` |
 | **Logo Asset** | `assets/public-logo.svg` |
 | **Geographic Availability** | OWNER-PROVIDED country and region availability |
 | **Pricing Model** | Free / Open Source (MIT); requires user's own Codex model access |

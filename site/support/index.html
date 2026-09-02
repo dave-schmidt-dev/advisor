@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Support &amp; Troubleshooting — Codex Advisor</title>
+<meta name="description" content="Support channels, prerequisites checklist, and troubleshooting guide for the Codex Advisor plugin.">
+<link rel="canonical" href="https://zerodelta.dev/advisor/support/">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+
+<header class="site-header">
+    <div class="wrap">
+        <a class="brand" href="../"><img src="../assets/logo.svg" alt="" width="26" height="26">Codex Advisor</a>
+        <nav class="site-nav" aria-label="Primary">
+            <a href="../#install">Install</a>
+            <a href="../support/" aria-current="page">Support</a>
+            <a href="../privacy/">Privacy</a>
+            <a href="../terms/">Terms</a>
+            <a href="https://github.com/dave-schmidt-dev/advisor">Source</a>
+        </nav>
+    </div>
+</header>
+
+<div class="doc-head">
+    <div class="wrap">
+        <span class="eyebrow">Help</span>
+        <h1>Support &amp; Troubleshooting</h1>
+        <div class="doc-meta">
+            <div>Issue tracker: <a href="https://github.com/dave-schmidt-dev/advisor/issues">github.com/dave-schmidt-dev/advisor/issues</a></div>
+            <div>Email: <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a></div>
+            <div>Maintained on a best-effort basis by Zero Delta LLC.</div>
+        </div>
+    </div>
+</div>
+
+<main id="content">
+<div class="wrap">
+
+<section aria-labelledby="channels">
+    <h2 id="channels">1. Support channels</h2>
+    <p>For bug reports and feature questions, the <a href="https://github.com/dave-schmidt-dev/advisor/issues">GitHub issue tracker</a> is the primary channel — it keeps the discussion public and searchable for the next person hitting the same thing. Use <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a> for anything you would rather not file publicly.</p>
+    <p>Codex Advisor is an open-source project maintained on a best-effort basis. There is no response-time commitment.</p>
+</section>
+
+<section aria-labelledby="scope">
+    <h2 id="scope">2. Supported platforms and scope</h2>
+    <h3>Supported</h3>
+    <ul>
+        <li><strong>Codex CLI</strong> on macOS and Linux.</li>
+        <li><strong>Codex desktop</strong> on macOS and Linux, with persisted sessions.</li>
+    </ul>
+    <h3>Out of scope</h3>
+    <ul>
+        <li><strong>Generic ChatGPT alone.</strong> With no local Codex runtime, preflight emits <code>route: unavailable</code>.</li>
+        <li><strong>Remote and hosted services.</strong> The plugin operates with no MCP server and no hosted service; neither is supported.</li>
+        <li><strong>Native Codex subagents as a consultation transport.</strong> They inherit parent permissions and cannot supply the required read-only isolation guarantee.</li>
+    </ul>
+</section>
+
+<section aria-labelledby="checklist">
+    <h2 id="checklist">3. Prerequisites checklist</h2>
+    <p>Work through this before opening a ticket. Most <code>route: unavailable</code> reports resolve here.</p>
+    <ol>
+        <li>Codex CLI or Codex desktop is installed and operational.</li>
+        <li><code>jq</code> is installed and on your <code>$PATH</code> — check with <code>which jq</code>.</li>
+        <li>You have a <code>/bin/sh</code>-compliant POSIX shell.</li>
+        <li>An active persisted Codex session rollout exists in your Codex home directory.</li>
+        <li><code>CODEX_THREAD_ID</code> is set in the active parent execution context.</li>
+        <li>The escalated launcher permission (<code>require_escalated</code>) is enabled for the installed plugin launcher script.</li>
+        <li>Your subscription has model availability for <code>gpt-5.6-terra</code> and <code>gpt-5.6-sol</code>.</li>
+    </ol>
+</section>
+
+<section aria-labelledby="scenarios">
+    <h2 id="scenarios">4. Common scenarios</h2>
+
+    <h3>A. Preflight returns <code>route: unavailable</code></h3>
+    <p><strong>Symptom.</strong> The root agent emits:</p>
+<pre><code>ADVISOR DECISION
+route: unavailable</code></pre>
+    <p><strong>Cause.</strong> <code>inspect-parent-runtime.sh</code> could not verify the parent environment or a prerequisite.</p>
+    <p><strong>Remedies.</strong> Confirm <code>jq</code> is installed and reachable. Confirm you are in an interactive, persisted Codex session — ephemeral test sessions have no persisted rollout and correctly emit <code>route: unavailable</code>. Confirm the companion scripts were installed via <code>install-agents.sh</code>.</p>
+
+    <h3>B. Model availability or authorization failure</h3>
+    <p><strong>Symptom.</strong> The consultation launcher reports a failure or an unexpected model response.</p>
+    <p><strong>Cause.</strong> Your OpenAI account lacks model availability for <code>gpt-5.6-terra</code> or <code>gpt-5.6-sol</code>.</p>
+    <p><strong>Remedies.</strong> Verify your subscription tier includes those models at high reasoning effort, and verify Codex authentication with the standard CLI commands.</p>
+
+    <h3>C. Response classification retry</h3>
+    <p><strong>Symptom.</strong> Stderr shows a single retry during consultation.</p>
+    <p><strong>Behavior.</strong> This is by design. A runtime-valid first child whose response is empty or structurally malformed gets exactly one fresh retry. If the retry also fails, the plugin records <code>recommendation: unavailable</code> and <code>decision: blocked</code> and stops. Packet, launcher, identity, runtime, wrong-model, wrong-effort, and tool-use failures are terminal and never retry.</p>
+</section>
+
+<section aria-labelledby="diagnostics">
+    <h2 id="diagnostics">5. Diagnostic commands</h2>
+    <p>Verify a local installation without starting Codex or making a network call:</p>
+<pre><code>sh plugins/advisor/scripts/verify.sh --static</code></pre>
+    <p>Review aggregate local consultation activity. This redacts code, prompts, filenames, paths, and identifiers:</p>
+<pre><code>sh plugins/advisor/scripts/advisor-audit.sh --window-hours 24</code></pre>
+</section>
+
+<section aria-labelledby="ticket">
+    <h2 id="ticket">6. Submitting a report</h2>
+    <p>Include these four things. Without them, the first reply is going to be a request for them.</p>
+    <ol>
+        <li>Codex host type (CLI or desktop) and version.</li>
+        <li>Operating system and shell version.</li>
+        <li>The output of <code>sh plugins/advisor/scripts/verify.sh --static</code>.</li>
+        <li>The relevant <code>ADVISOR DECISION</code>, <code>ADVISOR CALL</code>, or <code>ADVISOR RESULT</code> receipts from the conversation.</li>
+    </ol>
+    <div class="callout">
+        <p>Redact secrets and proprietary context before sending. Receipts are written into your conversation, so check what you are pasting.</p>
+    </div>
+</section>
+
+</div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <div>Codex Advisor &middot; maintained by <a href="https://zerodelta.dev">Zero Delta LLC</a></div>
+        <div class="footer-links">
+            <a href="../support/">Support</a>
+            <a href="../privacy/">Privacy</a>
+            <a href="../terms/">Terms</a>
+            <a href="https://github.com/dave-schmidt-dev/advisor">Source</a>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

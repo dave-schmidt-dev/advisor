@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Privacy Policy — Codex Advisor</title>
+<meta name="description" content="Privacy policy for the Codex Advisor plugin. The plugin runs locally with no hosted service, no MCP server, and no telemetry.">
+<link rel="canonical" href="https://zerodelta.dev/advisor/privacy/">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+
+<header class="site-header">
+    <div class="wrap">
+        <a class="brand" href="../"><img src="../assets/logo.svg" alt="" width="26" height="26">Codex Advisor</a>
+        <nav class="site-nav" aria-label="Primary">
+            <a href="../#install">Install</a>
+            <a href="../support/">Support</a>
+            <a href="../privacy/" aria-current="page">Privacy</a>
+            <a href="../terms/">Terms</a>
+            <a href="https://github.com/dave-schmidt-dev/advisor">Source</a>
+        </nav>
+    </div>
+</header>
+
+<div class="doc-head">
+    <div class="wrap">
+        <span class="eyebrow">Legal</span>
+        <h1>Privacy Policy</h1>
+        <div class="doc-meta">
+            <div>Effective date: 1 September 2026</div>
+            <div>Publisher and controller: Zero Delta LLC (Commonwealth of Virginia, United States)</div>
+            <div>Contact: <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a></div>
+            <div>Website: <a href="https://zerodelta.dev">zerodelta.dev</a></div>
+        </div>
+    </div>
+</div>
+
+<main id="content">
+<div class="wrap">
+
+<section aria-labelledby="overview">
+    <h2 id="overview">1. Overview and core principles</h2>
+    <p>Codex Advisor is an open-source, skills-only plugin designed for local use within Codex CLI and Codex desktop.</p>
+    <ul>
+        <li><strong>Local execution.</strong> The plugin operates entirely on your own machine. There is no hosted service and no remote backend infrastructure.</li>
+        <li><strong>No third-party transmission.</strong> No prompts, code snippets, project context, or consultation packets are transmitted to the maintainers, to Zero Delta LLC, or to any third-party infrastructure.</li>
+        <li><strong>No telemetry or analytics.</strong> The plugin includes no telemetry, no analytics tracking, no crash reporting, and no MCP server.</li>
+        <li><strong>Zero-tool sandboxing.</strong> Advisor child processes run in a forced read-only sandbox with zero tools enabled, which prevents outbound network connections and unsolicited local file modification.</li>
+    </ul>
+</section>
+
+<section aria-labelledby="handled">
+    <h2 id="handled">2. Information handled by the plugin</h2>
+
+    <h3>Local consultation context</h3>
+    <p>When the root agent invokes a consultation, it compiles a bounded five-section packet containing the technical decision question, and the relevant code context, architectural options, and repository boundaries that the root agent chose to supply. The packet is not intended to carry credentials, secrets, personal data, or unrelated conversation history.</p>
+    <p>That packet is processed locally by your authenticated Codex runtime through your existing OpenAI subscription. Communication with OpenAI is governed by your own OpenAI account agreement and OpenAI's privacy policy. Codex Advisor interposes no proxy, no intermediate server, and no hosted service.</p>
+
+    <h3>Local session data</h3>
+    <ul>
+        <li>Consultation activity, receipts (<code>ADVISOR CALL</code> and <code>ADVISOR RESULT</code>), and decisions are recorded locally within your persisted Codex session logs.</li>
+        <li>Those logs remain on your own storage under your configured Codex home directory, for example <code>~/.codex/sessions</code>.</li>
+        <li>The plugin never uploads, copies, or shares persisted Codex session logs.</li>
+    </ul>
+</section>
+
+<section aria-labelledby="audit">
+    <h2 id="audit">3. Local audit and diagnostic script</h2>
+    <p>The repository includes a local audit utility, <code>plugins/advisor/scripts/advisor-audit.sh</code>, for inspecting consultation metrics.</p>
+    <ul>
+        <li>It operates strictly on local persisted Codex session logs.</li>
+        <li>It calculates aggregate counts and statistics, such as consult and skip counts and token totals.</li>
+        <li>It enforces strict redaction: it never emits session content, user prompts, file paths, filenames, identifiers, contact information, secret-shaped patterns, or cost calculations.</li>
+        <li>Its output is written to local standard output and is not transmitted anywhere.</li>
+    </ul>
+</section>
+
+<section aria-labelledby="creds">
+    <h2 id="creds">4. Authentication and credentials</h2>
+    <p>Codex Advisor relies exclusively on your existing local Codex host authentication. The plugin does not request, collect, store, transmit, or handle OpenAI API keys or login credentials, and it does not read or duplicate credential files from your environment.</p>
+</section>
+
+<section aria-labelledby="third-party">
+    <h2 id="third-party">5. Third-party services and surfaces</h2>
+    <ul>
+        <li><strong>OpenAI Codex.</strong> Consultation requests execute via your local Codex installation communicating with OpenAI models (<code>gpt-5.6-terra</code> and <code>gpt-5.6-sol</code>). Data handling by OpenAI is governed by OpenAI's terms.</li>
+        <li><strong>No MCP or hosted service.</strong> Codex Advisor provides no MCP server, no hosted service, and no background cloud service.</li>
+    </ul>
+</section>
+
+<section aria-labelledby="control">
+    <h2 id="control">6. User control and data deletion</h2>
+    <p>Because all consultation data resides solely in local persisted Codex session logs on your own machine, you retain complete ownership and control. You may inspect, modify, archive, or delete those logs at any time using standard operating system tools. Removing or uninstalling the plugin removes the plugin files from your environment without affecting your repository data.</p>
+</section>
+
+<section aria-labelledby="website">
+    <h2 id="website">7. This website</h2>
+    <p>This site is a set of static pages served from Zero Delta LLC's own hosting. It sets no cookies, loads no third-party scripts or fonts, and runs no analytics or tracking. The hosting provider keeps standard web server access logs, which contain the IP address, timestamp, requested path, and user agent of each request, for operational and security purposes.</p>
+</section>
+
+<section aria-labelledby="changes">
+    <h2 id="changes">8. Changes to this policy</h2>
+    <p>Updates to this policy are published in the project repository and on this page with a revised effective date.</p>
+</section>
+
+<section aria-labelledby="contact">
+    <h2 id="contact">9. Contact</h2>
+    <p>Email is the contact channel for privacy inquiries: <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a>. A postal address is available on request.</p>
+</section>
+
+</div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <div>Codex Advisor &middot; maintained by <a href="https://zerodelta.dev">Zero Delta LLC</a></div>
+        <div class="footer-links">
+            <a href="../support/">Support</a>
+            <a href="../privacy/">Privacy</a>
+            <a href="../terms/">Terms</a>
+            <a href="https://github.com/dave-schmidt-dev/advisor">Source</a>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

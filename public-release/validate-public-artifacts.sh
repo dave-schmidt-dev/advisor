@@ -142,6 +142,10 @@ is_public_document() {
   normalize_candidate "$1"
   case "$candidate" in
     */docs/*.md|*/README.md|*/NOTICE.md) return 0 ;;
+    # The deployed site is the most public claim surface there is, so it is
+    # held to the same MCP-negation and entitlement rules as the drafts it
+    # was written from.
+    */site/*.html) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -227,7 +231,7 @@ case "$mode" in
       [ -f "$plugin_dir/$companion" ] || fail "missing permitted source-validation companion: $plugin_dir/$companion"
       pass "permitted source-validation companion: plugins/advisor/$companion"
     done
-    for artifact in "$repo_dir/README.md" "$repo_dir/NOTICE.md" "$repo_dir/LICENSE" "$repo_dir/docs" "$plugin_dir"; do
+    for artifact in "$repo_dir/README.md" "$repo_dir/NOTICE.md" "$repo_dir/LICENSE" "$repo_dir/docs" "$repo_dir/site" "$plugin_dir"; do
       scan_path "$artifact"
     done
     pass "public artifact disclosure scan"

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Codex Advisor — Second opinions before you ship</title>
+<meta name="description" content="Codex Advisor is an open-source, skills-only plugin that adds automatic, read-only architectural second opinions to Codex CLI and Codex desktop.">
+<meta property="og:title" content="Codex Advisor">
+<meta property="og:description" content="Automatic, read-only architectural and technical consultations for Codex CLI and Codex desktop.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://zerodelta.dev/advisor/">
+<link rel="canonical" href="https://zerodelta.dev/advisor/">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+
+<header class="site-header">
+    <div class="wrap">
+        <a class="brand" href="./"><img src="assets/logo.svg" alt="" width="26" height="26">Codex Advisor</a>
+        <nav class="site-nav" aria-label="Primary">
+            <a href="#install">Install</a>
+            <a href="support/">Support</a>
+            <a href="privacy/">Privacy</a>
+            <a href="terms/">Terms</a>
+            <a href="https://github.com/dave-schmidt-dev/advisor">Source</a>
+        </nav>
+    </div>
+</header>
+
+<div class="hero">
+    <div class="wrap">
+        <span class="status-pill">Version 1.3.0 &middot; MIT</span>
+        <h1>Second opinions before you ship<span class="cursor" aria-hidden="true"></span></h1>
+        <p class="subhead">Automatic, read-only architectural and technical consultations for Codex CLI and Codex desktop. Your agent still owns every decision.</p>
+        <div class="cta-row">
+            <a class="btn btn-primary" href="#install">Get started</a>
+            <a class="btn" href="https://github.com/dave-schmidt-dev/advisor">Documentation &amp; source →</a>
+        </div>
+    </div>
+</div>
+
+<main id="content">
+<div class="wrap">
+
+<section aria-labelledby="what">
+    <h2 id="what">What it is</h2>
+    <p class="lead">Codex Advisor is an open-source, skills-only plugin that provides disciplined second opinions for material technical decisions. When your root agent faces a complex architectural trade-off, an interface design, a data-model migration, or competing root-cause diagnoses, Advisor consults a fresh, read-only advisor before code gets written.</p>
+    <p>Advice is non-authoritative. The root agent reviews it against repository evidence and explicitly records whether the recommendation was accepted, modified, or rejected.</p>
+    <div class="callout">
+        <p>The plugin runs entirely on your machine. There is no hosted service, no MCP server, and no telemetry — consultation never leaves your local Codex runtime and its existing connection to OpenAI.</p>
+    </div>
+</section>
+
+<section aria-labelledby="features">
+    <h2 id="features">How it works</h2>
+
+    <div class="cards">
+        <div class="card">
+            <span class="card-label">01 — Triggering</span>
+            <h3>Disciplined, not chatty</h3>
+            <p>Consults on architecture, interface, and compatibility choices; work spanning module, trust, process, or persistence boundaries; competing root-cause diagnoses; and irreversible state, migration, security, and privacy decisions. Factual lookups, mechanical edits, doc formatting, and settled plans skip automatically.</p>
+        </div>
+        <div class="card">
+            <span class="card-label">02 — Role selection</span>
+            <h3>Two risk-calibrated tiers</h3>
+            <p><strong>Standard</strong> (<code>advisor-terra</code>, GPT&#8209;5.6 Terra, high effort) handles general architecture, interface design, data modeling, and generic second-opinion requests. <strong>Specialist</strong> (<code>advisor-sol</code>, GPT&#8209;5.6 Sol, high effort) is reserved for unresolved security or trust boundaries, irreversible migration or data-loss decisions, and credible high-severity disagreement.</p>
+        </div>
+        <div class="card">
+            <span class="card-label">03 — Isolation</span>
+            <h3>Read-only, zero tools</h3>
+            <p>Every consultation runs in a forced read-only sandbox with zero tools enabled. The advisor does not read files you did not send it, does not call tools, and does not browse the web. A runtime inspector verifies the child's provenance, model, effort, and isolation before any result is returned.</p>
+        </div>
+        <div class="card">
+            <span class="card-label">04 — Receipts</span>
+            <h3>Visible in main chat</h3>
+            <p><code>ADVISOR CALL</code> records the tier, role, reason, bounded question, and status before launch. <code>ADVISOR RESULT</code> records the verified model, high effort, read-only isolation, the recommendation, and the root agent's disposition. A skipped or unavailable preflight emits only <code>ADVISOR DECISION</code>.</p>
+        </div>
+        <div class="card">
+            <span class="card-label">05 — Fallback</span>
+            <h3>Research-first, never a guess</h3>
+            <p>When the packet lacks the evidence to choose, the advisor does not invent one. It returns a concrete research-first next step and names the missing evidence under <code>FOLLOW-UP AREAS</code>.</p>
+        </div>
+        <div class="card">
+            <span class="card-label">06 — Failure mode</span>
+            <h3>Fail closed</h3>
+            <p>Missing, conflicting, or malformed runtime evidence records <code>route: unavailable</code> with no consultation process started — and never blocks the work your root agent already owns.</p>
+        </div>
+    </div>
+</section>
+
+<section aria-labelledby="install">
+    <h2 id="install">Install</h2>
+    <p>Add the marketplace, install the plugin, then run the companion installer resolved from the installed plugin directory:</p>
+<pre><code><span class="c"># 1. Add the marketplace repository</span>
+codex plugin marketplace add dave-schmidt-dev/advisor --ref main
+
+<span class="c"># 2. Install the plugin</span>
+codex plugin add advisor@advisor
+
+<span class="c"># 3. Run the companion installer</span>
+plugin_dir="$(codex plugin list --json | jq -r '.installed[] | select(.pluginId == "advisor@advisor") | .source.path')" &amp;&amp; test -n "$plugin_dir" &amp;&amp; test "$plugin_dir" != null &amp;&amp; test -d "$plugin_dir" &amp;&amp; test -f "$plugin_dir/scripts/install-agents.sh" &amp;&amp; sh "$plugin_dir/scripts/install-agents.sh"</code></pre>
+    <p>Start a new Codex thread after installation so the skill and custom roles are discovered. Eligible decisions match implicitly; you can also ask explicitly:</p>
+<pre><code>Use $advisor:consultation for a fresh, read-only second opinion on this decision.</code></pre>
+    <p>Verify a local installation without starting Codex or making a network call:</p>
+<pre><code>sh plugins/advisor/scripts/verify.sh --static</code></pre>
+</section>
+
+<section aria-labelledby="compat">
+    <h2 id="compat">Compatibility</h2>
+    <p>Codex Advisor is a Codex-only plugin built for local development workflows.</p>
+    <div class="table-scroll">
+    <table>
+        <thead>
+            <tr><th scope="col">Surface</th><th scope="col">Status</th><th scope="col">Detail</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Codex CLI</td><td class="yes">Supported</td><td>Runs through your local Codex CLI runtime on macOS or Linux.</td></tr>
+            <tr><td>Codex desktop</td><td class="yes">Supported</td><td>Runs through your local Codex desktop runtime on macOS or Linux.</td></tr>
+            <tr><td>Generic ChatGPT alone</td><td class="no">Unsupported</td><td>Preflight returns <code>route: unavailable</code> and no transport is invoked.</td></tr>
+            <tr><td>Native Codex subagents</td><td class="no">Unsupported as transport</td><td>Subagents inherit parent permissions and cannot supply the required read-only isolation contract.</td></tr>
+            <tr><td>MCP servers and hosted services</td><td class="no">Out of scope</td><td>The plugin operates with no MCP server and no hosted service.</td></tr>
+        </tbody>
+    </table>
+    </div>
+</section>
+
+<section aria-labelledby="prereq">
+    <h2 id="prereq">Local prerequisites</h2>
+    <p>Consultation requires all of the following on the machine running Codex. When any one is absent, the plugin records <code>route: unavailable</code> rather than degrading.</p>
+    <ul>
+        <li>Codex CLI or Codex desktop.</li>
+        <li><code>jq</code> available in <code>$PATH</code>.</li>
+        <li>A POSIX shell (<code>sh</code>).</li>
+        <li>An active persisted Codex session rollout.</li>
+        <li>A resolvable <code>CODEX_THREAD_ID</code>. <code>CODEX_SESSION_ID</code> is never used as a fallback.</li>
+        <li>An OpenAI account with model availability for <code>gpt-5.6-terra</code> and <code>gpt-5.6-sol</code> at high reasoning effort.</li>
+    </ul>
+</section>
+
+<section aria-labelledby="privacy-summary">
+    <h2 id="privacy-summary">Privacy in one paragraph</h2>
+    <p>Consultation packets stay inside your local Codex session and your own authenticated connection to OpenAI. No prompts, code, or context are transmitted to the maintainers, to Zero Delta LLC, or to any third-party infrastructure. Receipts and transcripts live in your local persisted Codex session logs, which the plugin never uploads or copies. The bundled local audit tool reports aggregate counts only and redacts code, prompts, filenames, paths, and identifiers. Full detail is in the <a href="privacy/">privacy policy</a>.</p>
+</section>
+
+<section aria-labelledby="project">
+    <h2 id="project">Project</h2>
+    <div class="table-scroll">
+    <table>
+        <tbody>
+            <tr><th scope="row">License</th><td>MIT. Original author Daniel McAteer; fork maintained by David Schmidt / Zero Delta LLC.</td></tr>
+            <tr><th scope="row">Source</th><td><a href="https://github.com/dave-schmidt-dev/advisor">github.com/dave-schmidt-dev/advisor</a></td></tr>
+            <tr><th scope="row">Issues</th><td><a href="https://github.com/dave-schmidt-dev/advisor/issues">github.com/dave-schmidt-dev/advisor/issues</a></td></tr>
+            <tr><th scope="row">Support</th><td><a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a> &middot; <a href="support/">troubleshooting guide</a></td></tr>
+            <tr><th scope="row">Pricing</th><td>Free and open source. Requires your own Codex model access.</td></tr>
+        </tbody>
+    </table>
+    </div>
+</section>
+
+</div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <div>Codex Advisor &middot; maintained by <a href="https://zerodelta.dev">Zero Delta LLC</a></div>
+        <div class="footer-links">
+            <a href="support/">Support</a>
+            <a href="privacy/">Privacy</a>
+            <a href="terms/">Terms</a>
+            <a href="https://github.com/dave-schmidt-dev/advisor">Source</a>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

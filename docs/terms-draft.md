@@ -1,5 +1,11 @@
 # Codex Advisor Terms of Service (Draft)
 
+> **Superseded 2026-09-01.** The published version of this document is
+> [`site/terms/index.html`](../site/terms/index.html), deployed to `https://zerodelta.dev/advisor/`.
+> This draft is kept as the record of what the published page was written
+> from. Edit the published page, not this file.
+
+
 > **Notice:** This document is a pre-release draft. All publisher-specific entries marked `OWNER-PROVIDED` must be populated by the repository owner prior to formal directory submission.
 
 **Effective Date:** OWNER-PROVIDED effective date  

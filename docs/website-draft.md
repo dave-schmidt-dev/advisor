@@ -1,5 +1,11 @@
 # Codex Advisor — Official Website Copy (Draft)
 
+> **Superseded 2026-09-01.** The published version of this document is
+> [`site/index.html`](../site/index.html), deployed to `https://zerodelta.dev/advisor/`.
+> This draft is kept as the record of what the published page was written
+> from. Edit the published page, not this file.
+
+
 > **Draft Copy:** Content draft for the official Codex Advisor project landing page and documentation site.
 
 ---
@@ -102,8 +108,9 @@ Codex Advisor respects your code privacy:
 
 ## Project Links and Resources
 
-- **Terms of Service:** [Terms Draft](terms-draft.md) / `OWNER-PROVIDED terms URL`
-- **Privacy Policy:** [Privacy Policy Draft](privacy-policy-draft.md) / `OWNER-PROVIDED privacy policy URL`
-- **Support & Troubleshooting:** [Support Guide](support-draft.md) / `OWNER-PROVIDED support URL`
-- **Source Repository:** `OWNER-PROVIDED repository URL`
+- **Terms of Service:** `https://zerodelta.dev/advisor/terms/`
+- **Privacy Policy:** `https://zerodelta.dev/advisor/privacy/`
+- **Support & Troubleshooting:** `https://zerodelta.dev/advisor/support/`
+- **Support Email:** `advisor@zerodelta.dev`
+- **Source Repository:** `https://github.com/dave-schmidt-dev/advisor`
 - **License:** MIT License (Original author Daniel McAteer; Maintainer David Schmidt / Zero Delta LLC)

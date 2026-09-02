@@ -15,9 +15,10 @@
     --accent-dim: rgba(0, 229, 255, 0.12);
     --success: #2dd4bf;
     --warn: #f5b342;
-    --radius-lg: 20px;
-    --radius-md: 14px;
-    --radius-sm: 10px;
+    --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
     --mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", "Menlo", "Consolas", monospace;
 }
 
@@ -38,6 +39,11 @@ body {
     color: var(--text);
     line-height: 1.7;
     background: var(--bg);
+    display: grid;
+    grid-template-columns: minmax(0, 860px);
+    align-content: start;
+    justify-content: center;
+    padding: 40px 18px;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -82,19 +88,17 @@ a:focus-visible {
 
 .wrap {
     width: 100%;
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 0 20px;
+    max-width: none;
+    padding: 0 34px;
 }
 
-/* ── Site header ── */
+/* ── Shared Zero Delta terminal panel ── */
 .site-header {
-    border-bottom: 1px solid var(--border);
-    background: rgba(13, 17, 23, 0.9);
-    backdrop-filter: blur(8px);
-    position: sticky;
-    top: 0;
-    z-index: 50;
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: var(--panel);
+    box-shadow: var(--shadow);
 }
 
 .site-header .wrap {
@@ -102,7 +106,7 @@ a:focus-visible {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    min-height: 60px;
+    min-height: 64px;
     flex-wrap: wrap;
 }
 
@@ -113,6 +117,12 @@ a:focus-visible {
     color: var(--text);
     font-weight: 700;
     letter-spacing: -0.02em;
+}
+
+.brand::before {
+    content: ">";
+    color: var(--accent);
+    font-weight: 400;
 }
 
 .brand:hover,
@@ -131,8 +141,10 @@ a:focus-visible {
 .site-nav {
     display: flex;
     align-items: center;
-    gap: 18px;
-    font-size: 0.82rem;
+    gap: 14px;
+    font-size: 0.76rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .site-nav a {
@@ -151,8 +163,11 @@ a:focus-visible {
 
 /* ── Hero ── */
 .hero {
-    padding: 64px 0 44px;
+    padding: 28px 0 30px;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
+    background: var(--panel);
 }
 
 .status-pill {
@@ -179,11 +194,17 @@ a:focus-visible {
 }
 
 h1 {
-    margin-top: 18px;
-    font-size: clamp(1.8rem, 5.2vw, 2.6rem);
+    margin-top: 14px;
+    font-size: clamp(1.7rem, 5.2vw, 2.35rem);
     font-weight: 700;
     letter-spacing: -0.04em;
     line-height: 1.12;
+}
+
+h1::before {
+    content: "> ";
+    color: var(--accent);
+    font-weight: 400;
 }
 
 .cursor {
@@ -212,7 +233,7 @@ h1 {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    margin-top: 28px;
+    margin-top: 22px;
 }
 
 .btn {
@@ -224,6 +245,7 @@ h1 {
     border: 1px solid var(--border-strong);
     font-size: 0.85rem;
     color: var(--text);
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 
 .btn:hover,
@@ -231,6 +253,7 @@ h1 {
     text-decoration: none;
     border-color: rgba(0, 229, 255, 0.4);
     background: var(--panel-soft);
+    transform: translateY(-1px);
 }
 
 .btn-primary {
@@ -244,9 +267,15 @@ h1 {
     background: rgba(0, 229, 255, 0.2);
 }
 
-/* ── Sections ── */
+/* ── Documentation inside the shared panel ── */
+main {
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    background: var(--panel);
+}
+
 main section {
-    padding: 44px 0;
+    padding: 30px 0;
     border-bottom: 1px solid var(--border);
 }
 
@@ -311,7 +340,7 @@ li {
 }
 
 .card {
-    padding: 18px;
+    padding: 16px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--panel);
@@ -421,8 +450,11 @@ tbody tr:last-child td {
 
 /* ── Doc page header ── */
 .doc-head {
-    padding: 48px 0 20px;
+    padding: 26px 0 22px;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
+    background: var(--panel);
 }
 
 .doc-head h1 {
@@ -449,9 +481,13 @@ tbody tr:last-child td {
 
 /* ── Footer ── */
 .site-footer {
-    margin-top: 12px;
-    padding: 32px 0 44px;
-    border-top: 1px solid var(--border);
+    margin-top: 0;
+    padding: 24px 0 30px;
+    border: 1px solid var(--border);
+    border-top: 0;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    background: var(--panel);
+    box-shadow: var(--shadow);
     color: var(--soft);
     font-size: 0.78rem;
 }
@@ -474,12 +510,16 @@ tbody tr:last-child td {
 }
 
 @media (max-width: 560px) {
-    .hero { padding: 44px 0 34px; }
-    main section { padding: 34px 0; }
-    .site-nav { gap: 14px; font-size: 0.78rem; }
+    body { padding: 18px 12px; }
+    .wrap { padding: 0 18px; }
+    .site-header .wrap { min-height: 58px; }
+    .hero { padding: 22px 0 26px; }
+    main section { padding: 26px 0; }
+    .site-nav { gap: 10px; font-size: 0.7rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .cursor { animation: none; }
     html { scroll-behavior: auto; }
+    .btn { transition: none; }
 }

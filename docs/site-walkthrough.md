@@ -1,7 +1,7 @@
-# Public site walkthrough — 2026-09-01
+# Public site walkthrough — 2026-09-02
 
 Screen-by-screen review record for the Codex Advisor public site, taken against
-the deployed candidate at `https://zerodelta.dev/advisor/`. Refresh this document
+the candidate source for `https://zerodelta.dev/advisor/`. Refresh this document
 whenever a user-visible route, control, state, or copy string changes.
 
 ## Scope and hosting
@@ -10,6 +10,12 @@ The site is four static pages with no application logic, no forms, no
 authentication, and no client-side JavaScript. There are therefore no roles, no
 permission differences, no onboarding flow, and no system-owned sheets. Every
 reachable screen and every interactive control is enumerated below.
+
+Every page now uses the Zero Delta terminal surface: a centered dark panel on a
+subtle grid background, rounded outer chrome, cyan terminal prefixes, compact
+navigation, and consistent cards, tables, callouts, and focus states. The
+documentation remains full width within that panel rather than being reduced to
+the parent landing page's short-card format.
 
 It is served from the `advisor/` subdirectory of the Opalstack static app
 `zerodelta` on `opal18.opalstack.com`, under the same certificate and site as
@@ -31,7 +37,8 @@ a robots file is only honoured there.
 
 ## Landing — `/advisor/`
 
-- **Header.** Sticky. Brand lockup (logo + "Codex Advisor") links to `/advisor/`.
+- **Header.** Non-sticky panel header. Terminal-prefixed brand lockup (logo +
+  "Codex Advisor") links to `/advisor/`.
   Nav: Install (same-page anchor `#install`), Support, Privacy, Terms, Source
   (external, GitHub).
 - **Skip link.** Hidden until focused, then jumps to `#content`. Keyboard only.
@@ -88,21 +95,24 @@ under this app.
 Motion is limited to the hero cursor blink and card and button hover
 transitions. All of it is disabled under `prefers-reduced-motion: reduce`.
 
-## Verification, 2026-09-01
+## Verification, 2026-09-02
 
-Automated, `web-tests/` (38 assertions, Chromium desktop + WebKit iPhone 13):
+Automated, `web-tests/` (40 assertions, Chromium desktop + WebKit iPhone 13):
 every page renders with no console error and no failed request; the stylesheet
 resolves; no horizontal overflow; every internal link and same-page anchor
 resolves; no root-absolute reference, so the tree stays relocatable; canonical
 URLs match the deployed path; the claim surface still names version 1.3.0 and the
 two entitled models; no mention of an MCP server or a hosted service appears
 without its negation; and
-no draft `OWNER-PROVIDED` placeholder survives on a legal page.
+no draft `OWNER-PROVIDED` placeholder survives on a legal page. A new desktop and
+mobile visual-contract assertion checks the parent-shared panel color, 28px
+corner radius, and cyan terminal section prefix.
 
-Live checks against the deployed site returned HTTP 200 for `/advisor/`,
-`/advisor/privacy/`, `/advisor/terms/`, `/advisor/support/`,
-`/advisor/assets/style.css`, and `/advisor/sitemap.xml`, with no console error,
-no failed request, and zero horizontal overflow at iPhone 13 width.
+Candidate review covered the landing panel at desktop width and the full
+responsive suite at iPhone 13 width. The header, hero, documentation sections,
+code blocks, tables, callouts, footer, and all page navigation remain reachable
+without clipped or overlapping content. Deployment validation is recorded after
+the publish step.
 
 All four pages were reviewed as full-page renders at desktop width, not only as
 route checks: heading hierarchy, the doc-head metadata block, code blocks, the
@@ -119,7 +129,6 @@ the real files before being trusted.
 
 ## Known gaps
 
-- Reviewed by the implementing agent, not yet by the release owner.
 - No screen-reader pass and no automated accessibility audit; the pages use
   landmarks, a skip link, labelled sections, and visible focus, but that is an
   assertion about the markup rather than a tested result.

@@ -140,6 +140,24 @@ test('canonical URLs point at the deployed path', async ({ page }) => {
   }
 });
 
+test('shared Zero Delta visual system', async ({ page }) => {
+  await page.goto('/');
+
+  const chrome = await page.locator('.site-header').evaluate((header) => {
+    const heading = document.querySelector('h2');
+    const headerStyle = getComputedStyle(header);
+    return {
+      background: headerStyle.backgroundColor,
+      topRadius: headerStyle.borderTopLeftRadius,
+      prefix: heading ? getComputedStyle(heading, '::before').content : '',
+    };
+  });
+
+  expect(chrome.background).toBe('rgb(15, 20, 28)');
+  expect(chrome.topRadius).toBe('28px');
+  expect(chrome.prefix).toContain('>');
+});
+
 test('claim surface matches the validated listing', async ({ page }) => {
   // These claims are load-checked against docs/public-listing.md. Drift here
   // is a directory-submission problem, not a cosmetic one.

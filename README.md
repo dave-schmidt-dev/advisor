@@ -18,7 +18,7 @@ mechanical, and explicitly no-delegation work alone.
 - [Support](https://zerodelta.dev/advisor/support/)
 - [Privacy Policy](https://zerodelta.dev/advisor/privacy/)
 - [Terms of Service](https://zerodelta.dev/advisor/terms/)
-- [Release v1.3.4](https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.3.4)
+- [Release v1.3.3](https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.3.3)
 
 ## Development
 

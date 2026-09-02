@@ -2,9 +2,9 @@
 
 ## Candidate identity
 
-The submitted identity is version `1.3.4`, matching `plugin.json` and the public
-listing. The release owner will use the `git tag` `v1.3.4` to pin the candidate
-commit.
+The submitted identity is version `1.3.0`, the canonical version in the public listing;
+`plugin.json` carries the additional build-metadata suffix `+codex.20260831221407`.
+The release owner will use the `git tag` `advisor-v1.3.0` to pin the candidate commit.
 
 ## Candidate contents
 
@@ -14,7 +14,7 @@ networked service component.
 
 ## Candidate freeze
 
-The content digest (SHA-256) is `7795648ba5b7f2da284a64808194e42f362c779288e869b8388abec70c6e5974`.
+The content digest (SHA-256) is `767bbf4c5bb13406ed92fabdc24ac1c89508dc0742d1990de3c8dfed6242406b`.
 Run `public-release/freeze-candidate.sh --check` to verify it against the candidate
 content; use `--write` only after an intentional candidate change.
 

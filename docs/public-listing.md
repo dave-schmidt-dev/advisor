@@ -10,10 +10,10 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | --- | --- |
 | **Plugin Name** | `advisor` |
 | **Display Name** | Codex Advisor |
-| **Version** | `1.3.4` |
+| **Version** | `1.3.0` |
 | **Category** | Productivity |
 | **Capabilities** | Interactive, Read |
-| **Author / Maintainer** | David Schmidt / Zero Delta LLC |
+| **Author / Maintainer** | David Schmidt / Zero Delta LLC (maintainer); Daniel McAteer (original author) |
 | **Developer / Publisher Entity** | Zero Delta LLC (Commonwealth of Virginia, United States) |
 | **Publisher Website** | `https://zerodelta.dev/advisor/` |
 | **Support URL** | `https://zerodelta.dev/advisor/support/` |
@@ -21,7 +21,7 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | **Privacy Policy URL** | `https://zerodelta.dev/advisor/privacy/` |
 | **Terms of Service URL** | `https://zerodelta.dev/advisor/terms/` |
 | **Logo Asset** | `assets/public-logo.svg` |
-| **Geographic Availability** | United States |
+| **Geographic Availability** | OWNER-PROVIDED country and region availability |
 | **Pricing Model** | Free / Open Source (MIT); requires user's own Codex model access |
 
 ## Descriptions
@@ -86,9 +86,9 @@ Execution of consultations depends on user model availability through their auth
 2. **Mechanical Implementation:** "Rename variable `old_path` to `source_path` across all helper functions in `utils.py`." (Skips consultation; deterministic mechanical edit).
 3. **Diff Review / No Delegation:** "Review the committed git diff for typos and formatting errors, and do not delegate to an advisor." (Skips consultation; owned by review workflow and explicit no-delegation).
 
-## Release Notes (v1.3.4)
+## Release Notes (v1.3.0)
 
-- Published directory package with current developer metadata and updated public links.
+- Initial public listing candidate for Codex Advisor (v1.3.0).
 - Dual-tier risk-calibrated consultation: Standard (`advisor-terra`) and Specialist (`advisor-sol`).
 - Mandatory parent preflight and post-response runtime inspection verifying read-only sandbox and zero-tool isolation.
 - Structured receipts (`ADVISOR CALL` and `ADVISOR RESULT`) for transparent execution visibility.

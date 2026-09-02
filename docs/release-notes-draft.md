@@ -1,22 +1,23 @@
-# Release notes draft
+# Release record
 
-## Candidate identity
+## Published package
 
-The submitted identity is version `1.3.0`, the canonical version in the public listing;
-`plugin.json` carries the additional build-metadata suffix `+codex.20260831221407`.
-The release owner will use the `git tag` `advisor-v1.3.0` to pin the candidate commit.
+The published identity is version `1.3.3`, pinned by Git tag `v1.3.3` at commit
+`2cd47df0fc86931f34a05b982f38232a6b51c2e9`. The release archive is
+`Codex-Advisor-1.3.3.zip` with SHA-256
+`a0064662cfabd419a120c4e583068bb86905bb17aeb0482005d93f8b5cde505d`.
 
 ## Candidate contents
 
-This candidate packages the skills-only Codex Advisor consultation skill, its local
+The published archive packages the skills-only Codex Advisor consultation skill, its local
 runtime references and scripts, and the two read-only advisor profiles. It adds no
 networked service component.
 
-## Candidate freeze
+## Future package releases
 
-The content digest (SHA-256) is `767bbf4c5bb13406ed92fabdc24ac1c89508dc0742d1990de3c8dfed6242406b`.
-Run `public-release/freeze-candidate.sh --check` to verify it against the candidate
-content; use `--write` only after an intentional candidate change.
+Run `public-release/freeze-candidate.sh --write` only when an intentional new package
+release is approved. Root legal or provenance-document changes do not create a new
+package release.
 
 ## Submission test cases
 

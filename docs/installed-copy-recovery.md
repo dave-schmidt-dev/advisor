@@ -4,14 +4,15 @@
 
 For already-installed copies, use the Codex plugin manager to locate the Advisor
 plugin directory, then read its `.codex-plugin/plugin.json`. Its `version` field
-identifies the exact build metadata; the submitted release identity is `1.3.0`.
+identifies the exact build metadata; the submitted release identity is `1.3.3`.
 
 ## Verify the installed content
 
-Obtain a clean checkout of the candidate pinned by the documented release tag. Copy
-the installed plugin directory over `plugins/advisor` in a disposable copy of that
-checkout, then run `sh public-release/freeze-candidate.sh --check` from the disposable
-copy. A passing check proves the installed package matches the release notes digest.
+Download the archive from the documented GitHub release and compare its SHA-256 with
+the value in [`release-notes-draft.md`](release-notes-draft.md). Then copy the
+installed plugin directory into a disposable checkout of the pinned release tag and
+run `sh plugins/advisor/scripts/verify.sh --static`. A passing check proves the
+installed package matches the published release contract.
 
 ## Update to a newer candidate
 

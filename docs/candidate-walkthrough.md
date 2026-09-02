@@ -92,15 +92,12 @@ and stores only `agent_role`, `transport`, `model`, `effort`,
 
 ## Candidate-current acceptance record
 
-### Candidate version
+### Published version
 
-The public-listing identity is candidate version `1.3.0`; the installed plugin
-manifest records build metadata as `1.3.0+codex.20260831221407`. The helper pins the
-marketplace candidate to local `HEAD` and verifies installed manifest version parity
-before capture. The candidate content digest is recorded in
-[`release-notes-draft.md`](release-notes-draft.md). Before submission, the release
-owner runs `sh public-release/freeze-candidate.sh --check` and pins the reviewed
-commit with the documented `advisor-v1.3.0` tag.
+The public listing and published installed plugin manifest are version `1.3.3`, pinned
+to Git tag `v1.3.3`. The archive name and SHA-256 are recorded in
+[`release-notes-draft.md`](release-notes-draft.md). A future package release receives
+a new version and fresh candidate-freeze evidence before submission.
 
 ### Host preflight
 

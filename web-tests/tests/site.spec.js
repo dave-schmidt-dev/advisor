@@ -199,6 +199,10 @@ test('public boundary language is exact and the cursor is removed', async ({ pag
 
   await page.goto('/privacy/');
   const privacy = await page.locator('body').innerText();
+  expect(privacy).toContain('Local integration. The plugin runs from your own Codex installation. It has no Zero Delta-hosted service or remote backend; consultations are processed through your authenticated Codex/OpenAI account.');
+  expect(privacy).toContain('Read-only, zero-tool child. Advisor child processes run in a forced read-only sandbox with no tools enabled. They cannot make tool calls or modify local files; the Codex runtime still sends the bounded consultation packet directly to OpenAI through your authenticated account.');
+  expect(privacy).not.toContain('Local execution.');
+  expect(privacy).not.toContain('Zero-tool sandboxing.');
   expect(privacy).toContain('No Zero Delta relay. Consultation packets are sent directly through your authenticated Codex/OpenAI account. Zero Delta receives no packets, runs no proxy, and collects no telemetry.');
   expect(privacy).not.toContain('No third-party transmission');
 });

@@ -22,7 +22,7 @@ has a keyboard skip link.
 ## Documentation routes
 
 - `/advisor/support/`: support channels, prerequisites, troubleshooting, diagnostics, and report format.
-- `/advisor/privacy/`: controller, local data handling, third parties, retention, website logs, and contact.
+- `/advisor/privacy/`: controller, local integration, the read-only zero-tool child, local data handling, third parties, retention, website logs, and contact.
 - `/advisor/terms/`: license, advisory boundary, responsibilities, warranty, liability, governing law, and contact.
 
 There is no onboarding, authentication, role-dependent UI, form, disabled

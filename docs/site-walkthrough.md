@@ -10,7 +10,7 @@ has a keyboard skip link.
 
 ## Landing — `/advisor/`
 
-- Hero: version 1.3.4, one-sentence purpose, Install anchor, and Source link. It starts at the shared content edge with no standalone product icon or cursor animation.
+- Hero: version 1.3.0, one-sentence purpose, Install anchor, and Source link. It starts at the shared content edge with no standalone product icon or cursor animation.
 - What it does: three static steps covering selection, read-only challenge, and disposition, followed by the verified-child and unsupported-direct-profile qualifier.
 - Install: three commands in one horizontally scrollable code block; the companion step is labelled “Advisor support.”
 - Compatibility: the user's Codex/OpenAI account and no-intermediary boundary,

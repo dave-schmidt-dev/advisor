@@ -4,7 +4,7 @@
 
 For already-installed copies, use the Codex plugin manager to locate the Advisor
 plugin directory, then read its `.codex-plugin/plugin.json`. Its `version` field
-identifies the exact build metadata; the submitted release identity is `1.3.4`.
+identifies the exact build metadata; the submitted release identity is `1.3.0`.
 
 ## Verify the installed content
 

@@ -48,7 +48,7 @@ version=manifest.get("version","")
 if manifest.get("name")!="advisor" or version!="1.3.3": raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
-if "David Schmidt / Zero Delta LLC" not in author_name or "Daniel McAteer" not in author_name: raise SystemExit("maintainer/original-author identity")
+if author_name!="David Schmidt / Zero Delta LLC": raise SystemExit("plugin developer identity")
 if manifest.get("skills")!="./skills/" or any(k in manifest for k in ("hooks","apps","mcpServers")): raise SystemExit("unsupported plugin components")
 entry=market.get("plugins",[])
 if market.get("name")!="advisor" or market.get("interface",{}).get("displayName")!="Codex Advisor": raise SystemExit("marketplace identity")
@@ -112,7 +112,7 @@ for phrase in 'ADVISOR DECISION' 'route: consult | skip | unavailable' 'inspect-
   'non-read-only' 'tool-use evidence'; do
   grep -Fq -- "$phrase" "$skill" || fail "consultation contract omits: $phrase"
 done
-for document in "$operations" "$readme" "$repo_dir/SPEC.md"; do
+for document in "$operations" "$repo_dir/SPEC.md"; do
   grep -Fqi 'repository or web research' "$document" || fail "root-research contract missing: $document"
   grep -Fqi 'source references' "$document" || fail "source-reference contract missing: $document"
   grep -Fqi 'zero-tool' "$document" || fail "zero-tool contract missing: $document"
@@ -163,7 +163,7 @@ for surface in unsupported:
         raise SystemExit(f"compatibility matrix does not mark unsupported: {surface}")
 PY
 pass "public directory compatibility document: owner decision recorded and Codex CLI/desktop vs. non-Codex/subagent/MCP verdicts intact"
-python3 - "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md" "$skill" "$operations" <<'PY'
+python3 - "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md" "$skill" "$operations" <<'PY'
 import re
 import sys
 from pathlib import Path
@@ -176,7 +176,7 @@ PY
 pass "exact codex_exec or Codex Desktop provenance allowlist documented across contracts"
 grep -Fqi 'FOLLOW-UP AREAS' "$repo_dir/SPEC.md" || fail "SPEC follow-up placement missing"
 if grep -Fq 'specific missing evidence under CHANGE MY MIND' "$repo_dir/SPEC.md"; then fail "SPEC retains stale missing-evidence placement"; fi
-for document in "$skill" "$operations" "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
+for document in "$skill" "$operations" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
   grep -Fqi 'trailing spaces or tabs' "$document" || fail "trailing-whitespace contract missing: $document"
   grep -Fqi 'exactly one fresh retry' "$document" || fail "single-retry contract missing: $document"
   grep -Fqi 'empty-valued' "$document" || fail "empty-valued-field contract missing: $document"
@@ -184,7 +184,6 @@ done
 grep -Fqi 'read-only' "$manifest" || fail "listing omits read-only boundary"
 grep -Fqi 'tool-free' "$manifest" || fail "listing omits tool-free boundary"
 grep -Fqi 'does not implement' "$manifest" || fail "listing omits implementation boundary"
-grep -Fq 'Missing, duplicate, renamed, misordered, or empty-valued fields remain malformed.' "$readme" || fail "README full malformed-field list missing"
 pass "retry, trailing-whitespace, and empty-valued-field documentation parity"
 grep -Fqi 'accepting that plan' "$operations" || fail "research-first disposition semantics missing"
 grep -Fqi '.retired-v1.3.0-zero-tool' "$operations" || fail "1.3.0 zero-tool retirement documentation missing"
@@ -1195,13 +1194,13 @@ grep -Fq 'David Schmidt / Zero Delta LLC' "$notice" || fail "NOTICE maintainer"
 grep -Fq 'Daniel McAteer' "$notice" || fail "NOTICE original author"
 grep -Fq 'Copyright (c) 2026 Daniel McAteer' "$license" || fail "LICENSE copyright"
 if grep -Eqi 'substack|attentionheads' "$readme"; then fail "README retains Substack promotion"; fi
-for phrase in 'consultation' 'read-only' 'workspace-write' 'run-advisor.sh' 'ADVISOR DECISION' 'ADVISOR CALL' 'ADVISOR RESULT' 'status: running' 'decision: blocked' 'distinct Codex consultation thread' 'advisor' 'gpt-5.6-terra' 'gpt-5.6-sol' 'unavailable' 'NOTICE.md'; do grep -Fqi "$phrase" "$readme" || fail "README parity omits: $phrase"; done
-for document in "$operations" "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
+for phrase in 'automatic' 'read-only' 'cannot' 'Plugins Directory' 'Codex CLI' 'Codex desktop' 'Privacy Policy' 'Terms of Service'; do grep -Fqi "$phrase" "$readme" || fail "README guidance omits: $phrase"; done
+for document in "$operations" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
   for phrase in 'ADVISOR CALL' 'ADVISOR RESULT' 'unavailable' 'blocked' 'distinct Codex consultation'; do
     grep -Fqi "$phrase" "$document" || fail "lifecycle documentation omits $phrase: $document"
   done
 done
-pass "README, NOTICE, LICENSE, UI, and operations parity"
+pass "customer README, repository attribution, and lifecycle documentation parity"
 
 sh -n "$script_dir"/*.sh
 [ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"

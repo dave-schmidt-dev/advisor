@@ -176,6 +176,22 @@ test('claim surface matches the validated listing', async ({ page }) => {
   expect(body).toContain('advisor-sol');
 });
 
+test('public boundary language is exact and the cursor is removed', async ({ page }) => {
+  await page.goto('/');
+  const landing = await page.locator('body').innerText();
+
+  expect(landing).toContain('Consultations use your own Codex/OpenAI account; Advisor has no hosted backend or intermediary service.');
+  expect(landing).toContain('The consultation child is verified read-only and tool-free. Direct invocation of installed advisor profiles is unsupported.');
+  expect(landing).toContain('Install Advisor support');
+  expect(landing).not.toContain('custom roles');
+  await expect(page.locator('.cursor')).toHaveCount(0);
+
+  await page.goto('/privacy/');
+  const privacy = await page.locator('body').innerText();
+  expect(privacy).toContain('No Zero Delta relay. Consultation packets are sent directly through your authenticated Codex/OpenAI account. Zero Delta receives no packets, runs no proxy, and collects no telemetry.');
+  expect(privacy).not.toContain('No third-party transmission');
+});
+
 test('every MCP or hosted-service mention carries its negation', async ({ page }) => {
   // The plugin ships no MCP server and no hosted service. A public page that
   // mentions either without negating it is a false capability claim.

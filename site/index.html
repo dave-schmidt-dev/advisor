@@ -31,7 +31,7 @@
         <img class="product-mark" src="assets/logo.svg" alt="" width="48" height="48">
         <div>
             <span class="status-pill">Open source &middot; v1.3.0</span>
-            <h1>Codex Advisor<span class="cursor" aria-hidden="true"></span></h1>
+            <h1>Codex Advisor</h1>
             <p class="subhead">A read-only second opinion for material Codex decisions. It advises; your main agent decides.</p>
             <div class="cta-row">
                 <a class="btn btn-primary" href="#install">Install</a>
@@ -48,6 +48,7 @@
         <li><strong>Challenges it read-only.</strong><span>The advisor gets a bounded packet, no tools, and no write access.</span></li>
         <li><strong>Returns the call.</strong><span>Your main agent accepts, changes, or rejects the recommendation.</span></li>
     </ol>
+    <div class="callout"><p>The consultation child is verified read-only and tool-free. Direct invocation of installed advisor profiles is unsupported.</p></div>
 </section>
 <section id="install" aria-labelledby="install-title">
     <h2 id="install-title">Install</h2>
@@ -57,12 +58,13 @@ codex plugin marketplace add dave-schmidt-dev/advisor --ref main
 <span class="c"># Install the plugin</span>
 codex plugin add advisor@advisor
 
-<span class="c"># Install its custom roles</span>
+<span class="c"># Install Advisor support</span>
 plugin_dir="$(codex plugin list --json | jq -r '.installed[] | select(.pluginId == "advisor@advisor") | .source.path')" &amp;&amp; test -n "$plugin_dir" &amp;&amp; test "$plugin_dir" != null &amp;&amp; test -d "$plugin_dir" &amp;&amp; test -f "$plugin_dir/scripts/install-agents.sh" &amp;&amp; sh "$plugin_dir/scripts/install-agents.sh"</code></pre>
     <p>Start a new Codex thread after installation.</p>
 </section>
 <section aria-labelledby="compat">
     <h2 id="compat">Compatibility</h2>
+    <p>Consultations use your own Codex/OpenAI account; Advisor has no hosted backend or intermediary service.</p>
     <div class="fact-grid">
         <div><span>Runs in</span><strong>Codex CLI and desktop on macOS or Linux</strong></div>
         <div><span>Does not use</span><strong>No MCP server, no hosted service, no telemetry</strong></div>

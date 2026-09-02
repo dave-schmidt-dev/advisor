@@ -6,7 +6,7 @@ browse the web, implement work, deploy, or make the final decision.
 
 ## Install
 
-Install **Codex Advisor** from the official Plugins Directory. It requires
+Install [**Codex Advisor** from the official Plugins Directory](https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521). It requires
 **Codex CLI** or **Codex desktop**; generic ChatGPT is not a supported runtime.
 
 Advisor activates automatically for material design, architecture, migration,

@@ -94,9 +94,10 @@ and stores only `agent_role`, `transport`, `model`, `effort`,
 
 ### Candidate and published versions
 
-The locally verified candidate is version `1.3.4`; the public listing remains
-version `1.3.3` until the release owner uploads the new archive. The candidate
-archive name and SHA-256 are recorded in
+The locally verified candidate is version `1.3.4`, and the release owner has
+confirmed that the new archive was uploaded to the marketplace as version
+`1.3.4`. This document does not independently verify the authenticated live
+directory state. The candidate archive name and SHA-256 are recorded in
 [`release-notes-draft.md`](release-notes-draft.md).
 
 ### Host preflight

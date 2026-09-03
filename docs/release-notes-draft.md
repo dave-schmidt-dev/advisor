@@ -13,6 +13,8 @@ Version `1.3.4` hardens response handling with a strict JSON Schema, precise
 redacted validation failures, one corrective retry, and deterministic canonical
 rendering. The handoff archive is `Codex-Advisor-1.3.4.zip`; its SHA-256 is
 `aece3eaab6fa7b3bd33bb170618b025770f853687b954c2a8d614b56a882e933`.
+The release owner has confirmed that this archive was uploaded to the marketplace.
+Live marketplace directory state has not been independently verified.
 Candidate content digest: `81a2c85d55c5ecfb8cfbf68e618368400f4fea983c004d2bb51c7c9bfaa1815d`.
 
 ## Candidate contents

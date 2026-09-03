@@ -160,6 +160,11 @@ test('shared Zero Delta visual system', async ({ page }) => {
   expect(chrome.background).toBe('rgb(15, 20, 28)');
   expect(chrome.topRadius).toBe('28px');
   expect(chrome.prefix).toContain('>');
+
+  const brandPromptMargin = await page.locator('.global-brand').evaluate((brand) =>
+    parseFloat(getComputedStyle(brand, '::before').marginRight)
+  );
+  expect(brandPromptMargin).toBeGreaterThanOrEqual(4);
 });
 
 test('landing hero aligns with the shared brand edge', async ({ page }) => {
@@ -187,13 +192,20 @@ test('claim surface matches the validated listing', async ({ page }) => {
   expect(body).toContain('advisor-sol');
 });
 
-test('public boundary language is exact and the cursor is removed', async ({ page }) => {
+test('public boundary and installation language are exact and the cursor is removed', async ({ page }) => {
   await page.goto('/');
   const landing = await page.locator('body').innerText();
 
   expect(landing).toContain('Consultations use your own Codex/OpenAI account; Advisor has no hosted backend or intermediary service.');
   expect(landing).toContain('The consultation child is verified read-only and tool-free. Direct invocation of installed advisor profiles is unsupported.');
-  expect(landing).toContain('Install Advisor support');
+  const directoryUrl = 'https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521';
+  await expect(page.locator(`a[href="${directoryUrl}"]`)).toHaveCount(2);
+  expect(landing).toContain('Codex Advisor is available in the official OpenAI Plugins Directory.');
+  expect(landing).toContain('Install it there, then start a new Codex thread so Advisor is available to the session.');
+  expect(landing).not.toContain('codex plugin marketplace add');
+  expect(landing).not.toContain('codex plugin add');
+  expect(landing).not.toContain('plugin_dir');
+  expect(landing).not.toContain('install-agents.sh');
   expect(landing).not.toContain('custom roles');
   await expect(page.locator('.cursor')).toHaveCount(0);
 

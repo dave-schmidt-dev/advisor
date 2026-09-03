@@ -31,7 +31,7 @@
         <h1>Codex Advisor</h1>
         <p class="subhead">A read-only second opinion for material Codex decisions. It advises; your main agent decides.</p>
         <div class="cta-row">
-            <a class="btn btn-primary" href="#install">Install</a>
+            <a class="btn btn-primary" href="https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521">Install from OpenAI</a>
             <a class="btn" href="https://github.com/dave-schmidt-dev/advisor">View source</a>
         </div>
     </div>
@@ -47,16 +47,10 @@
     <div class="callout"><p>The consultation child is verified read-only and tool-free. Direct invocation of installed advisor profiles is unsupported.</p></div>
 </section>
 <section id="install" aria-labelledby="install-title">
-    <h2 id="install-title">Install</h2>
-<pre><code><span class="c"># Add the marketplace</span>
-codex plugin marketplace add dave-schmidt-dev/advisor --ref main
-
-<span class="c"># Install the plugin</span>
-codex plugin add advisor@advisor
-
-<span class="c"># Install Advisor support</span>
-plugin_dir="$(codex plugin list --json | jq -r '.installed[] | select(.pluginId == "advisor@advisor") | .source.path')" &amp;&amp; test -n "$plugin_dir" &amp;&amp; test "$plugin_dir" != null &amp;&amp; test -d "$plugin_dir" &amp;&amp; test -f "$plugin_dir/scripts/install-agents.sh" &amp;&amp; sh "$plugin_dir/scripts/install-agents.sh"</code></pre>
-    <p>Start a new Codex thread after installation.</p>
+    <h2 id="install-title">Install from OpenAI</h2>
+    <p>Codex Advisor is available in the official OpenAI Plugins Directory.</p>
+    <a class="btn btn-primary" href="https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521">Open in Plugins Directory</a>
+    <p>Install it there, then start a new Codex thread so Advisor is available to the session.</p>
 </section>
 <section aria-labelledby="compat">
     <h2 id="compat">Compatibility</h2>

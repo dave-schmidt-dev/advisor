@@ -121,9 +121,10 @@ a:focus-visible {
 }
 
 .global-brand::before {
-    content: "> ";
+    content: ">";
     color: var(--accent);
     font-weight: 400;
+    margin-right: 0.45em;
 }
 
 .global-brand:hover,

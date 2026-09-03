@@ -1,4 +1,4 @@
-# Public site walkthrough — 2026-09-02
+# Public site walkthrough — 2026-09-03
 
 Candidate-current review record for `https://zerodelta.dev/advisor/`.
 
@@ -10,9 +10,9 @@ has a keyboard skip link.
 
 ## Landing — `/advisor/`
 
-- Hero: version 1.3.3, one-sentence purpose, Install anchor, and Source link. It starts at the shared content edge with no standalone product icon or cursor animation.
+- Hero: version 1.3.3, one-sentence purpose, an Install from OpenAI link to the official OpenAI Plugins Directory, and Source link. It starts at the shared content edge with no standalone product icon or cursor animation.
 - What it does: three static steps covering selection, read-only challenge, and disposition, followed by the verified-child and unsupported-direct-profile qualifier.
-- Install: three commands in one horizontally scrollable code block; the companion step is labelled “Advisor support.”
+- Install from OpenAI: states that Codex Advisor is available in the official OpenAI Plugins Directory, provides an Open in Plugins Directory button to the same directory URL, and directs users to start a new Codex thread after installation.
 - Compatibility: the user's Codex/OpenAI account and no-intermediary boundary,
   plus four facts covering supported Codex surfaces, absent services, and the
   Standard and Specialist roles.
@@ -31,12 +31,13 @@ Reduced-motion mode disables hover motion; the prior blinking cursor was removed
 
 ## Candidate verification
 
-- `npm test`: 44 Playwright checks passed in desktop Chromium and iPhone 13 WebKit profiles.
+- `npm --prefix web-tests test`: 44 Playwright checks passed in desktop Chromium and iPhone 13 WebKit profiles.
 - All four routes loaded without console or network errors.
 - Every internal link resolved; every page had no horizontal overflow.
 - The global navigation labels and destinations matched on all four routes.
 - Static Advisor verification passed with the validated version, role, model,
   read-only, no-MCP, and no-hosted-service claims intact.
+- The shared `> ZERO DELTA` brand prompt has an explicit 0.45em right margin; browser coverage asserts at least 4px computed spacing.
 - Standalone screenshot capture was unavailable because macOS denied the
   Playwright browser rendezvous outside the passing suite; no visual defect was
   inferred from that unavailable evidence.

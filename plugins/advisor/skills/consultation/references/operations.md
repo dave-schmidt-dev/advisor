@@ -102,18 +102,22 @@ workspace-writable file.
 The wrapper uses existing Codex authentication in place; it does not read, copy,
 print, or relink authentication material. Send the five-section
 DECISION/CONTEXT/OPTIONS/BOUNDARIES/REQUEST packet from the skill, with only
-root-gathered relevant evidence and source references. Require:
+root-gathered relevant evidence and source references. Require exactly one JSON
+object conforming to the installed `advisor-response.schema.json`, with no prose or
+code fences. This schema is the sole supported wrapper model-output format. Direct/native role invocation is unsupported and is not schema-validated. It requires
+six nonblank string fields (`recommendation`, `why`, `strongest_objection`,
+`change_my_mind`, `risks`, `follow_up_areas`) and a nonempty array of nonblank string
+`acceptance_checks` values.
 
 ```text
 ADVISOR RESPONSE
-RECOMMENDATION: <one path>
-WHY: <decisive evidence and reasoning>
-STRONGEST OBJECTION: <best case against the recommendation>
-CHANGE MY MIND: <specific missing or contrary evidence>
-ACCEPTANCE CHECKS: <concrete checks>
-RISKS: <material residual risks, or none>
-FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence,
-research questions, or bounded brainstorming areas>
+RECOMMENDATION: <recommendation>
+WHY: <why>
+STRONGEST OBJECTION: <strongest_objection>
+CHANGE MY MIND: <change_my_mind>
+ACCEPTANCE CHECKS: <acceptance checks joined by ; >
+RISKS: <risks>
+FOLLOW-UP AREAS: <follow_up_areas>
 ```
 
 Immediately after every launched child, before response classification or machine
@@ -121,15 +125,18 @@ output, the wrapper runs `inspect-agent-runtime.sh` for that thread, expected
 role/model, and parent thread. This mandatory inspection verifies allowlisted
 `codex_exec` or `Codex Desktop` provenance, a thread distinct from the parent,
 High effort, read-only isolation, and
-zero tool use; it is not a metadata fallback. Structural recognition trims only
-trailing spaces or tabs from a separate validation copy and preserves the successful
-response bytes. Leading indentation, a nonliteral-space separator, and missing,
-duplicate, renamed, misordered, or empty-valued fields remain
-malformed. A runtime-valid empty or malformed first response receives exactly one fresh retry
-with stderr progress. Packet, launcher, event, identity, same-session,
-runtime, wrong-model, wrong-effort, non-read-only, normalization, or tool-use failure is terminal and
-never retries. A second empty or malformed response is unavailable; the rejected first
-response is never accepted or merged. If packet evidence is
+zero tool use; it is not a metadata fallback. Wrapper-owned semantic validation
+accepts only schema-valid, nonblank fields and deterministically renders the exact
+canonical eight-line receipt above. A runtime-valid response-validation failure emits
+only a redacted failure `class` and `field`, then receives exactly one fresh corrective
+retry whose prompt names only that diagnostic. A consultation launches at most two children.
+Packet, launcher, event, identity, same-session, runtime, wrong-model,
+wrong-effort, non-read-only, normalization, or tool-use failure is terminal and never
+retries. A second response-validation failure is unavailable. Rejected content is
+never emitted, accepted, merged, or copied into the retry prompt. Every attempt
+artifact is confined to one private mode-0700 consultation directory beneath the
+private transport root; an unconditional exit trap removes it after every wrapper
+exit. If packet evidence is
 insufficient, the advisor names the specific missing evidence or research questions
 under `FOLLOW-UP AREAS` instead of researching. A valid processed response contains
 either a recommendation grounded in the packet or a concrete `FOLLOW-UP AREAS`
@@ -196,10 +203,13 @@ isolation. Missing, conflicting, unexpected, non-read-only, or tool-use evidence
 unavailable, never approval. No substitute advisor role or replacement consultation
 is allowed; any root-routed follow-up remains outside this consultation. Progress is
 stderr-only and successful stdout is one verified JSON object containing the allowlisted
-runtime evidence and the byte-preserved successful response. Every launched child is
-inspected before retry eligibility is decided. Exactly one retry is permitted only for
-a runtime-valid empty or structurally malformed first response; terminal transport or
-runtime failures never retry.
+runtime evidence and the canonical eight-line receipt rendered from the accepted
+schema object. Every launched child is inspected before retry eligibility is decided.
+Exactly one corrective retry is permitted only for a runtime-valid
+response-validation failure and exposes only its redacted failure class and field;
+terminal transport, identity, isolation, provenance, runtime, or tool failures never
+retry. Rejected raw content remains private to the consultation directory and is never
+emitted or copied into a retry prompt.
 
 ## Local advisor audit
 

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recommendation",
+    "why",
+    "strongest_objection",
+    "change_my_mind",
+    "acceptance_checks",
+    "risks",
+    "follow_up_areas"
+  ],
+  "properties": {
+    "recommendation": { "type": "string" },
+    "why": { "type": "string" },
+    "strongest_objection": { "type": "string" },
+    "change_my_mind": { "type": "string" },
+    "acceptance_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "risks": { "type": "string" },
+    "follow_up_areas": { "type": "string" }
+  }
+}

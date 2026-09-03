@@ -90,14 +90,14 @@ edit those values to make a check pass. The captured receipt redacts thread iden
 and stores only `agent_role`, `transport`, `model`, `effort`,
 `sandbox_policy_type`, and `permission_profile_type`.
 
-## Candidate-current acceptance record
+## Candidate-current acceptance record (2026-09-03)
 
-### Published version
+### Candidate and published versions
 
-The public listing and published installed plugin manifest are version `1.3.3`, pinned
-to Git tag `v1.3.3`. The archive name and SHA-256 are recorded in
-[`release-notes-draft.md`](release-notes-draft.md). A future package release receives
-a new version and fresh candidate-freeze evidence before submission.
+The locally verified candidate is version `1.3.4`; the public listing remains
+version `1.3.3` until the release owner uploads the new archive. The candidate
+archive name and SHA-256 are recorded in
+[`release-notes-draft.md`](release-notes-draft.md).
 
 ### Host preflight
 
@@ -114,6 +114,15 @@ captured allowlisted runtime receipt identifies `advisor-terra` with `gpt-5.6-te
 `advisor-sol` with `gpt-5.6-sol`, `codex-exec` transport, high effort, a read-only
 sandbox, and a managed permission profile. The receipt is runtime evidence only:
 it intentionally does not preserve conversation content or session identifiers.
+
+### Structured-response acceptance
+
+The candidate accepts only the shipped seven-field JSON Schema, rejects malformed,
+duplicate, overwritten, missing, extra, wrongly typed, or blank values with redacted
+failure classes, and permits one fresh corrective retry only after runtime-valid
+response validation fails. Accepted content renders as exactly eight physical lines.
+The local regression suite and fresh Terra and Sol source canaries passed before
+installation.
 
 ### Unavailable evidence
 

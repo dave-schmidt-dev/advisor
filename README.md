@@ -28,3 +28,15 @@ sh plugins/advisor/scripts/verify.sh --static
 
 The implementation contract is in the [plugin skill](plugins/advisor/skills/consultation/SKILL.md),
 [SPEC.md](SPEC.md), and [INVARIANTS.md](INVARIANTS.md).
+
+## Response contract
+
+The wrapper accepts model output only as one object matching its installed JSON Schema,
+the sole supported wrapper model-output format. Direct/native role invocation is unsupported and is not schema-validated. After
+runtime inspection, wrapper-owned semantic validation renders the accepted object as
+the canonical eight-line `ADVISOR RESPONSE` receipt. A runtime-valid
+response-validation failure exposes only a redacted failure class and field and gets
+one fresh corrective retry, with at most two children. Runtime, identity,
+isolation, provenance, or tool failures are terminal. Rejected content remains private
+to the mode-0700 consultation directory, is never emitted or copied into a retry
+prompt, and is removed by unconditional cleanup.

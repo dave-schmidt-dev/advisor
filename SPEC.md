@@ -8,7 +8,7 @@ technical decisions; it never implements, routes implementation, or performs
 final verification.
 
 The distributable plugin identity is `advisor`. Its single skill is `consultation`, and
-the current release version is `1.3.3`. Release archives use that exact version.
+the current candidate version is `1.3.4`. Release archives use that exact version.
 
 Supported local Codex hosts are **Codex CLI and Codex desktop**. Generic ChatGPT is
 out of scope.
@@ -134,17 +134,18 @@ ordinary `route: skip` path remains unchanged.
    stdout, the wrapper runs `inspect-agent-runtime.sh` for that child and the parent.
    This inspection is mandatory, not a metadata fallback, and must prove exact
    allowlisted `codex_exec` or `Codex Desktop` provenance, role/model, High effort, a thread distinct from the parent,
-   read-only isolation, and zero-tool behavior. Structural response recognition strips
-   only trailing spaces or tabs from a separate validation copy; leading indentation,
-   a nonliteral-space separator, and missing, duplicate, renamed, misordered, or
-   empty-valued fields remain malformed, while successful output
-   preserves the original response bytes. Exactly one fresh retry is allowed only when
-   the first child's runtime proof passes and its response is empty or structurally
-   malformed or misordered. Packet, launcher, event, identity, same-session, runtime,
-   wrong-model, wrong-effort, non-read-only, normalization, or tool-use failure is terminal and never
-   retries. A second empty or malformed response is unavailable, and no rejected first
-   response is accepted or merged. Progress is stderr-only; successful stdout is one
-   verified JSON object.
+   read-only isolation, and zero-tool behavior. The installed JSON Schema is the sole supported wrapper model-output contract. Direct/native role invocation is unsupported and is not schema-validated. Wrapper-owned semantic validation rejects
+   invalid JSON and duplicate, missing, extra, wrong-type, noncontiguous-array, or
+   blank fields. It deterministically renders an accepted object as the canonical eight-line `ADVISOR RESPONSE` receipt. Exactly one fresh corrective retry is
+   allowed only after a runtime-valid response-validation failure; stderr and the retry prompt expose only its redacted failure `class` and
+   `field`, never rejected content. A consultation launches at most two children.
+   Packet, launcher, event, identity, same-session, runtime, wrong-model, wrong-effort,
+   non-read-only, normalization, provenance, or tool-use failure is terminal and never
+   retries. A second response-validation failure is unavailable. Every attempt artifact
+   stays only in a private mode-0700 consultation directory beneath the private Codex
+   transport root, and an unconditional exit trap removes it after every wrapper exit.
+   Progress is stderr-only; successful stdout is one verified JSON object containing
+   runtime evidence and the canonical receipt.
 8. Treat a response that passed runtime inspection as advice, not authority. A valid
    processed response contains either a recommendation grounded in the packet or a
    concrete `FOLLOW-UP AREAS` entry. The root checks its cited source references and
@@ -226,18 +227,24 @@ change the recommendation, and give specific acceptance checks. Use zero tools: 
 not inspect files, call tools, fetch the web, or conduct independent research.
 ```
 
-### Advisor output
+### Advisor model output and canonical receipt
+
+The model emits exactly one JSON object matching the installed
+`advisor-response.schema.json`, with no prose or code fences. It has six required
+nonblank scalar strings (`recommendation`, `why`, `strongest_objection`,
+`change_my_mind`, `risks`, `follow_up_areas`) and a required nonempty array of
+nonblank strings (`acceptance_checks`). The wrapper, not a direct/native role
+invocation, validates it and renders this exact eight-line receipt:
 
 ```text
 ADVISOR RESPONSE
-RECOMMENDATION: <one path>
-WHY: <decisive evidence and reasoning>
-STRONGEST OBJECTION: <best case against the recommendation>
-CHANGE MY MIND: <specific missing or contrary evidence>
-ACCEPTANCE CHECKS: <concrete checks>
-RISKS: <material residual risks, or none>
-FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence,
-research questions, or bounded brainstorming areas>
+RECOMMENDATION: <recommendation>
+WHY: <why>
+STRONGEST OBJECTION: <strongest_objection>
+CHANGE MY MIND: <change_my_mind>
+ACCEPTANCE CHECKS: <acceptance checks joined by ; >
+RISKS: <risks>
+FOLLOW-UP AREAS: <follow_up_areas>
 ```
 
 For a research-first response, `RECOMMENDATION` is the concise research-first plan
@@ -258,8 +265,10 @@ it never implies that a technical choice was accepted when no technical choice w
   outside the consultation for the identified research or brainstorming, synthesize
   it, and optionally start a fresh separately receipted consultation. Unavailable
   runtime evidence cannot be rescued this way. An unavailable result cannot be rescued by follow-up work.
-- Every native advisor response receives mandatory runtime inspection before a
-  completed result; missing, conflicting, non-read-only, or tool-use evidence blocks.
+- Every wrapper-launched advisor response receives mandatory runtime inspection before
+  a completed result; direct/native role invocation is unsupported and has no
+  schema-validation claim. Missing, conflicting, non-read-only, provenance, or
+  tool-use evidence blocks.
 - Every consult candidate receives parent-runtime preflight before its decision
   receipt. It uses only `CODEX_THREAD_ID`, never `CODEX_SESSION_ID`, and fails closed
   on missing identity or rollout, symlinks/nonregular files, malformed, ambiguous, or
@@ -316,7 +325,7 @@ it never implies that a technical choice was accepted when no technical choice w
   `06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d`,
   used by the intermediate v0.3.0/v0.4.0/pre-revert v0.5.0 history. Unknown blobs
   still fail closed.
-- Plugin installation identity is `advisor`. Set version `1.3.3` and make
+- Plugin installation identity is `advisor`. Set version `1.3.4` and make
   the manifest author identify David Schmidt / Zero Delta LLC. Preserve Daniel
   McAteer's MIT copyright in `LICENSE` and keep upstream provenance in root
   `NOTICE.md`; do not add upstream attribution to the marketplace listing,

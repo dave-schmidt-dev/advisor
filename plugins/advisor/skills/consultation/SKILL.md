@@ -110,18 +110,14 @@ specific acceptance checks. Use zero tools: do not inspect files, call tools, fe
 the web, or conduct independent research. Do not perform or delegate the follow-up.
 ```
 
-Require exactly:
+Require the model to emit exactly one object conforming to the installed
+`advisor-response.schema.json`, with no prose or code fences. This JSON Schema is
+the sole supported wrapper model-output format. Direct/native role invocation is unsupported and is not schema-validated. The required fields are:
 
 ```text
-ADVISOR RESPONSE
-RECOMMENDATION: <one path>
-WHY: <decisive evidence and reasoning>
-STRONGEST OBJECTION: <best case against the recommendation>
-CHANGE MY MIND: <specific missing or contrary evidence>
-ACCEPTANCE CHECKS: <concrete checks>
-RISKS: <material residual risks, or none>
-FOLLOW-UP AREAS: <none, or a concrete research-first next step, missing evidence,
-research questions, or bounded brainstorming areas>
+recommendation, why, strongest_objection, change_my_mind, risks,
+follow_up_areas: required nonblank strings
+acceptance_checks: required nonempty array of nonblank strings
 ```
 
 5. Run exactly one selected consultation. Invoke the fixed installed-plugin wrapper
@@ -151,20 +147,37 @@ ADVISOR_PACKET
 
    The wrapper writes progress only to stderr and emits one verified JSON object on
    stdout. It runtime-inspects every launched child before classifying that child's
-   response. Structural recognition tolerates only trailing spaces or tabs on response
-   lines, using a separate validation copy so successful response bytes are preserved
-   exactly. Leading indentation, a nonliteral-space separator, and missing, duplicate,
-   renamed, misordered, or empty-valued fields remain
-   malformed. Mandatory post-response inspection proves the exact selected model,
+   response. Wrapper-owned semantic validation rejects malformed JSON, duplicate,
+   missing, extra, wrong-type, noncontiguous-array, or blank schema fields, then
+   deterministically renders the accepted object as this exact canonical eight-line
+   receipt:
+
+```text
+ADVISOR RESPONSE
+RECOMMENDATION: <recommendation>
+WHY: <why>
+STRONGEST OBJECTION: <strongest_objection>
+CHANGE MY MIND: <change_my_mind>
+ACCEPTANCE CHECKS: <acceptance checks joined by ; >
+RISKS: <risks>
+FOLLOW-UP AREAS: <follow_up_areas>
+```
+
+   Mandatory post-response inspection proves the exact selected model,
    High effort, read-only isolation, distinct-thread identity, `codex_exec` provenance,
-   and zero tool calls before parsing can succeed. When the first child proves the exact selected model, High effort,
+   and zero tool calls before validation can succeed. When the first child proves the exact selected model, High effort,
    read-only runtime, distinct thread, allowlisted `codex_exec` or `Codex Desktop`
    provenance, and zero tool calls but
-   returns an empty or malformed response, the wrapper emits retry progress on stderr
-   and performs exactly one fresh retry by launching a new child. Packet, launcher, event, identity,
-   same-session, runtime, wrong-model, wrong-effort, non-read-only, normalization, or tool-use failure
-   is terminal and never retries. A second empty or malformed response fails closed;
-   the rejected first response is never accepted or merged.
+   returns a runtime-valid response-validation failure, the wrapper emits only its
+   redacted failure `class` and `field` on stderr and performs exactly one fresh
+   corrective retry by launching a new child. The retry prompt names only that
+   diagnostic, never rejected content. A consultation launches at most two children.
+   Packet, launcher, event, identity,
+   same-session, runtime, wrong-model, wrong-effort, non-read-only, normalization, provenance, or tool-use failure
+   is terminal and never retries. A second response-validation failure fails closed.
+   Rejected content is never emitted, accepted, merged, or copied into the retry
+   prompt. Every attempt artifact remains only in one private mode-0700 consultation directory beneath the private transport root; an unconditional exit trap removes
+   that directory after every wrapper exit.
 6. Receive the required advisor response from the verified JSON without supplying
    more context or asking it to research. A valid processed response contains either
    a recommendation grounded in the packet or a concrete research-first follow-up

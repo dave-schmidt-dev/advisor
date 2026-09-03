@@ -21,6 +21,7 @@ installer=$script_dir/install-agents.sh
 inspector=$script_dir/inspect-agent-runtime.sh
 parent_inspector=$script_dir/inspect-parent-runtime.sh
 transport=$script_dir/run-advisor.sh
+response_schema=$plugin_dir/advisor-response.schema.json
 audit=$script_dir/advisor-audit.sh
 evaluator=$script_dir/evaluate-triggers.sh
 readme=$repo_dir/README.md
@@ -28,12 +29,23 @@ notice=$repo_dir/NOTICE.md
 license=$repo_dir/LICENSE
 compat_doc=$repo_dir/docs/public-directory-compatibility.md
 
-for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$transport" "$audit" "$evaluator" "$readme" "$notice" "$license"; do
+for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$transport" "$response_schema" "$audit" "$evaluator" "$readme" "$notice" "$license"; do
   [ -f "$file" ] || fail "missing required file: $file"
 done
 [ "$(find "$plugin_dir/agents" -maxdepth 1 -type f -name '*.toml' | wc -l | tr -d ' ')" -eq 2 ] || fail "expected exactly two active roles"
 [ "$(find "$plugin_dir/skills" -type f -name SKILL.md | wc -l | tr -d ' ')" -eq 1 ] || fail "expected exactly one skill"
 pass "required inventory: one skill, two model pins, read-only transport, parent/child inspectors, evaluator, documentation"
+
+jq -e '
+  .type == "object" and .additionalProperties == false and
+  .required == ["recommendation", "why", "strongest_objection", "change_my_mind", "acceptance_checks", "risks", "follow_up_areas"] and
+  (.properties | keys | sort) == (["recommendation", "why", "strongest_objection", "change_my_mind", "acceptance_checks", "risks", "follow_up_areas"] | sort) and
+  all(.properties.recommendation, .properties.why, .properties.strongest_objection, .properties.change_my_mind, .properties.risks, .properties.follow_up_areas; .type == "string") and
+  .properties.acceptance_checks.type == "array" and .properties.acceptance_checks.minItems == 1 and
+  .properties.acceptance_checks.items == {"type":"string"}
+' "$response_schema" >/dev/null || fail "response schema contract mismatch"
+[ ! -L "$response_schema" ] || fail "response schema must not be a symlink"
+pass "strict seven-field response schema"
 
 python3 - "$manifest" "$marketplace" "$terra_role" "$sol_role" "$fixtures" "$ui" <<'PY'
 import json, re, sys, tomllib
@@ -45,7 +57,7 @@ sol=tomllib.loads(Path(sys.argv[4]).read_text())
 cases=json.loads(Path(sys.argv[5]).read_text())
 ui=Path(sys.argv[6]).read_text()
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or version!="1.3.3": raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or version!="1.3.4": raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if author_name!="David Schmidt / Zero Delta LLC": raise SystemExit("plugin developer identity")
@@ -176,15 +188,30 @@ PY
 pass "exact codex_exec or Codex Desktop provenance allowlist documented across contracts"
 grep -Fqi 'FOLLOW-UP AREAS' "$repo_dir/SPEC.md" || fail "SPEC follow-up placement missing"
 if grep -Fq 'specific missing evidence under CHANGE MY MIND' "$repo_dir/SPEC.md"; then fail "SPEC retains stale missing-evidence placement"; fi
+for document in "$skill" "$operations" "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
+  grep -Fqi 'sole supported wrapper model-output' "$document" || fail "JSON-only wrapper contract missing: $document"
+  grep -Fqi 'wrapper-owned semantic validation' "$document" || fail "wrapper semantic-validation contract missing: $document"
+  grep -Fqi 'canonical eight-line' "$document" || fail "canonical renderer contract missing: $document"
+  grep -Fqi 'redacted failure' "$document" || fail "redacted failure diagnostic contract missing: $document"
+  grep -Fqi 'at most two children' "$document" || fail "two-child retry bound missing: $document"
+  grep -Fqi 'direct/native role invocation is unsupported' "$document" || fail "unsupported direct/native invocation contract missing: $document"
+done
 for document in "$skill" "$operations" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
-  grep -Fqi 'trailing spaces or tabs' "$document" || fail "trailing-whitespace contract missing: $document"
-  grep -Fqi 'exactly one fresh retry' "$document" || fail "single-retry contract missing: $document"
-  grep -Fqi 'empty-valued' "$document" || fail "empty-valued-field contract missing: $document"
+  grep -Fqi 'runtime-valid response-validation failure' "$document" || fail "runtime-gated retry contract missing: $document"
+  grep -Fqi 'terminal' "$document" || fail "terminal runtime failure contract missing: $document"
+  grep -Fqi 'rejected content' "$document" || fail "rejected-content redaction contract missing: $document"
+  grep -Fqi 'mode-0700 consultation directory' "$document" || fail "private consultation directory contract missing: $document"
+  grep -Fqi 'unconditional exit trap' "$document" || fail "consultation cleanup contract missing: $document"
+done
+for document in "$skill" "$operations" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
+  if grep -Eqi 'trailing spaces or tabs|raw response bytes|byte-preserved successful response|Structural recognition' "$document"; then
+    fail "retired text-parser or raw-byte contract remains: $document"
+  fi
 done
 grep -Fqi 'read-only' "$manifest" || fail "listing omits read-only boundary"
 grep -Fqi 'tool-free' "$manifest" || fail "listing omits tool-free boundary"
 grep -Fqi 'does not implement' "$manifest" || fail "listing omits implementation boundary"
-pass "retry, trailing-whitespace, and empty-valued-field documentation parity"
+pass "JSON schema, semantic validation, renderer, retry, privacy, cleanup, and unsupported-native documentation parity"
 grep -Fqi 'accepting that plan' "$operations" || fail "research-first disposition semantics missing"
 grep -Fqi '.retired-v1.3.0-zero-tool' "$operations" || fail "1.3.0 zero-tool retirement documentation missing"
 grep -Fq 'never substitute a role other than the policy-selected' "$skill" || fail "no-substitution rule missing"
@@ -200,9 +227,10 @@ grep -Fq '($b|unique)!=["read-only"]' "$inspector" || fail "inspector does not b
 grep -Fq '($tool_events|length)!=0' "$inspector" || fail "inspector does not block advisor tool use"
 grep -Fq 'parent_thread_id=${CODEX_THREAD_ID-}' "$parent_inspector" || fail "parent inspector does not require CODEX_THREAD_ID"
 if grep -Fq 'CODEX_SESSION_ID' "$parent_inspector"; then fail "parent inspector falls back to CODEX_SESSION_ID"; fi
-for phrase in 'codex exec --json --ignore-user-config --ignore-rules' '--sandbox read-only --model "$model"' 'model_reasoning_effort="high"' '--skip-git-repo-check' '--output-last-message' 'ADVISOR TRANSPORT:' '--expected-parent "$parent_thread_id"' 'jq -cn' 'consultation reused the parent thread' 'LC_ALL=C sed' 'response normalization failed' 'advisor response was not verified'; do
+for phrase in 'codex exec --json --ignore-user-config --ignore-rules' '--sandbox read-only --model "$model"' 'model_reasoning_effort="high"' '--skip-git-repo-check' '--output-schema "$response_schema"' '--output-last-message' 'ADVISOR TRANSPORT:' '--expected-parent "$parent_thread_id"' 'jq --stream' 'consultation reused the parent thread' 'response validation failed' 'advisor response was not verified'; do
   grep -Fq -- "$phrase" "$transport" || fail "transport contract omits: $phrase"
 done
+if grep -Eq 'response_is_well_formed|Normalize only trailing ASCII|original candidate remains untouched' "$transport"; then fail "retired line response parser remains"; fi
 if grep -Eq 'auth\.json|bws|get secret|CODEX_HOME=' "$transport"; then fail "transport handles authentication or secrets"; fi
 pass "implicit boundaries, root research, exact read-only transport, clean output, and mandatory inspection"
 
@@ -600,15 +628,17 @@ pass "parent preflight read-only/workspace-write success plus danger-full-access
 fake_bin=$tmp/fake-bin
 fake_home=$tmp/fake-codex-home
 mkdir -p "$fake_bin" "$fake_home/sessions/2026/08/30"
+real_jq=$(command -v jq)
 python3 - "$fake_bin/codex" <<'PY'
 from pathlib import Path
 import sys
 Path(sys.argv[1]).write_text(r'''#!/bin/sh
 set -eu
-output='' model='' sandbox='' effort='' workdir=''
+output='' model='' sandbox='' effort='' workdir='' schema=''
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --output-last-message) output=$2; shift 2 ;;
+    --output-schema) schema=$2; shift 2 ;;
     --model) model=$2; shift 2 ;;
     --sandbox) sandbox=$2; shift 2 ;;
     -c) effort=$2; shift 2 ;;
@@ -619,67 +649,114 @@ while [ "$#" -gt 0 ]; do
 done
 [ "$sandbox" = read-only ] && [ "$effort" = 'model_reasoning_effort="high"' ] || exit 91
 case "$model" in gpt-5.6-terra|gpt-5.6-sol) ;; *) exit 92 ;; esac
-case "$output" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/response.*.txt) ;; *) exit 94 ;; esac
+case "$schema" in */plugins/advisor/advisor-response.schema.json) ;; *) exit 93 ;; esac
+case "$output" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/response.*.json) ;; *) exit 94 ;; esac
 case "$workdir" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/workdir.*) ;; *) exit 95 ;; esac
-dd of=/dev/null 2>/dev/null
-[ -z "${FAKE_CODEX_MARKER-}" ] || : >"$FAKE_CODEX_MARKER"
-if [ "${FAKE_CODEX_CASE-valid}" = heartbeat ]; then sleep 1; fi
+[ "$(stat -f '%Lp' "$(dirname "$output")" 2>/dev/null || stat -c '%a' "$(dirname "$output")")" = 700 ] || exit 96
+
 attempt=1
 if [ -n "${FAKE_CODEX_COUNT_FILE-}" ]; then
   [ ! -f "$FAKE_CODEX_COUNT_FILE" ] || attempt=$(($(cat "$FAKE_CODEX_COUNT_FILE") + 1))
   printf '%s\n' "$attempt" >"$FAKE_CODEX_COUNT_FILE"
 fi
+if [ -n "${FAKE_CODEX_PROMPT_DIR-}" ]; then
+  dd of="$FAKE_CODEX_PROMPT_DIR/attempt.$attempt.txt" 2>/dev/null
+else
+  dd of=/dev/null 2>/dev/null
+fi
+[ -z "${FAKE_CODEX_MARKER-}" ] || : >"$FAKE_CODEX_MARKER"
+if [ "${FAKE_CODEX_CASE-valid}" = heartbeat ]; then sleep 1; fi
 case "$attempt" in
   1) child=dddddddd-dddd-7ddd-8ddd-dddddddddddd ;;
   2) child=abababab-abab-7aba-8aba-abababababab ;;
-  *) exit 96 ;;
+  *) exit 97 ;;
 esac
 case "${FAKE_CODEX_CASE-valid}:$attempt" in
-  launcher-failure:*) exit 97 ;;
+  launcher-failure:*) exit 98 ;;
   same-session:*) child=${FAKE_PARENT_ID:?} ;;
   retry-reused-child:2) child=dddddddd-dddd-7ddd-8ddd-dddddddddddd ;;
 esac
+
+valid_response() {
+  printf '%s\n' '{"recommendation":"  neutral   path  ","why":"reason with\nspacing","strongest_objection":"objection","change_my_mind":"contrary evidence","acceptance_checks":["first check"," second   check "],"risks":"none","follow_up_areas":"none"}' >"$output"
+}
+neutral_22_response() {
+  printf '%s\n' \
+    'ADVISOR RESPONSE' \
+    'RECOMMENDATION: neutral path' \
+    '' \
+    'WHY: neutral reason' \
+    '' \
+    'STRONGEST OBJECTION: neutral objection' \
+    '' \
+    'CHANGE MY MIND: neutral evidence' \
+    '' \
+    'ACCEPTANCE CHECKS:' \
+    '- neutral check 1' \
+    '- neutral check 2' \
+    '- neutral check 3' \
+    '- neutral check 4' \
+    '- neutral check 5' \
+    '- neutral check 6' \
+    '- neutral check 7' \
+    '- neutral check 8' \
+    '' \
+    'RISKS: none' \
+    '' \
+    'FOLLOW-UP AREAS: none' >"$output"
+}
+
 case "${FAKE_CODEX_CASE-valid}:$attempt" in
-  response-misordered:*|malformed-twice:*|malformed-first-valid-second:1|retry-reused-child:1)
-    printf '%s\n' 'ADVISOR RESPONSE' 'WHY: reason' 'RECOMMENDATION: path' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
+  neutral-22-first-valid-second:1|retry-reused-child:1|runtime-invalid-second:1) neutral_22_response ;;
+  legacy-text:*) neutral_22_response ;;
+  empty-output:*) : >"$output" ;;
+  invalid-twice:*) printf '%s\n' '{"recommendation":"path"' >"$output" ;;
+  concatenated:*)
+    printf '%s\n' \
+      '{"recommendation":"path","why":"reason","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["check"],"risks":"none","follow_up_areas":"none"}' \
+      '{"recommendation":"path","why":"reason","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["check"],"risks":"none","follow_up_areas":"none"}' >"$output"
     ;;
-  response-missing:*)
-    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY: reason' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'FOLLOW-UP AREAS: none' >"$output"
-    ;;
-  trailing-whitespace-valid:*)
-    {
-      printf '%s  \n' 'ADVISOR RESPONSE'
-      printf '%s\t\n' 'RECOMMENDATION: path'
-      printf '%s  \n' 'WHY: reason'
-      printf '%s\t\n' 'STRONGEST OBJECTION: objection'
-      printf '%s \n' 'CHANGE MY MIND: evidence'
-      printf '%s  \n' 'ACCEPTANCE CHECKS: checks'
-      printf '%s\t\n' 'RISKS: none'
-      printf '%s \n' 'FOLLOW-UP AREAS: none'
-    } >"$output"
-    ;;
-  indented-continuation:*)
-    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY: reason' '  WHY: indented continuation' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
-    ;;
-  response-duplicate:*)
-    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY: reason' 'WHY: duplicate' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
-    ;;
-  response-renamed:*)
-    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'RATIONALE: reason' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
-    ;;
-  response-empty-valued:*)
-    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY:' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
-    ;;
-  runtime-invalid-malformed:*)
-    printf '%s\n' 'ADVISOR RESPONSE' 'WHY: reason' 'RECOMMENDATION: path' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
-    ;;
-  *)
-    printf '%s\n' 'ADVISOR RESPONSE' 'RECOMMENDATION: path' 'WHY: reason' 'STRONGEST OBJECTION: objection' 'CHANGE MY MIND: evidence' 'ACCEPTANCE CHECKS: checks' 'RISKS: none' 'FOLLOW-UP AREAS: none' >"$output"
-    ;;
+  truncated:*) printf '%s\n' '{"recommendation":"DO_NOT_LEAK_REJECTED"' >"$output" ;;
+  non-object:*) printf '%s\n' '["not","an","object"]' >"$output" ;;
+  duplicate-scalar:*) printf '%s\n' '{"recommendation":"path","why":"first","why":"DO_NOT_LEAK_REJECTED","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["check"],"risks":"none","follow_up_areas":"none"}' >"$output" ;;
+  duplicate-array:*) printf '%s\n' '{"recommendation":"path","why":"reason","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["first"],"acceptance_checks":["second"],"risks":"none","follow_up_areas":"none"}' >"$output" ;;
+  container-scalar-overwrite:*) printf '%s\n' '{"recommendation":"path","why":{"nested":"DO_NOT_LEAK_REJECTED"},"why":"reason","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["check"],"risks":"none","follow_up_areas":"none"}' >"$output" ;;
+  missing:*) printf '%s\n' '{"recommendation":"path","why":"reason","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["check"],"follow_up_areas":"none"}' >"$output" ;;
+  extra:*) printf '%s\n' '{"recommendation":"path","why":"reason","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["check"],"risks":"none","follow_up_areas":"none","extra":"DO_NOT_LEAK_REJECTED"}' >"$output" ;;
+  wrong-type:*) printf '%s\n' '{"recommendation":7,"why":"reason","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["check"],"risks":"none","follow_up_areas":"none"}' >"$output" ;;
+  noncontiguous-array:*) printf '%s\n' '{"recommendation":"path","why":"reason","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["first",{"nested":"DO_NOT_LEAK_REJECTED"},"third"],"risks":"none","follow_up_areas":"none"}' >"$output" ;;
+  blank-scalar:*) printf '%s\n' '{"recommendation":"path","why":"  \n ","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["check"],"risks":"none","follow_up_areas":"none"}' >"$output" ;;
+  blank-array-item:*) printf '%s\n' '{"recommendation":"path","why":"reason","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":["check"," \t "],"risks":"none","follow_up_areas":"none"}' >"$output" ;;
+  empty-array:*) printf '%s\n' '{"recommendation":"path","why":"reason","strongest_objection":"objection","change_my_mind":"evidence","acceptance_checks":[],"risks":"none","follow_up_areas":"none"}' >"$output" ;;
+  *) valid_response ;;
 esac
+
+if [ -n "${FAKE_CODEX_RESPONSE_CAPTURE_DIR-}" ]; then
+  cp "$output" "$FAKE_CODEX_RESPONSE_CAPTURE_DIR/attempt.$attempt.txt"
+fi
+
+if [ "${FAKE_CODEX_CASE-valid}" = concurrent ]; then
+  consultation_dir=$(dirname "$output")
+  slot=${FAKE_CODEX_CONCURRENT_SLOT:?}
+  printf '%s\n' "$consultation_dir" >"$FAKE_CODEX_SYNC_DIR/dir.$slot"
+  : >"$FAKE_CODEX_SYNC_DIR/ready.$slot"
+  cycles=0
+  while [ ! -e "$FAKE_CODEX_SYNC_DIR/ready.1" ] || [ ! -e "$FAKE_CODEX_SYNC_DIR/ready.2" ]; do
+    cycles=$((cycles + 1)); [ "$cycles" -le 200 ] || exit 99; sleep 0.05
+  done
+  if [ "$slot" -eq 2 ]; then
+    cycles=0
+    while [ ! -e "$FAKE_CODEX_SYNC_DIR/release.2" ]; do
+      cycles=$((cycles + 1)); [ "$cycles" -le 200 ] || exit 100; sleep 0.05
+    done
+    [ -d "$consultation_dir" ] || exit 101
+    child=cdcdcdcd-cdcd-7dcd-8dcd-cdcdcdcdcdcd
+  fi
+fi
+
 rollout=$CODEX_HOME/sessions/2026/08/30/rollout-fake-$child.jsonl
 runtime_policy=read-only
-case "${FAKE_CODEX_CASE-valid}" in runtime-invalid|runtime-invalid-malformed) runtime_policy=workspace-write ;; esac
+case "${FAKE_CODEX_CASE-valid}:$attempt" in runtime-invalid-first:*|runtime-invalid-second:2) runtime_policy=workspace-write ;; esac
 runtime_originator=codex_exec
 case "${FAKE_CODEX_CASE-valid}" in desktop-valid) runtime_originator='Codex Desktop' ;; provenance-mismatch) runtime_originator='Codex desktop' ;; esac
 printf '%s\n' \
@@ -691,20 +768,37 @@ if [ "${FAKE_CODEX_CASE-valid}" = duplicate-thread ]; then
 fi
 ''', encoding='utf-8')
 PY
-chmod 700 "$fake_bin/codex"
+python3 - "$fake_bin/jq" "$real_jq" <<'PY'
+from pathlib import Path
+import sys
+target, real_jq = sys.argv[1:]
+Path(target).write_text(f'''#!/bin/sh
+set -eu
+if [ "${{FAKE_JQ_RENDER_FAILURE-}}" = 1 ] && [ "${{1-}}" = -r ]; then
+  case "${{2-}}" in *'"ADVISOR RESPONSE"'*) exit 70 ;; esac
+fi
+exec {real_jq!r} "$@"
+''', encoding='utf-8')
+PY
+chmod 700 "$fake_bin/codex" "$fake_bin/jq"
 
 transport_parent=56565656-5656-7565-8565-565656565656
 valid_packet=$tmp/valid-packet.txt
 printf '%s\n' DECISION 'question' CONTEXT 'evidence' OPTIONS 'choice' BOUNDARIES 'limits' REQUEST 'challenge' >"$valid_packet"
 transport_out=$tmp/transport-out.json
 transport_err=$tmp/transport-err.txt
+assert_transport_clean() {
+  [ -d "$fake_home/.tmp/advisor-transport" ] || return 0
+  [ "$(find "$fake_home/.tmp/advisor-transport" -mindepth 1 -maxdepth 1 -type d -name 'run.*' | wc -l | tr -d ' ')" -eq 0 ] || fail "private consultation directory survived wrapper exit"
+}
 PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=valid FAKE_PARENT_ID="$transport_parent" \
   sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$transport_out" 2>"$transport_err" || {
     sed -n '1,20p' "$transport_err" >&2
     fail "valid fake transport failed"
   }
 [ "$(wc -l <"$transport_out" | tr -d ' ')" -eq 1 ] || fail "transport stdout was not one JSON line"
-jq -e '.status=="completed" and .runtime.agent_role=="advisor-terra" and .runtime.model=="gpt-5.6-terra" and .runtime.effort=="high" and .runtime.sandbox_policy_type=="read-only" and .runtime.transport=="codex-exec" and (.response|startswith("ADVISOR RESPONSE\n"))' "$transport_out" >/dev/null || fail "valid transport JSON mismatch"
+jq -e '.status=="completed" and .runtime.agent_role=="advisor-terra" and .runtime.model=="gpt-5.6-terra" and .runtime.effort=="high" and .runtime.sandbox_policy_type=="read-only" and .runtime.transport=="codex-exec" and .response=="ADVISOR RESPONSE\nRECOMMENDATION: neutral path\nWHY: reason with spacing\nSTRONGEST OBJECTION: objection\nCHANGE MY MIND: contrary evidence\nACCEPTANCE CHECKS: first check; second check\nRISKS: none\nFOLLOW-UP AREAS: none\n"' "$transport_out" >/dev/null || fail "valid transport JSON or canonical render mismatch"
+assert_transport_clean
 for progress_line in 'launching advisor-terra (gpt-5.6-terra, high, read-only)' 'inspecting persisted runtime evidence' 'consultation verified'; do
   grep -Fq "$progress_line" "$transport_err" || fail "transport stderr progress missing: $progress_line"
 done
@@ -714,43 +808,30 @@ PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=heartbeat FAKE_PA
   sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/heartbeat-out.json" 2>"$heartbeat_err" || fail "heartbeat transport fixture failed"
 [ "$(grep -Fc 'child invocation still running (attempt 1)' "$heartbeat_err")" -eq 1 ] || fail "heartbeat was not emitted once and cleaned up"
 [ "$(wc -l <"$tmp/heartbeat-out.json" | tr -d ' ')" -eq 1 ] || fail "heartbeat fixture contaminated stdout"
+assert_transport_clean
 
-whitespace_count=$tmp/whitespace-count
-whitespace_out=$tmp/whitespace-out.json
-PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=trailing-whitespace-valid FAKE_CODEX_COUNT_FILE="$whitespace_count" FAKE_PARENT_ID="$transport_parent" \
-  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$whitespace_out" 2>/dev/null || fail "trailing-whitespace response failed"
-[ "$(cat "$whitespace_count")" -eq 1 ] || fail "trailing-whitespace response retried"
-whitespace_expected=$tmp/whitespace-expected.txt
-{
-  printf '%s  \n' 'ADVISOR RESPONSE'
-  printf '%s\t\n' 'RECOMMENDATION: path'
-  printf '%s  \n' 'WHY: reason'
-  printf '%s\t\n' 'STRONGEST OBJECTION: objection'
-  printf '%s \n' 'CHANGE MY MIND: evidence'
-  printf '%s  \n' 'ACCEPTANCE CHECKS: checks'
-  printf '%s\t\n' 'RISKS: none'
-  printf '%s \n' 'FOLLOW-UP AREAS: none'
-} >"$whitespace_expected"
-jq -j '.response' "$whitespace_out" >"$tmp/whitespace-actual.txt"
-cmp -s "$whitespace_expected" "$tmp/whitespace-actual.txt" || fail "transport changed raw trailing-whitespace response bytes"
-
-continuation_count=$tmp/continuation-count
-PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=indented-continuation FAKE_CODEX_COUNT_FILE="$continuation_count" FAKE_PARENT_ID="$transport_parent" \
-  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/continuation-out.json" 2>/dev/null || fail "indented field-like continuation was treated as a structural duplicate"
-[ "$(cat "$continuation_count")" -eq 1 ] || fail "indented field-like continuation triggered a retry"
-
+neutral_capture=$tmp/neutral-capture; neutral_prompts=$tmp/neutral-prompts
+mkdir "$neutral_capture" "$neutral_prompts"
 retry_count=$tmp/retry-count
 retry_err=$tmp/retry-err.txt
-PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=malformed-first-valid-second FAKE_CODEX_COUNT_FILE="$retry_count" FAKE_PARENT_ID="$transport_parent" \
-  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/retry-out.json" 2>"$retry_err" || fail "runtime-valid malformed response did not retry successfully"
-[ "$(cat "$retry_count")" -eq 2 ] || fail "malformed-first response did not launch exactly one retry"
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=neutral-22-first-valid-second FAKE_CODEX_COUNT_FILE="$retry_count" FAKE_CODEX_RESPONSE_CAPTURE_DIR="$neutral_capture" FAKE_CODEX_PROMPT_DIR="$neutral_prompts" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/retry-out.json" 2>"$retry_err" || fail "neutral 22-line response did not retry successfully"
+[ "$(cat "$retry_count")" -eq 2 ] || fail "neutral 22-line response did not launch exactly one retry"
+[ "$(wc -l <"$neutral_capture/attempt.1.txt" | tr -d ' ')" -eq 22 ] || fail "neutral regression was not exactly 22 lines"
+awk 'NR==1&&$0=="ADVISOR RESPONSE"{a++} NR==2&&$0~/^RECOMMENDATION:/{a++} NR==4&&$0~/^WHY:/{a++} NR==6&&$0~/^STRONGEST OBJECTION:/{a++} NR==8&&$0~/^CHANGE MY MIND:/{a++} NR==10&&$0=="ACCEPTANCE CHECKS:"{a++} NR==20&&$0~/^RISKS:/{a++} NR==22&&$0~/^FOLLOW-UP AREAS:/{a++} (NR==3||NR==5||NR==7||NR==9||NR==19||NR==21)&&$0==""{b++} NR>=11&&NR<=18&&$0~/^- neutral check [1-8]$/{c++} END{exit !(a==8&&b==6&&c==8)}' "$neutral_capture/attempt.1.txt" || fail "neutral 22-line structure mismatch"
+grep -Fq 'class=legacy-text field=response' "$neutral_prompts/attempt.2.txt" || fail "corrective retry omitted redacted legacy-text class"
+if grep -Fq 'neutral check 1' "$neutral_prompts/attempt.2.txt"; then fail "corrective retry leaked rejected response"; fi
 jq -e '.status=="completed" and (.response|startswith("ADVISOR RESPONSE\nRECOMMENDATION:"))' "$tmp/retry-out.json" >/dev/null || fail "retry did not return only the valid second response"
-grep -Fq 'runtime-valid response was empty or malformed; launching one fresh retry' "$retry_err" || fail "retry progress missing from stderr"
+grep -Fq 'runtime-valid response failed validation; launching one fresh corrective retry (class=legacy-text field=response)' "$retry_err" || fail "corrective retry progress missing from stderr"
+assert_transport_clean
 
 twice_count=$tmp/twice-count
-if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=malformed-twice FAKE_CODEX_COUNT_FILE="$twice_count" FAKE_PARENT_ID="$transport_parent" \
-  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>&1; then fail "transport accepted two malformed responses"; fi
-[ "$(cat "$twice_count")" -eq 2 ] || fail "malformed-twice did not stop after one retry"
+twice_err=$tmp/twice-error
+if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=invalid-twice FAKE_CODEX_COUNT_FILE="$twice_count" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>"$twice_err"; then fail "transport accepted two invalid responses"; fi
+[ "$(cat "$twice_count")" -eq 2 ] || fail "invalid-twice did not stop after one retry"
+grep -Fq 'class=invalid-json field=response' "$twice_err" || fail "invalid JSON diagnostic mismatch"
+assert_transport_clean
 
 reused_count=$tmp/reused-count
 reused_err=$tmp/reused-err.txt
@@ -759,12 +840,18 @@ if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=retry-reused-c
 [ "$(cat "$reused_count")" -eq 2 ] || fail "reused-child retry did not stop after exactly two launches"
 grep -Fq 'retry reused the first child thread' "$reused_err" || fail "reused-child retry was not classified as terminal identity failure"
 
-for terminal_case in launcher-failure duplicate-thread same-session runtime-invalid runtime-invalid-malformed; do
+for terminal_case in launcher-failure duplicate-thread same-session runtime-invalid-first; do
   terminal_count=$tmp/terminal-count-$terminal_case
   if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE="$terminal_case" FAKE_CODEX_COUNT_FILE="$terminal_count" FAKE_PARENT_ID="$transport_parent" \
     sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>&1; then fail "transport accepted terminal case: $terminal_case"; fi
   [ "$(cat "$terminal_count")" -eq 1 ] || fail "transport retried terminal case: $terminal_case"
 done
+
+second_runtime_count=$tmp/terminal-count-runtime-invalid-second
+if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=runtime-invalid-second FAKE_CODEX_COUNT_FILE="$second_runtime_count" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>&1; then fail "transport accepted runtime-invalid retry child"; fi
+[ "$(cat "$second_runtime_count")" -eq 2 ] || fail "runtime-invalid second child launched other than two total children"
+assert_transport_clean
 
 PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=desktop-valid FAKE_PARENT_ID="$transport_parent" \
   sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/desktop-transport-out.json" 2>"$tmp/desktop-transport-err.txt" || fail "transport rejected exact Codex Desktop provenance"
@@ -780,15 +867,67 @@ if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_MARKER="$marker" FA
   sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$misordered_packet" >/dev/null 2>&1; then fail "transport accepted misordered packet headings"; fi
 [ ! -e "$marker" ] || fail "transport invoked codex before rejecting packet order"
 
-for rejected_case in response-misordered response-missing response-duplicate response-renamed response-empty-valued; do
+for diagnostic_spec in \
+  'empty-output:empty-output:response' \
+  'legacy-text:legacy-text:response' \
+  'concatenated:duplicate-or-overwritten-field:recommendation' \
+  'truncated:invalid-json:response' \
+  'non-object:wrong-type:response' \
+  'duplicate-scalar:duplicate-or-overwritten-field:why' \
+  'duplicate-array:duplicate-or-overwritten-field:acceptance_checks' \
+  'container-scalar-overwrite:duplicate-or-overwritten-field:why' \
+  'missing:missing-field:risks' \
+  'extra:extra-field:response' \
+  'wrong-type:wrong-type:recommendation' \
+  'noncontiguous-array:invalid-acceptance-checks:acceptance_checks' \
+  'blank-scalar:blank-field:why' \
+  'blank-array-item:blank-field:acceptance_checks' \
+  'empty-array:invalid-acceptance-checks:acceptance_checks'; do
+  rejected_case=${diagnostic_spec%%:*}
+  diagnostic_remainder=${diagnostic_spec#*:}
+  expected_class=${diagnostic_remainder%%:*}
+  expected_field=${diagnostic_remainder#*:}
   rejected_count=$tmp/rejected-count-$rejected_case
+  rejected_out=$tmp/rejected-out-$rejected_case.txt
+  rejected_err=$tmp/rejected-err-$rejected_case.txt
   if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE="$rejected_case" FAKE_CODEX_COUNT_FILE="$rejected_count" FAKE_PARENT_ID="$transport_parent" \
-    sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>&1; then
+    sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$rejected_out" 2>"$rejected_err"; then
     fail "transport accepted fake case: $rejected_case"
   fi
-  [ "$(cat "$rejected_count")" -eq 2 ] || fail "malformed response case did not exercise exactly one fresh retry: $rejected_case"
+  [ "$(cat "$rejected_count")" -eq 2 ] || fail "response validation case did not exercise exactly one fresh retry: $rejected_case"
+  grep -Fq "class=$expected_class field=$expected_field" "$rejected_err" || fail "response validation diagnostic mismatch: $rejected_case"
+  if grep -Fq 'DO_NOT_LEAK_REJECTED' "$rejected_out" "$rejected_err"; then fail "response validation leaked rejected content: $rejected_case"; fi
+  assert_transport_clean
 done
-pass "run-advisor behavioral transport: raw trailing-whitespace preservation, indented continuation, exact field grammar, one runtime-gated malformed retry, fresh retry identity, second-malformed refusal, terminal no-retry, pinned read-only exec, stderr progress, and single JSON stdout"
+
+render_count=$tmp/render-count
+render_err=$tmp/render-err
+if PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=valid FAKE_JQ_RENDER_FAILURE=1 FAKE_CODEX_COUNT_FILE="$render_count" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >/dev/null 2>"$render_err"; then fail "transport accepted render failure"; fi
+[ "$(cat "$render_count")" -eq 2 ] || fail "render failure did not stop after one corrective retry"
+grep -Fq 'class=render-failure field=response' "$render_err" || fail "render failure diagnostic mismatch"
+assert_transport_clean
+
+truncated_fixture=$tmp/truncated-parser.json
+printf '%s\n' '{"recommendation":"path"' >"$truncated_fixture"
+streaming_status=0
+jq --stream -c 'select(length == 2)' "$truncated_fixture" >"$tmp/truncated-parser-stream.jsonl" 2>/dev/null || streaming_status=$?
+[ "$streaming_status" -ne 0 ] || fail "streaming parser status did not reject truncated JSON"
+
+concurrent_sync=$tmp/concurrent-sync; mkdir "$concurrent_sync"
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=concurrent FAKE_CODEX_CONCURRENT_SLOT=1 FAKE_CODEX_SYNC_DIR="$concurrent_sync" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/concurrent-1.json" 2>"$tmp/concurrent-1.err" &
+concurrent_pid_1=$!
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=concurrent FAKE_CODEX_CONCURRENT_SLOT=2 FAKE_CODEX_SYNC_DIR="$concurrent_sync" FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/concurrent-2.json" 2>"$tmp/concurrent-2.err" &
+concurrent_pid_2=$!
+wait "$concurrent_pid_1" || fail "first concurrent transport failed"
+: >"$concurrent_sync/release.2"
+wait "$concurrent_pid_2" || fail "second concurrent transport lost its private directory"
+[ "$(cat "$concurrent_sync/dir.1")" != "$(cat "$concurrent_sync/dir.2")" ] || fail "concurrent transports reused a consultation directory"
+jq -e '.status=="completed"' "$tmp/concurrent-1.json" "$tmp/concurrent-2.json" >/dev/null || fail "concurrent transport result mismatch"
+assert_transport_clean
+pass "run-advisor behavioral transport: strict streamed JSON, duplicate/overwrite defense, nonblank semantics, exact eight-line renderer, neutral 22-line corrective retry, redacted diagnostics, two-child ceiling, terminal runtime failures, mode-0700 cleanup, concurrency isolation, stderr progress, and single JSON stdout"
 
 audit_sessions=$tmp/audit-sessions; mkdir -p "$audit_sessions/2026/01/01"
 python3 - "$audit_sessions/2026/01/01" <<'PY'
@@ -1205,4 +1344,4 @@ pass "customer README, repository attribution, and lifecycle documentation parit
 sh -n "$script_dir"/*.sh
 [ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.3.3 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.3.4 consultation-only static contract"

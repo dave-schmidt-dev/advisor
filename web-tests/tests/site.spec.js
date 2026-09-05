@@ -239,6 +239,15 @@ test('support page uses published directory recovery guidance', async ({ page })
   expect(support).not.toContain('sh plugins/advisor/');
 });
 
+test('terms identify the current developer and maintainer', async ({ page }) => {
+  await page.goto('/terms/');
+  const terms = await bodyText(page);
+
+  expect(terms).toContain('Developer and maintainer: David Schmidt / Zero Delta LLC');
+  expect(terms).not.toContain('Daniel McAteer');
+  expect(terms).not.toContain('Fork maintainer');
+});
+
 test('public boundary and installation language are exact and the cursor is removed', async ({ page }) => {
   await page.goto('/');
   const landing = await bodyText(page);

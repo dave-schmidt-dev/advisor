@@ -22,8 +22,7 @@ By installing, loading, or using the Codex Advisor plugin ("Software"), you agre
 ## 2. Open Source License and Maintainer Identity
 
 The Software is distributed as open-source software under the **MIT License**.
-- **Original Author & Copyright:** Daniel McAteer
-- **Fork Maintainer:** David Schmidt / Zero Delta LLC
+- **Developer and Maintainer:** David Schmidt / Zero Delta LLC
 
 The full text of the MIT License is located in the repository's `LICENSE` file. In the event of any conflict between these Terms and the MIT License, the MIT License shall govern with respect to your rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software.
 

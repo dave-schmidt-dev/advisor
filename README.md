@@ -29,9 +29,13 @@ sh plugins/advisor/scripts/verify.sh --static
 The implementation contract is in the [plugin skill](plugins/advisor/skills/consultation/SKILL.md),
 [SPEC.md](SPEC.md), and [INVARIANTS.md](INVARIANTS.md).
 
-Before uploading a version, follow [the release process](docs/release-process.md)
-and `public-release/verify-upload-ready.sh`: verify its descriptions and matching
-live website. A ZIP alone is only a candidate.
+Before releasing a version, follow [the release process](docs/release-process.md):
+update descriptions and deploy and verify the reviewed website, then commit and push
+the exact source. Create or update the matching GitHub `vVERSION` release with the
+exact marketplace ZIP, verify its tag/source and downloaded asset SHA-256 separately,
+then run `public-release/verify-upload-ready.sh` immediately before the owner uploads.
+Completion requires the website, descriptions, GitHub release, and owner-confirmed
+marketplace publication; a ZIP alone is only a candidate.
 
 ## Selection and discovery
 

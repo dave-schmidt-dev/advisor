@@ -113,4 +113,4 @@ Codex Advisor respects your code privacy:
 - **Support & Troubleshooting:** `https://zerodelta.dev/advisor/support/`
 - **Support Email:** `advisor@zerodelta.dev`
 - **Source Repository:** `https://github.com/dave-schmidt-dev/advisor`
-- **License:** MIT License (Original author Daniel McAteer; Maintainer David Schmidt / Zero Delta LLC)
+- **License:** MIT License (Developer and maintainer David Schmidt / Zero Delta LLC)

@@ -491,11 +491,17 @@ overage, added provider, or expansion beyond 40 root sessions is Red and parked.
 Release order is: update marketplace Short Description and Long Description plus all
 applicable public website/product/privacy/support/terms copy for the target version;
 run local tests and review and prepare the dated candidate-current walkthrough; owner
-reviews before deployment; deploy with `deploy-site.sh` and verify live bytes; run
-`public-release/verify-upload-ready.sh [--json] ARCHIVE.zip` for the exact existing
-candidate ZIP; then, and only then, owner confirms/pastes marketplace metadata and
-authorizes upload. Support URL confirmation remains separate. Every version repeats
-this sequence; no earlier receipt carries forward.
+reviews before deployment; deploy with `deploy-site.sh` and verify live bytes; commit
+and push the exact source; create or update the matching GitHub release `vVERSION`
+with accurate notes and the exact same marketplace ZIP; separately verify that the
+tag resolves to the intended source and that the downloaded asset SHA-256 equals the
+marketplace ZIP SHA-256; then run the fresh
+`public-release/verify-upload-ready.sh [--json] ARCHIVE.zip` gate for the exact
+existing candidate ZIP; then, and only then, owner confirms/pastes marketplace
+metadata and authorizes upload. The upload-readiness script validates ZIP/listing/site
+only and does not automate GitHub verification. Release completion requires the
+website, descriptions, GitHub release, and owner-confirmed marketplace publication;
+no earlier receipt carries forward. Support URL confirmation remains separate.
 
 Overnight work may redesign, test, document, and locally checkpoint the plugin.
 Unattended work may not install into the user's live Codex home, push, publish,

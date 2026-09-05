@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "revision", "selections", "presets", "deadline_seconds", "usage_journal_enabled"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "revision": { "type": "integer", "minimum": 0 },
+    "selections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["standard", "specialist"],
+      "properties": {
+        "standard": { "$ref": "#/$defs/pair" },
+        "specialist": { "$ref": "#/$defs/pair" }
+      }
+    },
+    "presets": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/pair" }
+    },
+    "deadline_seconds": { "type": "integer", "minimum": 30, "maximum": 900 },
+    "usage_journal_enabled": { "type": "boolean" }
+  },
+  "$defs": {
+    "pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "effort"],
+      "properties": {
+        "model": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$" },
+        "effort": { "enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"] }
+      }
+    }
+  }
+}

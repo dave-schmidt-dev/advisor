@@ -27,8 +27,13 @@ function watchFailures(page) {
   return failures;
 }
 
+/** Return rendered body copy with markup-only whitespace collapsed. */
+async function bodyText(page) {
+  return (await page.locator('body').innerText()).replace(/\s+/g, ' ').trim();
+}
+
 for (const { path, title, heading } of PAGES) {
-  test(`${path} renders without errors`, async ({ page }) => {
+  test(`${path} renders without errors`, async ({ page }, testInfo) => {
     const failures = watchFailures(page);
 
     await page.goto(path);
@@ -37,6 +42,7 @@ for (const { path, title, heading } of PAGES) {
     await expect(page.locator('h1')).toHaveText(heading);
     await expect(page.locator('header.site-header')).toBeVisible();
     await expect(page.locator('footer.site-footer')).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath('page.png'), fullPage: true });
     expect(failures).toEqual([]);
   });
 
@@ -183,20 +189,61 @@ test('claim surface matches the validated listing', async ({ page }) => {
   // These claims are load-checked against docs/public-listing.md. Drift here
   // is a directory-submission problem, not a cosmetic one.
   await page.goto('/');
-  const body = await page.locator('body').innerText();
+  const body = (await bodyText(page)).toLowerCase();
 
-  expect(body).toContain('1.3.3');
+  expect(body).toContain('documentation v1.4.2');
+  expect(body).toContain('automatic read-only advice');
+  expect(body).toContain('smart defaults');
+  expect(body).toContain('optional models');
+  expect(body).toContain('[standard]');
+  expect(body).toContain('[specialist]');
+  expect(body).toContain('gpt-6-astra');
   expect(body).toContain('gpt-5.6-terra');
   expect(body).toContain('gpt-5.6-sol');
-  expect(body).toContain('advisor-terra');
-  expect(body).toContain('advisor-sol');
+  expect(body).toContain('next consultation');
+  expect(body).toContain('no setup conversation or separate canary is required.');
+  expect(body).toContain('plugin updates may replace edits to the bundled file.');
+  expect(body).not.toContain('advisor-terra');
+  expect(body).not.toContain('advisor-sol');
+});
+
+test('each route carries the candidate release metadata', async ({ page }) => {
+  for (const { path } of PAGES) {
+    await page.goto(path);
+    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.2');
+  }
+});
+
+test('support page uses published directory recovery guidance', async ({ page }) => {
+  await page.goto('/support/');
+  const support = await bodyText(page);
+  const directoryUrl = 'https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521';
+
+  expect(support).toContain('official OpenAI Plugins Directory');
+  await expect(page.locator(`a[href="${directoryUrl}"]`)).toHaveCount(1);
+  expect(support).toContain('reinstall or update');
+  expect(support).toContain('start a new Codex thread');
+  expect(support).toContain('advisor.toml');
+  expect(support).toContain('two directories above');
+  expect(support).toContain('skills/consultation/SKILL.md');
+  expect(support).toContain('Edit that bundled file in place');
+  expect(support).toContain('do not copy it');
+  expect(support).toContain('Invalid TOML');
+  expect(support).toContain('unsupported-model');
+  expect(support).toContain('does not silently fall back');
+  expect(support).toContain('may replace edits');
+  expect(support).toContain('ADVISOR DECISION');
+  expect(support).toContain('ADVISOR CALL');
+  expect(support).toContain('ADVISOR RESULT');
+  expect(support).not.toContain('install-agents.sh');
+  expect(support).not.toContain('sh plugins/advisor/');
 });
 
 test('public boundary and installation language are exact and the cursor is removed', async ({ page }) => {
   await page.goto('/');
-  const landing = await page.locator('body').innerText();
+  const landing = await bodyText(page);
 
-  expect(landing).toContain('Consultations use your own Codex/OpenAI account; Advisor has no hosted backend or intermediary service.');
+  expect(landing).toContain('Consultations send bounded packets through your own authenticated Codex/OpenAI account; Zero Delta operates no relay, hosted backend, or intermediary service.');
   expect(landing).toContain('The consultation child is verified read-only and tool-free. Direct invocation of installed advisor profiles is unsupported.');
   const directoryUrl = 'https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521';
   await expect(page.locator(`a[href="${directoryUrl}"]`)).toHaveCount(2);
@@ -210,13 +257,42 @@ test('public boundary and installation language are exact and the cursor is remo
   await expect(page.locator('.cursor')).toHaveCount(0);
 
   await page.goto('/privacy/');
-  const privacy = await page.locator('body').innerText();
-  expect(privacy).toContain('Local integration. The plugin runs from your own Codex installation. It has no Zero Delta-hosted service or remote backend; consultations are processed through your authenticated Codex/OpenAI account.');
-  expect(privacy).toContain('Read-only, zero-tool child. Advisor child processes run in a forced read-only sandbox with no tools enabled. They cannot make tool calls or modify local files; the Codex runtime still sends the bounded consultation packet directly to OpenAI through your authenticated account.');
-  expect(privacy).not.toContain('Local execution.');
-  expect(privacy).not.toContain('Zero-tool sandboxing.');
-  expect(privacy).toContain('No Zero Delta relay. Consultation packets are sent directly through your authenticated Codex/OpenAI account. Zero Delta receives no packets, runs no proxy, and collects no telemetry.');
-  expect(privacy).not.toContain('No third-party transmission');
+  const privacy = (await bodyText(page)).toLowerCase();
+  expect(privacy).toContain('local integration. the plugin runs from your own codex installation. it has no zero delta-hosted service or remote backend; bounded consultation packets are sent through your authenticated codex/openai account.');
+  expect(privacy).toContain('read-only, zero-tool child. advisor child processes run in a forced read-only sandbox with no tools enabled. they cannot make tool calls or modify local files; the codex runtime still sends the bounded consultation packet directly to openai through your authenticated account.');
+  expect(privacy).not.toContain('local execution.');
+  expect(privacy).not.toContain('zero-tool sandboxing.');
+  expect(privacy).toContain('no zero delta relay. consultation packets are sent directly through your authenticated codex/openai account. zero delta receives no packets, runs no proxy, and collects no telemetry.');
+  expect(privacy).toContain('effective date: 5 september 2026');
+  expect(privacy).toContain('live');
+  expect(privacy).toContain('advisor.toml');
+  expect(privacy).toContain('advanced settings and model-catalog data');
+  expect(privacy).toContain('content-free usage journal is disabled by default');
+  expect(privacy).toContain('operational metadata and aggregate usage counters only');
+  expect(privacy).toContain('no consultation packets and no response content');
+  expect(privacy).toContain('older than 30 days');
+  expect(privacy).toContain('no background deletion service');
+  expect(privacy).toContain('uninstalling the plugin may leave user state and session logs behind');
+  expect(privacy).toContain('optional astra');
+  expect(privacy).not.toContain('offline inference');
+  expect(privacy).not.toContain('all consultation data resides solely');
+  expect(privacy).not.toContain('no third-party transmission');
+});
+
+test('terms describe configured model responsibility and preserve legal terms', async ({ page }) => {
+  await page.goto('/terms/');
+  const terms = await bodyText(page);
+
+  expect(terms).toContain('Effective date: 5 September 2026');
+  expect(terms).toContain('models and effort configured in the bundled');
+  expect(terms).toContain('Terra/high and Sol/high as defaults');
+  expect(terms).toContain('optional Astra');
+  expect(terms).toContain('OpenAI usage, quotas, and fees');
+  expect(terms).toContain('update or reinstall may replace those edits');
+  expect(terms).toContain('MIT License');
+  expect(terms).toContain('AS IS');
+  expect(terms).toContain('Limitation of liability');
+  expect(terms).toContain('Commonwealth of Virginia');
 });
 
 test('every MCP or hosted-service mention carries its negation', async ({ page }) => {

@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
 <title>Codex Advisor — Read-only second opinions</title>
-<meta name="description" content="Codex Advisor is an open-source, read-only second-opinion plugin for Codex CLI and Codex desktop.">
+<meta name="description" content="Codex Advisor automatically adds read-only advice for material Codex decisions, with smart defaults and optional models.">
+<meta name="advisor-release" content="1.4.2">
 <meta property="og:title" content="Codex Advisor">
 <meta property="og:description" content="Read-only second opinions for material Codex decisions.">
 <meta property="og:type" content="website">
@@ -27,9 +28,9 @@
 </header>
 <div class="hero">
     <div class="wrap">
-        <span class="status-pill">Open source &middot; v1.3.3</span>
+        <span class="status-pill">Open source &middot; Documentation v1.4.2</span>
         <h1>Codex Advisor</h1>
-        <p class="subhead">A read-only second opinion for material Codex decisions. It advises; your main agent decides.</p>
+        <p class="subhead">Automatic read-only advice for material Codex decisions, with smart defaults and optional models. It advises; your main agent decides.</p>
         <div class="cta-row">
             <a class="btn btn-primary" href="https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521">Install from OpenAI</a>
             <a class="btn" href="https://github.com/dave-schmidt-dev/advisor">View source</a>
@@ -46,6 +47,21 @@
     </ol>
     <div class="callout"><p>The consultation child is verified read-only and tool-free. Direct invocation of installed advisor profiles is unsupported.</p></div>
 </section>
+<section aria-labelledby="models">
+    <h2 id="models">Choose your models</h2>
+    <p>Advisor uses the live <code>advisor.toml</code> bundled with the installed plugin. The defaults are Terra at high effort for Standard and Sol at high effort for Specialist.</p>
+<pre><code>[standard]
+model = "gpt-5.6-terra"
+effort = "high"
+
+[specialist]
+model = "gpt-5.6-sol"
+effort = "high"
+
+# Optional: gpt-6-astra uses more of your Codex allowance.
+</code></pre>
+    <p>Edit the bundled <code>advisor.toml</code> in place and the change applies to the next consultation. Standard and Specialist have independent effort settings. Future model selectors are subject to your account access and runtime support. No setup conversation or separate canary is required. Plugin updates may replace edits to the bundled file.</p>
+</section>
 <section id="install" aria-labelledby="install-title">
     <h2 id="install-title">Install from OpenAI</h2>
     <p>Codex Advisor is available in the official OpenAI Plugins Directory.</p>
@@ -54,12 +70,12 @@
 </section>
 <section aria-labelledby="compat">
     <h2 id="compat">Compatibility</h2>
-    <p>Consultations use your own Codex/OpenAI account; Advisor has no hosted backend or intermediary service.</p>
+    <p>Consultations send bounded packets through your own authenticated Codex/OpenAI account; Zero Delta operates no relay, hosted backend, or intermediary service.</p>
     <div class="fact-grid">
         <div><span>Runs in</span><strong>Codex CLI and desktop on macOS or Linux</strong></div>
         <div><span>Does not use</span><strong>No MCP server, no hosted service, no telemetry</strong></div>
-        <div><span>Standard</span><strong><code>advisor-terra</code> · <code>gpt-5.6-terra</code></strong></div>
-        <div><span>Specialist</span><strong><code>advisor-sol</code> · <code>gpt-5.6-sol</code></strong></div>
+        <div><span>Standard</span><strong>Terra · <code>gpt-5.6-terra</code> · high</strong></div>
+        <div><span>Specialist</span><strong>Sol · <code>gpt-5.6-sol</code> · high</strong></div>
     </div>
 </section>
 <section aria-labelledby="resources">

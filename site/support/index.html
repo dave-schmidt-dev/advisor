@@ -6,6 +6,7 @@
 <meta name="color-scheme" content="dark">
 <title>Support &amp; Troubleshooting — Codex Advisor</title>
 <meta name="description" content="Support channels, prerequisites checklist, and troubleshooting guide for the Codex Advisor plugin.">
+<meta name="advisor-release" content="1.4.2">
 <link rel="canonical" href="https://zerodelta.dev/advisor/support/">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/style.css">
@@ -44,8 +45,20 @@
     <p>Codex Advisor is an open-source project maintained on a best-effort basis. There is no response-time commitment.</p>
 </section>
 
+<section aria-labelledby="installation">
+    <h2 id="installation">2. Reinstall or update Advisor</h2>
+    <p>Codex Advisor is distributed through the <a href="https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521">official OpenAI Plugins Directory</a>. If Advisor is missing, outdated, or not responding, reinstall or update it from the Directory, then start a new Codex thread so the installed plugin is available to the session.</p>
+    <p>The Directory package is skills-only. Consultations use bounded packets sent through your authenticated Codex/OpenAI account; Zero Delta operates no relay, hosted service, or MCP server.</p>
+</section>
+
+<section aria-labelledby="configuration">
+    <h2 id="configuration">3. Configure models</h2>
+    <p>Find <code>advisor.toml</code> in the installed plugin root. The plugin root is two directories above the directory containing <code>skills/consultation/SKILL.md</code>. Edit that bundled file in place; do not copy it and do not use repository commands. Changes apply to the next consultation, with independent settings for Standard and Specialist.</p>
+    <p>Terra/high and Sol/high are the defaults. You may select another model, including optional Astra, subject to your account access and runtime support. Invalid TOML and unsupported-model values produce an explicit error; Advisor does not silently fall back. An update or reinstall may replace edits to the bundled file. There is no GUI settings screen in the normal flow.</p>
+</section>
+
 <section aria-labelledby="scope">
-    <h2 id="scope">2. Supported platforms and scope</h2>
+    <h2 id="scope">4. Supported platforms and scope</h2>
     <h3>Supported</h3>
     <ul>
         <li><strong>Codex CLI</strong> on macOS and Linux.</li>
@@ -60,7 +73,7 @@
 </section>
 
 <section aria-labelledby="checklist">
-    <h2 id="checklist">3. Prerequisites checklist</h2>
+    <h2 id="checklist">5. Prerequisites checklist</h2>
     <p>Work through this before opening a ticket. Most <code>route: unavailable</code> reports resolve here.</p>
     <ol>
         <li>Codex CLI or Codex desktop is installed and operational.</li>
@@ -68,25 +81,25 @@
         <li>You have a <code>/bin/sh</code>-compliant POSIX shell.</li>
         <li>An active persisted Codex session rollout exists in your Codex home directory.</li>
         <li><code>CODEX_THREAD_ID</code> is set in the active parent execution context.</li>
-        <li>The escalated launcher permission (<code>require_escalated</code>) is enabled for the installed plugin launcher script.</li>
-        <li>Your subscription has model availability for <code>gpt-5.6-terra</code> and <code>gpt-5.6-sol</code>.</li>
+        <li>The installed plugin can use its declared escalated launcher permission (<code>require_escalated</code>).</li>
+        <li>Your authenticated Codex/OpenAI account has access to the models configured in <code>advisor.toml</code>.</li>
     </ol>
 </section>
 
 <section aria-labelledby="scenarios">
-    <h2 id="scenarios">4. Common scenarios</h2>
+    <h2 id="scenarios">6. Common scenarios</h2>
 
     <h3>A. Preflight returns <code>route: unavailable</code></h3>
     <p><strong>Symptom.</strong> The root agent emits:</p>
 <pre><code>ADVISOR DECISION
 route: unavailable</code></pre>
     <p><strong>Cause.</strong> <code>inspect-parent-runtime.sh</code> could not verify the parent environment or a prerequisite.</p>
-    <p><strong>Remedies.</strong> Confirm <code>jq</code> is installed and reachable. Confirm you are in an interactive, persisted Codex session — ephemeral test sessions have no persisted rollout and correctly emit <code>route: unavailable</code>. Confirm the companion scripts were installed via <code>install-agents.sh</code>.</p>
+    <p><strong>Remedies.</strong> Confirm <code>jq</code> is installed and reachable. Confirm you are in an interactive, persisted Codex session — ephemeral test sessions have no persisted rollout and correctly emit <code>route: unavailable</code>. Reinstall or update Advisor from the official OpenAI Plugins Directory, then start a new Codex thread.</p>
 
     <h3>B. Model availability or authorization failure</h3>
     <p><strong>Symptom.</strong> The consultation launcher reports a failure or an unexpected model response.</p>
-    <p><strong>Cause.</strong> Your OpenAI account lacks model availability for <code>gpt-5.6-terra</code> or <code>gpt-5.6-sol</code>.</p>
-    <p><strong>Remedies.</strong> Verify your subscription tier includes those models at high reasoning effort, and verify Codex authentication with the standard CLI commands.</p>
+    <p><strong>Cause.</strong> The configured model is unavailable or unauthorized for your authenticated Codex/OpenAI account.</p>
+    <p><strong>Remedies.</strong> Check the <code>model</code> and <code>effort</code> values in the installed <code>advisor.toml</code>, verify account access and usage availability, and correct the file in place. An unsupported model or invalid TOML reports an error; there is no silent fallback.</p>
 
     <h3>C. Response classification retry</h3>
     <p><strong>Symptom.</strong> Stderr shows a single retry during consultation.</p>
@@ -94,20 +107,17 @@ route: unavailable</code></pre>
 </section>
 
 <section aria-labelledby="diagnostics">
-    <h2 id="diagnostics">5. Diagnostic commands</h2>
-    <p>Verify a local installation without starting Codex or making a network call:</p>
-<pre><code>sh plugins/advisor/scripts/verify.sh --static</code></pre>
-    <p>Review aggregate local consultation activity. This redacts code, prompts, filenames, paths, and identifiers:</p>
-<pre><code>sh plugins/advisor/scripts/advisor-audit.sh --window-hours 24</code></pre>
+    <h2 id="diagnostics">7. Check an installed copy</h2>
+    <p>From the new Codex thread, ask Advisor for a consultation on a bounded architecture or technical decision. A working installed copy leaves an <code>ADVISOR DECISION</code> receipt followed, when consultation is selected, by an <code>ADVISOR CALL</code> and verified <code>ADVISOR RESULT</code> receipt.</p>
+    <p>For an unavailable or skipped request, the <code>ADVISOR DECISION</code> receipt is still the diagnostic result. Share the relevant receipt with support after redacting secrets and proprietary context.</p>
 </section>
 
 <section aria-labelledby="ticket">
-    <h2 id="ticket">6. Submitting a report</h2>
-    <p>Include these four things. Without them, the first reply is going to be a request for them.</p>
+    <h2 id="ticket">8. Submitting a report</h2>
+    <p>Include these three things. Without them, the first reply is going to be a request for them.</p>
     <ol>
         <li>Codex host type (CLI or desktop) and version.</li>
         <li>Operating system and shell version.</li>
-        <li>The output of <code>sh plugins/advisor/scripts/verify.sh --static</code>.</li>
         <li>The relevant <code>ADVISOR DECISION</code>, <code>ADVISOR CALL</code>, or <code>ADVISOR RESULT</code> receipts from the conversation.</li>
     </ol>
     <div class="callout">

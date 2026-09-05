@@ -182,7 +182,20 @@ scan_file() {
     if grep -E -i -q '([Cc]ustomer|[Cc]lient)[[:space:]]+[Nn]ame:[[:space:]]*|[Rr]eal[[:space:]]+[Uu]ser[[:space:]]+[Dd]ata|[Pp]roduction[[:space:]]+[Dd]ata|[Aa]ctual[[:space:]]+[Tt]ranscript' "$file"; then
       fail "disclosure hazard (non-synthetic customer content marker): $file"
     fi
-    allowed_models=$(awk -F ' = ' '$1 == "model" { gsub(/"/, "", $2); print $2 }' "$advisor_terra" "$advisor_sol" | sort -u)
+    allowed_models=$(
+      {
+        awk -F ' = ' '$1 == "model" { gsub(/"/, "", $2); print $2 }' "$advisor_terra" "$advisor_sol"
+        python3 - "$plugin_dir/models.json" <<'PY'
+import json
+import sys
+with open(sys.argv[1], encoding="utf-8") as source:
+    for item in json.load(source).get("models", []):
+        model = item.get("model")
+        if isinstance(model, str):
+            print(model)
+PY
+      } | sort -u
+    )
     model_references=$(grep -E -i -o '([Gg][Pp][Tt]|[Cc][Ll][Aa][Uu][Dd][Ee]|[Gg][Ee][Mm][Ii][Nn][Ii]|[Gg][Rr][Oo][Kk])-[A-Za-z0-9.]+-[A-Za-z0-9][A-Za-z0-9._-]*' "$file" || true)
     for model_reference in $model_references; do
       printf '%s\n' "$allowed_models" | grep -F -x -q "$model_reference" || fail "disclosure hazard (unavailable model entitlement): $file ($model_reference)"

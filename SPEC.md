@@ -8,10 +8,46 @@ technical decisions; it never implements, routes implementation, or performs
 final verification.
 
 The distributable plugin identity is `advisor`. Its single skill is `consultation`, and
-the current candidate version is `1.3.4`. Release archives use that exact version.
+the current local candidate version is `1.4.2`. Release archives use that exact version
+only after an owner-approved candidate freeze and packaging step. A built ZIP is only a
+local candidate: it may be described as upload-ready or uploaded only after the current
+public release evidence gate passes against that exact ZIP immediately before upload.
 
 Supported local Codex hosts are **Codex CLI and Codex desktop**. Generic ChatGPT is
 out of scope.
+
+## Selection and discovery contract
+
+New transports select `--tier standard|specialist` and resolve exactly one immutable
+launch record from the bundled live `advisor.toml`. It contains exactly `[standard]`
+and `[specialist]`, each with model and effort, and its SHA-256 content digest is the
+source revision. An edit applies to the next consultation without state, discovery,
+catalog registration, canary, or copying. Future syntactically valid selectors are
+permitted subject to account/runtime support; Specialist Astra is higher usage. A
+retry reuses the frozen record and never migrates, falls back, or automatically selects
+a newer model. Plugin updates or reinstall may replace edits. Legacy `--role
+advisor-terra` and `--role advisor-sol` remain fixed Terra/high and Sol/high routes
+and do not follow the live file. Explicit model
+refresh starts an owned `codex app-server --ignore-user-config --ignore-rules`
+process with the existing Codex home and requests only initialize, initialized, and
+paginated `model/list` with `includeHidden: true`; it neither reads/copies auth nor
+starts inference. Terra/high for Standard and Sol/high for Specialist are the validated
+shipped defaults and may be attempted with no state, discovery, or canary. This is
+launch permission only, never compatibility proof; each actual child still passes the
+existing exact runtime identity, effort, read-only, zero-tool, and response checks.
+The catalog records `codex-cli 0.153.2` as tested provenance only. If the installed
+app-server lacks either isolation flag, discovery returns unavailable without launching
+or changing saved state; discovery never blocks the built-in defaults. The observed
+`0.153.2` has this safe-unavailable condition, so local model discovery and real
+inference are not claimed passed. `models add MODEL` is the offline manual-selector
+path. The shipped catalog, including optional `gpt-6-astra`, is documentation rather
+than entitlement; advanced presets require an explicit successful exact
+model/effort/transport compatibility record but cannot override normal tiers.
+`models test MODEL --effort EFFORT
+--authorize-usage` runs only a fixed synthetic packet through the same transport,
+allows at most one response-only retry, records the actual local CLI version as
+provenance plus the transport contract, and never changes a selection. CLI updates
+alone never invalidate built-in defaults or existing custom/preset evidence.
 
 ## Outcome
 
@@ -94,11 +130,11 @@ ordinary `route: skip` path remains unchanged.
    when it returns `status: available` with a recognized sandbox policy; otherwise
    emit the required unavailable decision and do not invoke the transport.
 2. Verify the installed plugin includes `run-advisor.sh` and both runtime inspectors.
-3. Select the role from decision risk. Standard consultation uses
-   `advisor-terra`, pinned GPT-5.6 Terra / high, for material architecture,
+3. Select the tier from decision risk. Standard consultation uses
+   `--tier standard`, defaulting to GPT-5.6 Terra / high, for material architecture,
    interface, data-model, compatibility, cross-boundary, competing-diagnosis,
-   and generic advisor requests. Specialist consultation uses `advisor-sol`,
-   pinned GPT-5.6 Sol / high, only for an unresolved security or trust boundary,
+   and generic advisor requests. Specialist consultation uses `--tier specialist`,
+   defaulting to GPT-5.6 Sol / high, only for an unresolved security or trust boundary,
    an irreversible migration or data-loss decision, or a credible unresolved
    High-severity disagreement. Security adjacency and project importance alone
    do not qualify; a borderline role choice uses Terra. Parent model is irrelevant.
@@ -107,15 +143,15 @@ ordinary `route: skip` path remains unchanged.
    `status: running`.
 5. Invoke the fixed installed-plugin `run-advisor.sh` exactly once through the shell
    tool's `sandbox_permissions: require_escalated` boundary with the selected exact
-   role label and the packet on stdin. Do not first attempt it inside the parent
+   tier and the packet on stdin. Do not first attempt it inside the parent
    sandbox, where nested Codex app-server initialization is blocked. The elevation
    applies only to the fixed launcher; the child remains forced read-only and
    runtime-inspected. Resolve the absolute installed plugin root from the loaded skill
    path, require regular nonsymlinked scripts beneath it, and never elevate a
    repository-relative or workspace-resolved script. Do not call `codex exec`
    directly and do not pass a model or
-   effort override. The wrapper maps the role to its pinned Terra/Sol model, forces
-   High effort and `--sandbox read-only`, starts a distinct persisted Codex exec
+   effort override. The wrapper resolves the live-file model and effort once, forces
+   `--sandbox read-only`, starts a distinct persisted Codex exec
    thread, and uses existing Codex authentication without reading or copying secrets.
    The single wrapper invocation may launch exactly one additional fresh child only
    under the response-retry rule below; the root does not launch a replacement itself.
@@ -133,7 +169,7 @@ ordinary `route: skip` path remains unchanged.
 7. For every launched child, before response classification or successful machine
    stdout, the wrapper runs `inspect-agent-runtime.sh` for that child and the parent.
    This inspection is mandatory, not a metadata fallback, and must prove exact
-   allowlisted `codex_exec` or `Codex Desktop` provenance, role/model, High effort, a thread distinct from the parent,
+   allowlisted `codex_exec` or `Codex Desktop` provenance, the exact frozen model and effort, a thread distinct from the parent,
    read-only isolation, and zero-tool behavior. The installed JSON Schema is the sole supported wrapper model-output contract. Direct/native role invocation is unsupported and is not schema-validated. Wrapper-owned semantic validation rejects
    invalid JSON and duplicate, missing, extra, wrong-type, noncontiguous-array, or
    blank fields. It deterministically renders an accepted object as the canonical eight-line `ADVISOR RESPONSE` receipt. Exactly one fresh corrective retry is
@@ -151,8 +187,8 @@ ordinary `route: skip` path remains unchanged.
    concrete `FOLLOW-UP AREAS` entry. The root checks its cited source references and
    records `accept`, `modify`, or `reject` with one reason.
 9. After runtime evidence and advice processing, always emit a visible
-   `ADVISOR RESULT` receipt containing completed/unavailable status, tier, role,
-   verified model and high effort, read-only isolation, a concise recommendation
+   `ADVISOR RESULT` receipt containing completed/unavailable status, tier,
+   verified model and effort, read-only isolation, a concise recommendation
    or unavailable, the accept/modify/reject/blocked disposition, and one-sentence
    reason.
 10. After a valid, runtime-inspected completed result, the root may route only the
@@ -184,7 +220,8 @@ receipt and no transport invocation.
 ```text
 ADVISOR CALL
 tier: Standard | Specialist
-role: advisor-terra | advisor-sol
+model: <resolved model selector>
+effort: <resolved effort>
 reason: <one task-specific sentence>
 question: <bounded decision question>
 status: running
@@ -194,9 +231,8 @@ status: running
 ADVISOR RESULT
 status: completed | unavailable
 tier: Standard | Specialist
-role: advisor-terra | advisor-sol
-model: <verified gpt-5.6-terra | gpt-5.6-sol>
-effort: high
+model: <verified resolved model selector>
+effort: <verified resolved effort>
 isolation: read-only
 recommendation: <concise recommendation, or unavailable>
 decision: accept | modify | reject | blocked
@@ -325,7 +361,7 @@ it never implies that a technical choice was accepted when no technical choice w
   `06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d`,
   used by the intermediate v0.3.0/v0.4.0/pre-revert v0.5.0 history. Unknown blobs
   still fail closed.
-- Plugin installation identity is `advisor`. Set version `1.3.4` and make
+- Plugin installation identity is `advisor`. Set version `1.4.2` and make
   the manifest author identify David Schmidt / Zero Delta LLC. Preserve Daniel
   McAteer's MIT copyright in `LICENSE` and keep upstream provenance in root
   `NOTICE.md`; do not add upstream attribution to the marketplace listing,
@@ -452,9 +488,21 @@ overage, added provider, or expansion beyond 40 root sessions is Red and parked.
 
 ## Release boundary
 
+Release order is: update marketplace Short Description and Long Description plus all
+applicable public website/product/privacy/support/terms copy for the target version;
+run local tests and review and prepare the dated candidate-current walkthrough; owner
+reviews before deployment; deploy with `deploy-site.sh` and verify live bytes; run
+`public-release/verify-upload-ready.sh [--json] ARCHIVE.zip` for the exact existing
+candidate ZIP; then, and only then, owner confirms/pastes marketplace metadata and
+authorizes upload. Support URL confirmation remains separate. Every version repeats
+this sequence; no earlier receipt carries forward.
+
 Overnight work may redesign, test, document, and locally checkpoint the plugin.
 Unattended work may not install into the user's live Codex home, push, publish,
 change the marketplace source, or claim live trigger acceptance without current
 evidence. Publication and live installation remain attended, owner-authorized
 actions; a missing external review or runtime spawn evidence is unavailable, not
 approval to continue.
+# Usage and audit (1.4)
+
+The versioned wrapper envelope retains the canonical eight-line response and legacy runtime keys while adding an opaque consultation ID, frozen selection, per-attempt duration and available input/cached-input/output/reasoning counters. Cached input is a subset of input and reasoning is never added twice to output. Missing counters are null with explicit partial availability. The optional content-free local usage journal is disabled by default; `advisor-config.sh journal enable|disable|status|clear` controls owner-only, atomic 30-day receipts. It never stores prompts, answers, paths, child/session IDs, or raw errors. A journal failure is a redacted warning, not an advice failure.

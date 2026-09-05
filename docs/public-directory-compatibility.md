@@ -2,14 +2,11 @@
 
 ## Distribution and execution
 
-Advisor is not listed in the OpenAI Plugins Directory and has not been submitted for
-review. Today it is installed from its Git repository as a Codex plugin marketplace.
-This document records what a listing would mean so that decision can be made against a
-written runtime boundary; it is not a description of current distribution.
-
-If listed, the Directory would distribute a skills-only package. Consultation would
-still execute only through the **local Codex runtime** on the user's own machine, and
-publication would add no hosted or remote execution path.
+Advisor v1.3.3 is published in the official OpenAI Plugins Directory as a skills-only
+package. Marketplace users should reinstall or update Advisor from the Directory and
+start a new Codex thread so the installed copy is available to the session.
+Consultation still executes only through the **local Codex runtime** on the user's own
+machine; publication adds no hosted or remote execution path.
 
 ## Surface matrix
 
@@ -41,20 +38,14 @@ Consultation requires all of the following:
 | A resolvable current-thread identity from `CODEX_THREAD_ID` | Return `route: unavailable`; `CODEX_SESSION_ID` is never used as a fallback. |
 | A narrowly elevated launcher invoked through the escalated-command boundary, the skill's `require_escalated` declaration | Return `route: unavailable`; no consultation transport runs. |
 
-## Directory submission requirements
+## Published-directory recovery
 
-The submission source is <https://developers.openai.com/plugins/deploy/submission.md>.
-Public submission requires a verified developer or business identity; name, short
-description, and long description; logo and category; website plus support,
-privacy-policy, and terms URLs; at least five positive test cases and three negative
-test cases; an availability (country/region) selection; release notes; OpenAI review
-approval; and a separate explicit publisher action to publish. Skills-only plugins
-with no MCP server are explicitly permitted.
+The official recovery path is the published Directory entry:
+<https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521>. Reinstall or
+update Advisor there, then start a new Codex thread. To check the installed copy, ask
+Advisor for a bounded consultation and inspect the resulting `ADVISOR DECISION`,
+`ADVISOR CALL`, or `ADVISOR RESULT` receipts.
 
 ## Owner decision
 
 OWNER DECISION: approved
-
-Approved by the owner on 2026-08-31: Advisor will be listed when the candidate is
-ready. Approval authorizes local packaging work only; submission and publication
-remain separate owner actions.

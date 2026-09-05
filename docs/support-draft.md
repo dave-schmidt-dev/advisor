@@ -1,94 +1,81 @@
-# Codex Advisor Support and Troubleshooting Guide (Draft)
+# Codex Advisor Support and Troubleshooting Guide
 
-> **Superseded 2026-09-01.** The published version of this document is
-> [`site/support/index.html`](../site/support/index.html), deployed to `https://zerodelta.dev/advisor/`.
-> This draft is kept as the record of what the published page was written
-> from. Edit the published page, not this file.
+> The published support page at [`site/support/index.html`](../site/support/index.html)
+> is the source of truth. This draft mirrors its current distribution and recovery
+> guidance.
 
-
-> **Notice:** This document is a pre-release draft. All publisher-specific entries marked `OWNER-PROVIDED` must be populated by the repository owner prior to formal directory submission.
-
-**Support Contact:** OWNER-PROVIDED support email  
-**Issue Tracker:** OWNER-PROVIDED issue tracker URL  
-**Support SLA / Hours:** OWNER-PROVIDED response SLA  
-
----
+**Support Contact:** advisor@zerodelta.dev
+**Issue Tracker:** https://github.com/dave-schmidt-dev/advisor/issues
+**Support SLA / Hours:** Best effort; no response-time commitment
 
 ## 1. Support Channels
 
-For technical assistance, bug reports, or feature questions regarding Codex Advisor:
-- **Primary Issue Tracker:** OWNER-PROVIDED issue tracker URL  
-- **Email Support:** OWNER-PROVIDED support email  
-- **Discussions / Community:** OWNER-PROVIDED community forum URL  
+For technical assistance, bug reports, or feature questions, use the
+[GitHub issue tracker](https://github.com/dave-schmidt-dev/advisor/issues). Email
+[advisor@zerodelta.dev](mailto:advisor@zerodelta.dev) for anything that should not
+be filed publicly.
 
-Please note that Codex Advisor is an open-source project maintained on a best-effort basis by OWNER-PROVIDED legal entity name.
+## 2. Reinstall or Update Advisor
 
-## 2. Supported Platforms and Scope
+Codex Advisor v1.3.3 is distributed through the
+[official OpenAI Plugins Directory](https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521).
+If Advisor is missing, outdated, or not responding, reinstall or update it there,
+then start a new Codex thread so the installed plugin is available to the session.
 
-### Supported Platforms
-- **Codex CLI:** Supported on Linux and macOS environments.
-- **Codex Desktop:** Supported on Linux and macOS environments with persisted sessions.
+The Directory package is skills-only. Consultations execute through the
+authenticated local Codex runtime on the user's own machine; there is no hosted
+service or MCP server.
 
-### Unsupported Platforms & Out-of-Scope Configurations
-- **Generic ChatGPT Alone:** Generic ChatGPT with no local Codex runtime is unsupported (preflight emits `route: unavailable`).
-- **Remote / Hosted Services:** MCP servers and hosted services are unsupported and out of scope (operates with no MCP server and no hosted service).
-- **Subagents as Consultation Transports:** Native Codex subagents are unsupported as a consultation transport because they lack the required read-only isolation guarantees.
+## 3. Supported Platforms and Scope
 
-## 3. Local Host Prerequisites Checklist
+- **Codex CLI:** Supported on Linux and macOS.
+- **Codex desktop:** Supported on Linux and macOS with persisted sessions.
+- **Generic ChatGPT alone:** Unsupported; without a local Codex runtime, preflight
+  emits `route: unavailable`.
+- **Remote / hosted services:** Unsupported and out of scope; the plugin operates
+  with no MCP server and no hosted service.
+- **Native Codex subagents:** Unsupported as a consultation transport because they
+  cannot supply the required read-only isolation guarantee.
 
-Before opening a support ticket, ensure your local environment satisfies all required local host prerequisites:
+## 4. Local Host Prerequisites
 
-1. **Codex CLI or Codex Desktop:** Installed and operational.
-2. **`jq` Utility:** Installed and accessible in your `$PATH` (e.g. `which jq`).
-3. **POSIX Shell:** `/bin/sh` compliant environment.
-4. **Persisted Session Rollout:** Active Codex thread session files present in your local Codex home directory.
-5. **Thread Identity:** Environment variable `CODEX_THREAD_ID` set in the active parent execution context.
-6. **Launcher Permissions:** Escalated permission enabled for the installed plugin launcher script via `require_escalated`.
-7. **Model Availability:** Subscription access to `gpt-5.6-terra` (Standard) and `gpt-5.6-sol` (Specialist).
+Before opening a support ticket, ensure that Codex CLI or desktop is installed and
+operational, `jq` is on `$PATH`, a POSIX shell is available, an active persisted
+Codex session rollout exists, `CODEX_THREAD_ID` is set in the active parent
+context, the installed plugin can use its declared `require_escalated` launcher
+permission, and the account has access to `gpt-5.6-terra` and `gpt-5.6-sol`.
 
-## 4. Common Troubleshooting Scenarios
+## 5. Common Troubleshooting Scenarios
 
-### Scenario A: Preflight Returns `route: unavailable`
-- **Symptom:** In the root agent log, you observe:
-  ```text
-  ADVISOR DECISION
-  route: unavailable
-  ```
-- **Cause:** Preflight script (`inspect-parent-runtime.sh`) could not verify the parent environment or prerequisites.
-- **Remedies:**
-  - Verify that `jq` is installed and reachable in `$PATH`.
-  - Ensure you are running within an interactive, persisted Codex session (ephemeral test sessions lack persisted rollouts and correctly emit `route: unavailable`).
-  - Check that the installed plugin companion scripts were installed via `install-agents.sh`.
+### Preflight returns `route: unavailable`
 
-### Scenario B: Model Availability / Authorization Failure
-- **Symptom:** Consultation launcher reports failure or unexpected model response.
-- **Cause:** Your OpenAI account lacks model availability for `gpt-5.6-terra` or `gpt-5.6-sol`.
-- **Remedies:**
-  - Verify your OpenAI subscription tier supports GPT-5.6 models with high reasoning effort.
-  - Test Codex authentication using `codex auth check` or standard CLI commands.
+Confirm `jq`, the persisted Codex session, and the current thread identity. If the
+problem persists, reinstall or update Advisor from the official Plugins Directory
+and start a new Codex thread.
 
-### Scenario C: Response Classification Retries
-- **Symptom:** Stderr logs indicate a single retry attempt during consultation.
-- **Behavior:** The plugin allows exactly one fresh retry if the first response is structurally empty or misordered, provided runtime isolation was verified. If the retry also fails, it safely terminates with `decision: blocked`.
+### Model availability or authorization failure
 
-## 5. Diagnostic and Verification Commands
+Verify that the authenticated OpenAI account and subscription provide
+`gpt-5.6-terra` and `gpt-5.6-sol` at the required reasoning effort, then verify
+Codex authentication with the standard CLI commands.
 
-You can verify your local plugin installation using the non-networked verification script:
+### Response classification retry
 
-```sh
-sh plugins/advisor/scripts/verify.sh --static
-```
+A runtime-valid child with an empty or structurally malformed response gets one
+fresh retry. If it fails again, the plugin records `recommendation: unavailable` and
+`decision: blocked` and stops. Packet, launcher, identity, runtime, wrong-model,
+wrong-effort, and tool-use failures are terminal and never retry.
 
-To review local aggregate consultation activity without disclosing sensitive project data:
+## 6. Check an Installed Copy
 
-```sh
-sh plugins/advisor/scripts/advisor-audit.sh --window-hours 24
-```
+From a new Codex thread, ask Advisor for a consultation on a bounded architecture or
+technical decision. A working installed copy leaves an `ADVISOR DECISION` receipt
+followed, when consultation is selected, by an `ADVISOR CALL` and verified
+`ADVISOR RESULT` receipt. For an unavailable or skipped request, the
+`ADVISOR DECISION` receipt is still the diagnostic result.
 
-## 6. Submitting a Support Request
+## 7. Submitting a Support Request
 
-When submitting a support ticket to OWNER-PROVIDED support email, please include:
-1. Codex host type (Codex CLI or Codex desktop) and version.
-2. Operating system and shell version.
-3. Output of `sh plugins/advisor/scripts/verify.sh --static`.
-4. Relevant `ADVISOR DECISION`, `ADVISOR CALL`, or `ADVISOR RESULT` receipts from the conversation (ensuring all private project secrets are redacted).
+Include the Codex host type and version, operating system and shell version, and
+relevant `ADVISOR DECISION`, `ADVISOR CALL`, or `ADVISOR RESULT` receipts. Redact
+secrets and proprietary context before sending.

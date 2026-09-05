@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
 <title>Privacy Policy — Codex Advisor</title>
-<meta name="description" content="Privacy policy for the Codex Advisor plugin. The plugin runs locally with no hosted service, no MCP server, and no telemetry.">
+<meta name="description" content="Privacy policy for Codex Advisor, including authenticated OpenAI transmission, live configuration, and optional content-free usage data.">
+<meta name="advisor-release" content="1.4.2">
 <link rel="canonical" href="https://zerodelta.dev/advisor/privacy/">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/style.css">
@@ -28,7 +29,7 @@
         <span class="eyebrow">Legal</span>
         <h1>Privacy Policy</h1>
         <div class="doc-meta">
-            <div>Effective date: 1 September 2026</div>
+            <div>Effective date: 5 September 2026</div>
             <div>Publisher and controller: Zero Delta LLC (Commonwealth of Virginia, United States)</div>
             <div>Contact: <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a></div>
             <div>Website: <a href="https://zerodelta.dev">zerodelta.dev</a></div>
@@ -41,9 +42,9 @@
 
 <section aria-labelledby="overview">
     <h2 id="overview">1. Overview and core principles</h2>
-    <p>Codex Advisor is an open-source, skills-only plugin designed for local use within Codex CLI and Codex desktop.</p>
+    <p>Codex Advisor is an open-source, skills-only plugin integrated with Codex CLI and Codex desktop.</p>
     <ul>
-        <li><strong>Local integration.</strong> The plugin runs from your own Codex installation. It has no Zero Delta-hosted service or remote backend; consultations are processed through your authenticated Codex/OpenAI account.</li>
+        <li><strong>Local integration.</strong> The plugin runs from your own Codex installation. It has no Zero Delta-hosted service or remote backend; bounded consultation packets are sent through your authenticated Codex/OpenAI account.</li>
         <li><strong>No Zero Delta relay.</strong> Consultation packets are sent directly through your authenticated Codex/OpenAI account. Zero Delta receives no packets, runs no proxy, and collects no telemetry.</li>
         <li><strong>No telemetry or analytics.</strong> The plugin includes no telemetry, no analytics tracking, no crash reporting, and no MCP server.</li>
         <li><strong>Read-only, zero-tool child.</strong> Advisor child processes run in a forced read-only sandbox with no tools enabled. They cannot make tool calls or modify local files; the Codex runtime still sends the bounded consultation packet directly to OpenAI through your authenticated account.</li>
@@ -65,14 +66,14 @@
     </ul>
 </section>
 
-<section aria-labelledby="audit">
-    <h2 id="audit">3. Local audit and diagnostic script</h2>
-    <p>The plugin includes a local audit utility, <code>advisor-audit.sh</code>, for inspecting consultation metrics.</p>
+<section aria-labelledby="local-state">
+    <h2 id="local-state">3. Configuration and optional usage data</h2>
+    <p>The live <code>advisor.toml</code> file is bundled with the installed plugin and controls the configured Standard and Specialist models and effort. Advanced settings and model-catalog data may be stored under your Codex home directory. These local files are separate from the consultation packet sent through your authenticated account.</p>
     <ul>
-        <li>It operates strictly on local persisted Codex session logs.</li>
-        <li>It calculates aggregate counts and statistics, such as consult and skip counts and token totals.</li>
-        <li>It enforces strict redaction: it never emits session content, user prompts, file paths, filenames, identifiers, contact information, secret-shaped patterns, or cost calculations.</li>
-        <li>Its output is written to local standard output and is not transmitted anywhere.</li>
+        <li>The optional content-free usage journal is disabled by default.</li>
+        <li>If enabled, it stores operational metadata and aggregate usage counters only. It stores no consultation packets and no response content.</li>
+        <li>Later journal writes prune entries older than 30 days and enforce a bounded count. There is no background deletion service.</li>
+        <li>Terra/high and Sol/high are the defaults; models are configurable, and selecting optional Astra uses more of your Codex allowance.</li>
     </ul>
 </section>
 
@@ -84,14 +85,14 @@
 <section aria-labelledby="third-party">
     <h2 id="third-party">5. Third-party services and surfaces</h2>
     <ul>
-        <li><strong>OpenAI Codex.</strong> Consultation requests execute via your local Codex installation communicating with OpenAI models (<code>gpt-5.6-terra</code> and <code>gpt-5.6-sol</code>). Data handling by OpenAI is governed by OpenAI's terms.</li>
+        <li><strong>OpenAI Codex.</strong> Consultation requests execute via your local Codex installation communicating with the models configured in <code>advisor.toml</code>, with Terra/high and Sol/high as defaults and optional Astra. Data handling by OpenAI is governed by OpenAI's terms.</li>
         <li><strong>No MCP or hosted service.</strong> Codex Advisor provides no MCP server, no hosted service, and no background cloud service.</li>
     </ul>
 </section>
 
 <section aria-labelledby="control">
     <h2 id="control">6. User control and data deletion</h2>
-    <p>Because all consultation data resides solely in local persisted Codex session logs on your own machine, you retain complete ownership and control. You may inspect, modify, archive, or delete those logs at any time using standard operating system tools. Removing or uninstalling the plugin removes the plugin files from your environment without affecting your repository data.</p>
+    <p>Consultation receipts and decisions may remain in your local persisted Codex session logs, while live plugin configuration and optional journal or catalog state are managed separately under the installed plugin and your Codex home directory. You may inspect, modify, archive, or delete that user state using standard operating system tools. Uninstalling the plugin may leave user state and session logs behind; those are managed separately and can be removed by you.</p>
 </section>
 
 <section aria-labelledby="website">

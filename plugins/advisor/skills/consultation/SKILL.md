@@ -61,6 +61,24 @@ starts no consultation process, and does not block the root's own work. The ordi
 `route: skip` path is unchanged.
 A non-Codex surface has no supported local transport, so it takes `route: unavailable` and emits no `ADVISOR CALL` or `ADVISOR RESULT`.
 
+## Explicit configuration is separate
+
+The bundled installed `advisor.toml` is live configuration for normal `--tier`
+consultations. It contains exactly `[standard]` and `[specialist]`, each with `model`
+and `effort`; edit it in place and the next consultation uses the pair. No catalog,
+discovery, canary, saved state, or file copy is a prerequisite. Any syntactically valid
+future selector is permitted subject to account/runtime support; `gpt-6-astra` for
+Specialist opts into higher usage. Plugin updates or reinstalling can replace edits.
+The helper's `show` and `doctor` report the actual pairs, installed path, and SHA-256
+source revision. Catalogs, presets, and canaries are isolated advanced tools; `set`
+and `reset` reject as legacy-only, and `restore` states that it cannot affect tiers.
+
+`models test MODEL --effort EFFORT --authorize-usage --parent-thread THREAD_ID`
+uses model capacity. Never infer that authorization from catalog metadata, a saved
+selection, or a configuration request. CLI `0.153.2` app-server currently lacks the
+isolation flags required for safe discovery, so `models refresh` safely returns
+unavailable without changing state; it is not a live model canary.
+
 ## Consult exactly
 
 1. Resolve the absolute installed plugin root from this loaded `SKILL.md` path: it is
@@ -70,21 +88,24 @@ A non-Codex surface has no supported local transport, so it takes `route: unavai
    for every consultation command. Never elevate a repository-relative or
    workspace-resolved `plugins/advisor` script.
 2. Classify the decision risk. Standard consultation uses
-   `--role advisor-terra`, pinned to `gpt-5.6-terra` / `high`. This is the
+   `--tier standard`. Its live file model and effort default to Terra / `high` with no
+   setup, discovery, or canary. This permits the real consultation attempt, not a
+   compatibility claim; post-run runtime inspection remains required. This is the
    default for material architecture, interface, data-model, compatibility,
    cross-boundary, competing-diagnosis, and explicit generic advisor requests.
-   Specialist consultation uses `--role advisor-sol`, pinned to
-   `gpt-5.6-sol` / `high`, only for an unresolved security or trust boundary, an
+   Specialist consultation uses `--tier specialist`. Its live file model and effort
+   default to Sol / `high` with the same zero-setup launch permission, only for an unresolved security or trust boundary, an
    irreversible migration or data-loss decision, or a credible unresolved High-severity disagreement.
    Security adjacency or project importance alone
-   does not qualify. A borderline role choice uses `advisor-terra`. The parent
-   model and sandbox are irrelevant to selection.
-3. Before invoking the consultation transport, emit this visible main-chat receipt:
+   does not qualify. A borderline choice uses Standard. The parent model and sandbox are irrelevant to selection.
+3. Resolve the selected tier through the installed helper. Before invoking the
+   consultation transport, emit this visible main-chat receipt using the actual resolved model and effort metadata:
 
 ```text
 ADVISOR CALL
 tier: Standard | Specialist
-role: advisor-terra | advisor-sol
+model: <resolved model selector>
+effort: <resolved effort>
 reason: <one task-specific sentence>
 question: <bounded decision question>
 status: running
@@ -131,17 +152,17 @@ acceptance_checks: required nonempty array of nonblank strings
    blocked there. The elevation applies only to the fixed launcher; the consultation
    process itself is forced to `--sandbox read-only` and must pass runtime inspection.
    Do not call `codex exec` directly and do not pass a model or effort override;
-   `run-advisor.sh` maps the exact role label to
-   its pinned model, forces High effort and `--sandbox read-only`, starts a fresh
+   `run-advisor.sh` resolves the selected tier once, uses its exact live-file model and
+   effort, forces `--sandbox read-only`, starts a fresh
    `codex exec` thread using existing Codex authentication, and never reads or copies
    authentication files:
 
 ```sh
-/bin/sh <absolute-installed-plugin-root>/scripts/run-advisor.sh --role advisor-terra <<'ADVISOR_PACKET'
+/bin/sh <absolute-installed-plugin-root>/scripts/run-advisor.sh --tier standard <<'ADVISOR_PACKET'
 DECISION
 <the complete five-section packet continues here>
 ADVISOR_PACKET
-# or use: --role advisor-sol
+# or use: --tier specialist
 ```
 
    Use this single-quoted heredoc form, after proving the delimiter is absent from the
@@ -167,14 +188,14 @@ RISKS: <risks>
 FOLLOW-UP AREAS: <follow_up_areas>
 ```
 
-   Mandatory post-response inspection proves the exact selected model,
-   High effort, read-only isolation, distinct-thread identity, `codex_exec` provenance,
-   and zero tool calls before validation can succeed. When the first child proves the exact selected model, High effort,
+   Mandatory post-response inspection proves the exact frozen model and effort,
+   read-only isolation, distinct-thread identity, `codex_exec` provenance,
+   and zero tool calls before validation can succeed. When the first child proves the exact frozen model and effort,
    read-only runtime, distinct thread, allowlisted `codex_exec` or `Codex Desktop`
    provenance, and zero tool calls but
    returns a runtime-valid response-validation failure, the wrapper emits only its
    redacted failure `class` and `field` on stderr and performs exactly one fresh
-   corrective retry by launching a new child. The retry prompt names only that
+   corrective retry using the same frozen model and effort. The retry prompt names only that
    diagnostic, never rejected content. A consultation launches at most two children.
    Packet, launcher, event, identity,
    same-session, runtime, wrong-model, wrong-effort, non-read-only, normalization, provenance, or tool-use failure
@@ -199,9 +220,8 @@ FOLLOW-UP AREAS: <follow_up_areas>
 ADVISOR RESULT
 status: completed | unavailable
 tier: Standard | Specialist
-role: advisor-terra | advisor-sol
-model: <verified gpt-5.6-terra | gpt-5.6-sol>
-effort: high
+model: <verified resolved model selector>
+effort: <verified resolved effort>
 isolation: read-only
 recommendation: <concise recommendation, or unavailable>
 decision: accept | modify | reject | blocked
@@ -227,10 +247,8 @@ These receipts summarize verified evidence; they are not runtime proof.
 The distinct Codex consultation thread remains the inspectable detailed record.
 
 If exact completed transport evidence is unavailable, report `advisor unavailable`
-and block the consult route. Never continue independently, substitute another role,
-or add an implementer or final reviewer after choosing `consult`.
-In all cases, never substitute a role other than the policy-selected
-`advisor-terra` or `advisor-sol`.
+and block the consult route. Never continue independently, substitute another model
+or effort, or add an implementer or final reviewer after choosing `consult`.
 
 For `skip` or `unavailable`, emit only the existing `ADVISOR DECISION`; do not emit
 `ADVISOR CALL` or `ADVISOR RESULT`, and do not start the transport. An unavailable parent does not
@@ -238,3 +256,8 @@ block root-owned work.
 
 See [operations](references/operations.md) for installation, runtime evidence, and
 evaluation details.
+
+Legacy cached integrations may use `--role advisor-terra` or `--role advisor-sol`.
+Those compatibility routes remain fixed to Terra/high and Sol/high and do not follow
+`advisor.toml`. They cannot be combined with a tier or preset. New calls use the tier
+interface above; raw model and effort flags are never accepted by the wrapper.

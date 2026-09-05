@@ -24,12 +24,26 @@ transport=$script_dir/run-advisor.sh
 response_schema=$plugin_dir/advisor-response.schema.json
 audit=$script_dir/advisor-audit.sh
 evaluator=$script_dir/evaluate-triggers.sh
+config_test=$plugin_dir/tests/test_advisor_config.py
+transport_test=$plugin_dir/tests/test_advisor_transport.py
+usage_test=$plugin_dir/tests/test_advisor_usage.py
+cli_test=$plugin_dir/tests/test_advisor_cli.py
+process_helper=$script_dir/advisor_process.py
+config_helper=$script_dir/advisor_config.py
+config_wrapper=$script_dir/advisor-config.sh
+live_config=$plugin_dir/advisor.toml
+models=$plugin_dir/models.json
+settings_schema=$plugin_dir/settings.schema.json
 readme=$repo_dir/README.md
 notice=$repo_dir/NOTICE.md
 license=$repo_dir/LICENSE
 compat_doc=$repo_dir/docs/public-directory-compatibility.md
+model_doc=$repo_dir/docs/model-configuration.md
+walkthrough=$repo_dir/docs/advisor-1.4-walkthrough.md
+release_notes=$repo_dir/docs/release-notes-draft.md
+package_test=$repo_dir/public-release/test_candidate_package.py
 
-for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$transport" "$response_schema" "$audit" "$evaluator" "$readme" "$notice" "$license"; do
+for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$transport" "$response_schema" "$audit" "$evaluator" "$config_test" "$transport_test" "$usage_test" "$cli_test" "$process_helper" "$config_helper" "$config_wrapper" "$live_config" "$models" "$settings_schema" "$model_doc" "$walkthrough" "$release_notes" "$package_test" "$readme" "$notice" "$license"; do
   [ -f "$file" ] || fail "missing required file: $file"
 done
 [ "$(find "$plugin_dir/agents" -maxdepth 1 -type f -name '*.toml' | wc -l | tr -d ' ')" -eq 2 ] || fail "expected exactly two active roles"
@@ -47,7 +61,7 @@ jq -e '
 [ ! -L "$response_schema" ] || fail "response schema must not be a symlink"
 pass "strict seven-field response schema"
 
-python3 - "$manifest" "$marketplace" "$terra_role" "$sol_role" "$fixtures" "$ui" <<'PY'
+python3 - "$manifest" "$marketplace" "$terra_role" "$sol_role" "$fixtures" "$ui" "$models" "$live_config" <<'PY'
 import json, re, sys, tomllib
 from pathlib import Path
 manifest=json.loads(Path(sys.argv[1]).read_text())
@@ -56,12 +70,22 @@ terra=tomllib.loads(Path(sys.argv[3]).read_text())
 sol=tomllib.loads(Path(sys.argv[4]).read_text())
 cases=json.loads(Path(sys.argv[5]).read_text())
 ui=Path(sys.argv[6]).read_text()
+models=json.loads(Path(sys.argv[7]).read_text())
+live=tomllib.loads(Path(sys.argv[8]).read_text())
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or version!="1.3.4": raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or version!="1.4.2": raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if author_name!="David Schmidt / Zero Delta LLC": raise SystemExit("plugin developer identity")
 if manifest.get("skills")!="./skills/" or any(k in manifest for k in ("hooks","apps","mcpServers")): raise SystemExit("unsupported plugin components")
+interface=manifest.get("interface",{})
+if {key: interface.get(key) for key in ("websiteURL","privacyPolicyURL","termsOfServiceURL")} != {"websiteURL":"https://zerodelta.dev/advisor/","privacyPolicyURL":"https://zerodelta.dev/advisor/privacy/","termsOfServiceURL":"https://zerodelta.dev/advisor/terms/"}: raise SystemExit("manifest URL fields")
+if "supportURL" in interface: raise SystemExit("unsupported support URL field")
+if models.get("transport_contract_version")!="1.4" or models.get("tested_codex_cli")!="codex-cli 0.153.2": raise SystemExit("model transport provenance")
+if models.get("defaults")!={"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-5.6-sol","effort":"high"}}: raise SystemExit("model defaults")
+if live != {"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-5.6-sol","effort":"high"}}: raise SystemExit("live config defaults")
+if any("codex_cli_version_pattern" in (item.get("compatibility_baseline") or {}) for item in models.get("models", [])): raise SystemExit("CLI version eligibility pin")
+if {item.get("model") for item in models.get("models",[])} != {"gpt-5.6-terra","gpt-5.6-sol","gpt-6-astra"}: raise SystemExit("model catalog inventory")
 entry=market.get("plugins",[])
 if market.get("name")!="advisor" or market.get("interface",{}).get("displayName")!="Codex Advisor": raise SystemExit("marketplace identity")
 if len(entry)!=1 or entry[0].get("name")!="advisor" or entry[0].get("source")!={"source":"local","path":"./plugins/advisor"}: raise SystemExit("marketplace source")
@@ -83,7 +107,7 @@ if {c["id"] for c in items if c.get("risk")=="specialist"}!={"consult-security",
 if "allow_implicit_invocation: true" not in ui or "interface:" not in ui or "policy:" not in ui: raise SystemExit("UI YAML contract")
 print("structured files valid")
 PY
-pass "manifest, marketplace, TOML, YAML, and 4/4/4 evaluator fixtures"
+pass "manifest, marketplace, live TOML, YAML, and 4/4/4 evaluator fixtures"
 
 for phrase in \
   'material architecture' 'interface' 'data-model' 'compatibility' \
@@ -94,17 +118,17 @@ for phrase in \
   grep -Fqi "$phrase" "$skill" || fail "skill description/contract omits: $phrase"
 done
 for phrase in 'ADVISOR DECISION' 'route: consult | skip | unavailable' 'inspect-parent-runtime.sh' 'CODEX_THREAD_ID' 'CODEX_SESSION_ID' 'run-advisor.sh' \
-  '--role advisor-terra' '--role advisor-sol' 'gpt-5.6-terra' 'gpt-5.6-sol' \
+  '--role advisor-terra' '--role advisor-sol' 'actual resolved model and effort metadata' \
   'Standard consultation' 'Specialist consultation' 'generic advisor requests' \
   'unresolved security or trust boundary' 'irreversible migration or data-loss decision' \
   'credible unresolved High-severity disagreement' 'Security adjacency or project importance alone' \
-  'borderline role choice' 'model and sandbox are irrelevant' \
+  'borderline choice uses Standard' 'parent model and sandbox are irrelevant' \
   'DECISION' 'CONTEXT' 'OPTIONS' 'BOUNDARIES' 'REQUEST' \
   'ADVISOR RESPONSE' 'RECOMMENDATION:' 'WHY:' 'STRONGEST OBJECTION:' 'CHANGE MY MIND:' \
   'ACCEPTANCE CHECKS:' 'RISKS:' 'FOLLOW-UP AREAS:' 'research-first' 'accept' 'modify' 'reject' 'advisor unavailable' \
   'ADVISOR CALL' 'status: running' 'ADVISOR RESULT' 'status: completed | unavailable' \
-  'tier: Standard | Specialist' 'role: advisor-terra | advisor-sol' \
-  'model: <verified gpt-5.6-terra | gpt-5.6-sol>' 'effort: high' \
+  'tier: Standard | Specialist' 'model: <resolved model selector>' \
+  'model: <verified resolved model selector>' 'effort: <verified resolved effort>' \
   'isolation: read-only' 'recommendation: <concise recommendation, or unavailable>' \
   'decision: accept | modify | reject | blocked' 'recommendation: unavailable' \
   'decision: blocked' 'distinct Codex consultation thread remains the inspectable detailed record' \
@@ -249,7 +273,7 @@ grep -Fqi 'does not implement' "$manifest" || fail "listing omits implementation
 pass "JSON schema, semantic validation, renderer, retry, privacy, cleanup, and unsupported-native documentation parity"
 grep -Fqi 'accepting that plan' "$operations" || fail "research-first disposition semantics missing"
 grep -Fqi '.retired-v1.3.0-zero-tool' "$operations" || fail "1.3.0 zero-tool retirement documentation missing"
-grep -Fq 'never substitute a role other than the policy-selected' "$skill" || fail "no-substitution rule missing"
+grep -Fq 'substitute another model' "$skill" || fail "no-substitution rule missing"
 grep -Fq 'For `skip` or `unavailable`, emit only the existing `ADVISOR DECISION`' "$skill" || fail "skip/unavailable receipt exclusion missing"
 call_line=$(grep -n '^ADVISOR CALL$' "$skill" | head -1 | cut -d: -f1)
 transport_line=$(grep -n '^5\. Run exactly one selected consultation\.' "$skill" | head -1 | cut -d: -f1)
@@ -682,8 +706,8 @@ while [ "$#" -gt 0 ]; do
     *) exit 90 ;;
   esac
 done
-[ "$sandbox" = read-only ] && [ "$effort" = 'model_reasoning_effort="high"' ] || exit 91
-case "$model" in gpt-5.6-terra|gpt-5.6-sol) ;; *) exit 92 ;; esac
+[ "$sandbox" = read-only ] && [ "$effort" = "model_reasoning_effort=\"${FAKE_EXPECTED_EFFORT:-high}\"" ] || exit 91
+[ "$model" = "${FAKE_EXPECTED_MODEL:-gpt-5.6-terra}" ] || exit 92
 case "$schema" in */plugins/advisor/advisor-response.schema.json) ;; *) exit 93 ;; esac
 case "$output" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/response.*.json) ;; *) exit 94 ;; esac
 case "$workdir" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/workdir.*) ;; *) exit 95 ;; esac
@@ -700,7 +724,7 @@ else
   dd of=/dev/null 2>/dev/null
 fi
 [ -z "${FAKE_CODEX_MARKER-}" ] || : >"$FAKE_CODEX_MARKER"
-if [ "${FAKE_CODEX_CASE-valid}" = heartbeat ]; then sleep 1; fi
+if [ "${FAKE_CODEX_CASE-valid}" = heartbeat ]; then sleep 11; fi
 case "$attempt" in
   1) child=dddddddd-dddd-7ddd-8ddd-dddddddddddd ;;
   2) child=abababab-abab-7aba-8aba-abababababab ;;
@@ -841,7 +865,7 @@ done
 heartbeat_err=$tmp/heartbeat-err.txt
 PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=heartbeat FAKE_PARENT_ID="$transport_parent" \
   sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/heartbeat-out.json" 2>"$heartbeat_err" || fail "heartbeat transport fixture failed"
-[ "$(grep -Fc 'child invocation still running (attempt 1)' "$heartbeat_err")" -eq 1 ] || fail "heartbeat was not emitted once and cleaned up"
+[ "$(grep -Fc 'owned child invocation still running' "$heartbeat_err")" -eq 1 ] || fail "heartbeat was not emitted once and cleaned up"
 [ "$(wc -l <"$tmp/heartbeat-out.json" | tr -d ' ')" -eq 1 ] || fail "heartbeat fixture contaminated stdout"
 assert_transport_clean
 
@@ -1376,7 +1400,30 @@ for document in "$operations" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
 done
 pass "customer README, repository attribution, and lifecycle documentation parity"
 
+for document in "$readme" "$model_doc" "$walkthrough" "$operations"; do
+  grep -Fqi 'Codex home' "$document" || fail "configuration state location missing: $document"
+done
+for phrase in \
+  'gpt-6-astra' 'catalog presence is documentation' 'not an entitlement' \
+  'models test MODEL --effort EFFORT --authorize-usage --parent-thread THREAD_ID' \
+  '0.153.2' 'safe-unavailable' 'no background deletion service' \
+  'prunes records older than 30 days' 'transport contract' 'does not trigger a consultation' \
+  'live privacy reconciliation is still a publication prerequisite'; do
+  grep -Fqi "$phrase" "$model_doc" || fail "model configuration documentation omits: $phrase"
+done
+grep -Eq '^Candidate content digest: `[0-9a-f]{64}`\.$' "$release_notes" || fail "candidate digest placeholder missing"
+[ "$(grep -Ec '^Candidate content digest: `[0-9a-f]{64}`\.$' "$release_notes")" -eq 1 ] || fail "candidate digest must appear exactly once"
+grep -Fqi 'historical archive fingerprint' "$release_notes" || fail "historical 1.3.4 fingerprint label missing"
+grep -Fqi 'Repository-root documentation is not in the ZIP' "$release_notes" || fail "ZIP boundary documentation missing"
+grep -Fqi 'Mocked' "$walkthrough" || fail "walkthrough must label mocked evidence"
+grep -Fqi 'owner acceptance' "$walkthrough" || fail "walkthrough must retain owner acceptance gate"
+pass "1.4 model, privacy, candidate walkthrough, release-history, and ZIP-boundary documentation"
+
+python3 -m unittest discover -s "$plugin_dir/tests" -p 'test_advisor_*.py'
+python3 -m unittest "$package_test"
+pass "Advisor behavior tests and 17 candidate packaging tests"
+
 sh -n "$script_dir"/*.sh
 [ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.3.4 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.4.2 consultation-only static contract"

@@ -1,0 +1,14 @@
+# Live Advisor configuration. Edit either role for the next --tier consultation.
+# Standard handles ordinary material decisions; Specialist is for the narrow high-risk cases.
+# Allowed effort values: none, minimal, low, medium, high, xhigh, max, ultra.
+# Changing specialist.model to gpt-6-astra opts into its higher usage.
+# Any future model selector with supported syntax is allowed, subject to account and runtime support.
+# Plugin updates or reinstalling can replace these in-place edits.
+
+[standard]
+model = "gpt-5.6-terra"
+effort = "high"
+
+[specialist]
+model = "gpt-5.6-sol"
+effort = "high"

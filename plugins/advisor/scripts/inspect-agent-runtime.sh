@@ -4,19 +4,22 @@
 set -eu
 fail() { printf '%s\n' "ERROR: $*" >&2; exit 1; }
 
-sessions_dir='' expected_role='' expected_model='' expected_parent='' thread_id=''
+sessions_dir='' expected_role='' expected_model='' expected_effort='' expected_parent='' thread_id=''
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --sessions-dir) [ "$#" -ge 2 ] || fail "--sessions-dir requires DIR"; sessions_dir=$2; shift 2 ;;
     --expected-role) [ "$#" -ge 2 ] || fail "--expected-role requires ROLE"; expected_role=$2; shift 2 ;;
     --expected-model) [ "$#" -ge 2 ] || fail "--expected-model requires MODEL"; expected_model=$2; shift 2 ;;
+    --expected-effort) [ "$#" -ge 2 ] || fail "--expected-effort requires EFFORT"; expected_effort=$2; shift 2 ;;
     --expected-parent) [ "$#" -ge 2 ] || fail "--expected-parent requires THREAD_ID"; expected_parent=$2; shift 2 ;;
     --*) fail "unknown argument: $1" ;;
     *) [ -z "$thread_id" ] || fail "only one THREAD_ID is allowed"; thread_id=$1; shift ;;
   esac
 done
-[ -n "$thread_id" ] && [ -n "$expected_role" ] && [ -n "$expected_model" ] && [ -n "$expected_parent" ] || fail "usage: inspect-agent-runtime.sh [--sessions-dir DIR] --expected-role ROLE --expected-model MODEL --expected-parent THREAD_ID THREAD_ID"
-case "$expected_role:$expected_model" in advisor-terra:gpt-5.6-terra|advisor-sol:gpt-5.6-sol) ;; *) fail "unsupported expected role/model pair" ;; esac
+[ -n "$expected_effort" ] || expected_effort=high
+[ -n "$thread_id" ] && [ -n "$expected_role" ] && [ -n "$expected_model" ] && [ -n "$expected_parent" ] || fail "usage: inspect-agent-runtime.sh [--sessions-dir DIR] --expected-role ROLE --expected-model MODEL [--expected-effort EFFORT] --expected-parent THREAD_ID THREAD_ID"
+printf '%s\n' "$expected_model" | LC_ALL=C grep -Eq '^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$' || fail "unsafe expected model"
+case "$expected_effort" in none|minimal|low|medium|high|xhigh|max|ultra) ;; *) fail "unsupported expected effort" ;; esac
 printf '%s\n' "$thread_id" | LC_ALL=C grep -Eq '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' || fail "THREAD_ID must be a lowercase UUID"
 printf '%s\n' "$expected_parent" | LC_ALL=C grep -Eq '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' || fail "expected parent must be a lowercase UUID"
 [ "$thread_id" != "$expected_parent" ] || fail "advisor thread must differ from parent"
@@ -39,7 +42,7 @@ if jq -e -s '
   fail "runtime_provenance_mismatch"
 fi
 
-jq -ce -s --arg id "$thread_id" --arg expected_parent "$expected_parent" --arg expected_role "$expected_role" --arg expected_model "$expected_model" '
+jq -ce -s --arg id "$thread_id" --arg expected_parent "$expected_parent" --arg expected_role "$expected_role" --arg expected_model "$expected_model" --arg expected_effort "$expected_effort" '
   [ .[] | select(.type=="session_meta") | .payload ] as $s |
   [ .[] | select(.type=="turn_context") | .payload ] as $t |
   if ($s|length)!=1 or ($t|length)==0 then error("missing metadata") else
@@ -47,12 +50,14 @@ jq -ce -s --arg id "$thread_id" --arg expected_parent "$expected_parent" --arg e
     [$t[].sandbox_policy.type] as $b | [$t[].permission_profile.type] as $p |
     [ .[] | .. | objects | .type? |
       select(. == "function_call" or . == "custom_tool_call" or . == "collab_tool_call" or . == "tool_call" or . == "tool_use") ] as $tool_events |
+    [ .[] | .. | objects |
+      select((((.type? | type) == "string") and (.type | test("reroute|migration"; "i"))) or has("rerouted_model") or has("model_migration")) ] as $reroute_events |
     if $s[0].id!=$id or $s[0].source!="exec" or
        ($s[0].originator!="codex_exec" and $s[0].originator!="Codex Desktop") or
        ($s[0].agent_role // null)!=null or ($s[0].parent_thread_id // null)!=null or
-       ($m|unique)!=[$expected_model] or ($e|unique)!=["high"] or
+       ($m|unique)!=[$expected_model] or ($e|unique)!=[$expected_effort] or
        ($b|unique)!=["read-only"] or ($p|unique|length)!=1 or
-       any($p[]; type!="string" or length==0) or ($tool_events|length)!=0
+       any($p[]; type!="string" or length==0) or ($tool_events|length)!=0 or ($reroute_events|length)!=0
     then error("unexpected, non-read-only, or tool-using advisor evidence")
     else {
       thread_id:$s[0].id,

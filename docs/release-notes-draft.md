@@ -49,8 +49,8 @@ Candidate content digest: `5dae43e5d226b95a375d54876e2dec7ff132d8361d8ee6d890500
 
 The manifest contains supported `websiteURL`, `privacyPolicyURL`, and
 `termsOfServiceURL` fields. It contains no supported `supportURL` field; portal URL
-autofill is unverified. Website copy was verified for the published release; refreshed
-Terms owner review remains pending.
+autofill is unverified. The release owner approved the refreshed Terms captures, and
+the approved Terms release was deployed and live-byte verified on 5 September 2026.
 
 ## Candidate contents
 

@@ -4,8 +4,8 @@ Prior-candidate walkthrough for `https://zerodelta.dev/advisor/`.
 
 **Observation status:** Prior-candidate static evidence and visual review are
 preserved for the unchanged Landing, Support, and Privacy routes. Refreshed Terms
-static and browser evidence is recorded below; owner review of those Terms captures
-remains pending.
+static and browser evidence is recorded below; the release owner approved those Terms
+captures and the deployed site was live-byte verified on 5 September 2026.
 
 ## Shared controls and states
 
@@ -93,7 +93,8 @@ Refreshed Terms visual evidence:
 
 - The root reviewed the refreshed desktop and mobile captures. Both show the
   Developer and maintainer wording with the expected layout.
-- Owner review of the refreshed Terms captures remains pending.
+- The release owner approved the refreshed Terms captures. The approved Terms page
+  was deployed and live-byte verified on 5 September 2026.
 
 ## Install handoff and recovery review
 
@@ -113,7 +114,8 @@ maintainer identity.
 
 The root reviewed the refreshed Terms desktop and mobile captures; their layout is
 correct. The other three routes are unchanged and retain their prior-candidate visual
-review. The prior upload dry run succeeded; no files were transferred.
+review. The approved Terms release was deployed; the upload-readiness gate verified
+the exact marketplace ZIP and all 7 live site files.
 
 ## Current browser capture evidence
 
@@ -142,8 +144,5 @@ These SHA-256 hashes bind the current static candidate:
 | `site/assets/logo.svg` | `5cdf5277721efc07305ef9129410a2aefbc1fdd61e46c3d8946caa888210f0e2` |
 | `site/sitemap.xml` | `a6baf34abddca5c09f2659d226c605771a25b65089e0dd66874856b32141b792` |
 
-## Pending owner review
-
-The release owner must review the refreshed Terms desktop and mobile captures. Plugin
-installation, live model calls, and Astra availability were not tested by this website
-evidence.
+Plugin installation, live model calls, and Astra availability were not tested by this
+website evidence.

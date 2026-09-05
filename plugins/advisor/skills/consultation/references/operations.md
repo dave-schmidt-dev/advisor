@@ -8,6 +8,8 @@ not enough, the advisor may identify only a concrete research-first next step, m
 evidence, research questions, or bounded brainstorming areas. The advisor uses zero
 tools: it does not inspect files, fetch the web, or conduct independent research.
 
+The root may assign bounded evidence gathering to separate research workers before assembling the decision packet; the consulted advisor still uses zero tools and never delegates.
+
 ## Install and verify the companion roles
 
 From the repository root:

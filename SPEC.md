@@ -254,7 +254,7 @@ it never implies that a technical choice was accepted when no technical choice w
 
 ## Boundaries
 
-- The root remains architect, implementer-or-router, verifier, and acceptor.
+- The root owns architecture, implementation routing, verification, and acceptance.
 - The root performs all repository and web research before consultation and supplies
   enough relevant evidence and source references for a decision; the advisor receives
   no secrets and makes no tool call, file inspection, web fetch, or independent

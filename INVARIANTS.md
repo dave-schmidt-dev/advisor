@@ -73,6 +73,8 @@ gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
 rationale: The root completes repository and web research before consultation and supplies enough relevant evidence and source references for a decision; advisors make no tool call, file inspection, web fetch, or independent research attempt, and may only identify missing evidence, research questions, or bounded brainstorming areas for a root-routed follow-up.
 
+The root may assign bounded evidence gathering to separate research workers before assembling the decision packet; the consulted advisor still uses zero tools and never delegates.
+
 ### INV-12 — Redacted deferred audit
 area: ["plugins/advisor/scripts/advisor-audit.sh", "plugins/advisor/scripts/verify.sh", "plugins/advisor/skills/consultation/references/operations.md", "README.md", "SPEC.md"]
 gate_test: plugins/advisor/scripts/verify.sh

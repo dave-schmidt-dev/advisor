@@ -156,6 +156,41 @@ grep -Fqi 'takes one completion consultation before it is declared complete' "$o
 if grep -Fqi 'completion consultation is a final diff review' "$skill"; then fail "completion consultation must not claim final review"; fi
 pass "complex work takes one completion consultation that never becomes final review"
 
+python3 - "$skill" "$operations" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md" <<'PY'
+import sys
+from pathlib import Path
+
+skill, operations, spec, invariants = (
+    Path(path).read_text(encoding="utf-8") for path in sys.argv[1:]
+)
+ownership = "The root owns architecture, implementation routing, verification, and acceptance."
+legacy_ownership = "The root remains architect, implementer-or-router, verifier, and acceptor."
+evidence_workers = (
+    "The root may assign bounded evidence gathering to separate research workers before "
+    "assembling the decision packet; the consulted advisor still uses zero tools and "
+    "never delegates."
+)
+if ownership not in skill or ownership not in spec:
+    raise SystemExit("root ownership sentence missing from skill or SPEC")
+if legacy_ownership in skill or legacy_ownership in spec:
+    raise SystemExit("legacy root ownership sentence remains")
+if (
+    "the advisor to recommend a path.\n\n"
+    + evidence_workers
+    + "\n\nIf that evidence cannot settle the question,"
+) not in skill:
+    raise SystemExit("skill evidence-worker paragraph placement changed")
+if (
+    "tools: it does not inspect files, fetch the web, or conduct independent research.\n\n"
+    + evidence_workers
+) not in operations:
+    raise SystemExit("operations evidence-worker paragraph placement changed")
+if f"{evidence_workers}\n\n### INV-12 — Redacted deferred audit" not in invariants:
+    raise SystemExit("INVARIANTS evidence-worker paragraph placement changed")
+print("ownership and bounded evidence-worker documentation exactness valid")
+PY
+pass "root ownership and bounded evidence-worker documentation parity"
+
 [ -s "$compat_doc" ] || fail "public directory compatibility document missing or empty: $compat_doc"
 python3 - "$compat_doc" <<'PY'
 import re

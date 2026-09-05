@@ -6,10 +6,14 @@ description: Consult for material architecture, interface, data-model, or compat
 # Advisor consultation
 
 Use one fresh, read-only, zero-tool advisor only when the task has a concrete material
-decision. The root remains architect, implementer-or-router, verifier, and acceptor.
+decision. The root owns architecture, implementation routing, verification, and acceptance.
 Before consultation, the root performs any repository or web research and supplies
 enough relevant evidence and source references in the five-section decision packet for
-the advisor to recommend a path. If that evidence cannot settle the question, a valid
+the advisor to recommend a path.
+
+The root may assign bounded evidence gathering to separate research workers before assembling the decision packet; the consulted advisor still uses zero tools and never delegates.
+
+If that evidence cannot settle the question, a valid
 advisor result may instead identify a concrete research-first next step, missing
 evidence, research questions, or bounded brainstorming areas. The advisor does not
 inspect files, call tools, fetch the web, or conduct independent research.

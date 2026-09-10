@@ -26,8 +26,9 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 
 **Candidate status:** This document contains the approved 1.4.3 submission copy. The
 exact role files are installed, one explicit Astra/high smoke completed successfully,
-and the approved website is deployed with a verified live byte match. Marketplace
-upload and GitHub release publication remain separate gates.
+and the approved website is deployed with a verified live byte match. GitHub release
+`v1.4.3` is published with the byte-identical handoff ZIP. Marketplace upload remains
+owner-controlled and is not claimed.
 
 ## Descriptions
 

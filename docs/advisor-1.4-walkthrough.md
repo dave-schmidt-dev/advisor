@@ -35,5 +35,6 @@ The package ships only `plugins/advisor`; this walkthrough and other repository-
 docs are not inside the ZIP. The exact three role files passed installed-state checks.
 Config editing and malformed-file recovery remain automated-test evidence rather than
 manual interaction. Live website, privacy, terms, portal URL autofill, directory listing,
-marketplace state and GitHub release publication remain unverified. The approved
-website, privacy, and terms bytes are deployed and live-byte verified.
+marketplace state remains unverified. The approved website, privacy, and terms bytes are deployed and live-byte verified.
+GitHub release `v1.4.3` resolves to the exact
+source commit and its downloaded ZIP is byte-identical to the handoff archive.

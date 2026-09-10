@@ -2,10 +2,12 @@
 
 ## Published package
 
-The published identity is version `1.4.2`, pinned by Git tag `v1.4.2` at commit
-`57dad72989c175ae08d7e7c7ee1a981b1d177fb4`. The release archive is
-`Codex-Advisor-1.4.2.zip` with SHA-256
-`21324cf22eee2424859ab8825ea76eb2046fd2cd772190ad7ab822ab794df6c6`.
+The published GitHub identity is version `1.4.3`, pinned by Git tag `v1.4.3` at
+commit `554376fd3e1da8e4d98e4c29183406510814bf56`. The release archive is
+`Codex-Advisor-1.4.3.zip` with SHA-256
+`85c86f5a1c582c43a99bc274f9f54a60445cae316683892668b608e8054b54c2`.
+The downloaded GitHub asset was verified byte-identical to the marketplace handoff
+archive. Marketplace publication remains owner-controlled and is not claimed.
 
 ## Marketplace candidate
 
@@ -63,7 +65,9 @@ availability.
 The exact three role files are installed, and one explicit Astra/high consultation
 completed with verified read-only, zero-tool runtime evidence. The owner approved the
 website walkthrough; all seven public files are deployed and live-byte verified.
-Marketplace upload and GitHub release publication are not claimed yet.
+GitHub release `v1.4.3` is published from commit
+`554376fd3e1da8e4d98e4c29183406510814bf56`; its downloaded asset is byte-identical
+to the marketplace handoff archive. Marketplace upload is not claimed yet.
 The deterministic handoff archive is `Codex-Advisor-1.4.3.zip` with SHA-256
 `85c86f5a1c582c43a99bc274f9f54a60445cae316683892668b608e8054b54c2`.
 

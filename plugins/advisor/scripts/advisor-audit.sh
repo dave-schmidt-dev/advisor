@@ -48,6 +48,7 @@ import sys
 import uuid
 
 sessions_dir, hours_raw, since_raw, until_raw, report_mode, journal_dir = sys.argv[1:]
+ADVISOR_ROLES = ("advisor-terra", "advisor-sol", "advisor-astra")
 
 def fail(message):
     print(f"ERROR: {message}", file=sys.stderr)
@@ -150,6 +151,7 @@ if report_mode == "accounting":
         except (ValueError, TypeError, AttributeError): return False
         started, finished = parse_time(journal.get("started_at")), parse_time(journal.get("finished_at"))
         if not valid_id or started is None or finished is None or finished < started: return False
+        if journal.get("tier") not in ("standard", "specialist", "compatibility-test", "opt-in"): return False
         if journal.get("outcome") not in ("accepted", "failed", "timed_out", "cancelled", "retry_exhausted"): return False
         if not isinstance(journal.get("model"), str) or not isinstance(journal.get("effort"), str): return False
         rows, totals_row = journal.get("attempts"), journal.get("totals")
@@ -403,7 +405,7 @@ def advisor_spawn_request(entry):
     if not isinstance(parsed, dict):
         return None
     role = parsed.get("agent_type")
-    return role if role in ("advisor-terra", "advisor-sol") else None
+    return role if role in ADVISOR_ROLES else None
 
 def subagent_activity_item(entry):
     payload = entry.get("payload")
@@ -452,14 +454,14 @@ for path in files:
                     metadata_ids.add(session_id)
     except OSError:
         continue
-    if len(metadata_roles) == 1 and metadata_roles.issubset(("advisor-terra", "advisor-sol")) and len(metadata_ids) == 1:
+    if len(metadata_roles) == 1 and metadata_roles.issubset(ADVISOR_ROLES) and len(metadata_ids) == 1:
         advisor_child_ids.update(metadata_ids)
 
 attempts = standard = specialist = 0
 decision_routes = {"consult": 0, "skip": 0, "unavailable": 0}
 decision_evidence = False
-child_sessions = {"advisor-terra": 0, "advisor-sol": 0}
-parent_spawns = {"advisor-terra": 0, "advisor-sol": 0}
+child_sessions = {role: 0 for role in ADVISOR_ROLES}
+parent_spawns = {role: 0 for role in ADVISOR_ROLES}
 parent_completion_evidence = False
 parent_spawn_requests = 0
 parent_request_evidence = False
@@ -507,7 +509,7 @@ for path in files:
         if entry.get("type") == "session_meta"
         and (value := string_at(entry, "payload", "agent_role")) is not None
     }
-    child_roles = metadata_roles.intersection(("advisor-terra", "advisor-sol"))
+    child_roles = metadata_roles.intersection(ADVISOR_ROLES)
     child_role = next(iter(child_roles)) if len(child_roles) == 1 and len(metadata_roles) == 1 and len(session_ids) == 1 else None
     in_window = [entry for entry in entries if (stamp := entry_time(entry)) is not None and since <= stamp < until]
     if not in_window:
@@ -592,7 +594,7 @@ for path in files:
                     if spawn_key in seen_spawns:
                         continue
                     seen_spawns.add(spawn_key)
-                    if role in ("advisor-terra", "advisor-sol"):
+                    if role in ADVISOR_ROLES:
                         parent_spawns[role] += 1
                         parent_completion_evidence = True
                     elif role == "sol_advisor":

@@ -64,6 +64,7 @@ EFFORTS = frozenset(
     ("none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra")
 )
 TIERS = frozenset(("standard", "specialist"))
+JOURNAL_TIERS = frozenset((*TIERS, "compatibility-test", "opt-in"))
 SELECTOR_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
 PRESET_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
 TOKEN_RE = re.compile(r"^[0-9a-f]{32}$")
@@ -738,7 +739,7 @@ def validate_journal_record(value: Any) -> dict[str, Any]:
     ):
         raise ConfigError("invalid usage journal record")
     tier = value["tier"]
-    if tier not in TIERS and tier != "compatibility-test":
+    if tier not in JOURNAL_TIERS:
         raise ConfigError("invalid usage journal record")
     pair = validate_pair({"model": value["model"], "effort": value["effort"]})
     if not isinstance(value["attempts"], list) or not 1 <= len(value["attempts"]) <= 2:

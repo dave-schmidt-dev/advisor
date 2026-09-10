@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
 <title>Codex Advisor — Read-only second opinions</title>
-<meta name="description" content="Codex Advisor automatically adds read-only advice for material Codex decisions, with smart defaults and optional models.">
-<meta name="advisor-release" content="1.4.2">
+<meta name="description" content="Codex Advisor adds read-only advice for material Codex decisions, plus an explicit-only Astra role for the most complex uses.">
+<meta name="advisor-release" content="1.4.3">
 <meta property="og:title" content="Codex Advisor">
 <meta property="og:description" content="Read-only second opinions for material Codex decisions.">
 <meta property="og:type" content="website">
@@ -28,7 +28,7 @@
 </header>
 <div class="hero">
     <div class="wrap">
-        <span class="status-pill">Open source &middot; Documentation v1.4.2</span>
+        <span class="status-pill">Open source &middot; Documentation v1.4.3</span>
         <h1>Codex Advisor</h1>
         <p class="subhead">Automatic read-only advice for material Codex decisions, with smart defaults and optional models. It advises; your main agent decides.</p>
         <div class="cta-row">
@@ -49,7 +49,7 @@
 </section>
 <section aria-labelledby="models">
     <h2 id="models">Choose your models</h2>
-    <p>Advisor uses the live <code>advisor.toml</code> bundled with the installed plugin. The defaults are Terra at high effort for Standard and Sol at high effort for Specialist.</p>
+    <p>Advisor uses the live <code>advisor.toml</code> bundled with the installed plugin. Automatic Standard remains Terra at high effort and automatic Specialist remains Sol at high effort.</p>
 <pre><code>[standard]
 model = "gpt-5.6-terra"
 effort = "high"
@@ -58,9 +58,9 @@ effort = "high"
 model = "gpt-5.6-sol"
 effort = "high"
 
-# Optional: gpt-6-astra uses more of your Codex allowance.
+# advisor-astra is a separate explicit-only role pinned to gpt-6-astra/high.
 </code></pre>
-    <p>Edit the bundled <code>advisor.toml</code> in place and the change applies to the next consultation. Standard and Specialist have independent effort settings. Future model selectors are subject to your account access and runtime support. No setup conversation or separate canary is required. Plugin updates may replace edits to the bundled file.</p>
+    <p><code>advisor-astra</code> is reserved for explicit requests on the most complex uses. It is never selected automatically, uses more of your Codex allowance, and remains subject to account and runtime availability. Editing the bundled <code>advisor.toml</code> in place applies to the next consultation for Standard or Specialist. Plugin updates may replace edits to the bundled file.</p>
 </section>
 <section id="install" aria-labelledby="install-title">
     <h2 id="install-title">Install from OpenAI</h2>
@@ -76,6 +76,7 @@ effort = "high"
         <div><span>Does not use</span><strong>No MCP server, no hosted service, no telemetry</strong></div>
         <div><span>Standard</span><strong>Terra · <code>gpt-5.6-terra</code> · high</strong></div>
         <div><span>Specialist</span><strong>Sol · <code>gpt-5.6-sol</code> · high</strong></div>
+        <div><span>Explicit-only</span><strong><code>advisor-astra</code> · <code>gpt-6-astra</code> · high</strong></div>
     </div>
 </section>
 <section aria-labelledby="resources">

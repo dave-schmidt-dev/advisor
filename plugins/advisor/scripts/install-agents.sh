@@ -7,7 +7,7 @@ usage() {
   cat <<'EOF'
 Usage: install-agents.sh [--target-dir PATH] [--check]
 
-Install only advisor-terra.toml and advisor-sol.toml. Byte-exact known historical
+Install advisor-terra.toml, advisor-sol.toml, and the explicit opt-in advisor-astra.toml. Byte-exact known historical
 implementation/review roles are renamed to <role>.toml.retired-v0.6.0, the historical
 Sol consultation role to sol-advisor.toml.retired-v1.0.0, and the obsolete neutral
 Advisor role to advisor.toml.retired-v1.0.1. Every path is preflighted before mutation.
@@ -30,7 +30,8 @@ known_digest() {
 script_dir=$(CDPATH= cd "$(dirname "$0")" && pwd) || exit 1
 terra_template=$script_dir/../agents/advisor-terra.toml
 sol_template=$script_dir/../agents/advisor-sol.toml
-for template in "$terra_template" "$sol_template"; do
+astra_template=$script_dir/../agents/advisor-astra.toml
+for template in "$terra_template" "$sol_template" "$astra_template"; do
   [ -f "$template" ] && [ ! -L "$template" ] || fail "shipped advisor role is missing or unsafe: $template"
 done
 
@@ -59,6 +60,7 @@ case "$target_dir" in /|//) fail "refusing filesystem root as target" ;; esac
 
 terra_current=$target_dir/advisor-terra.toml
 sol_current=$target_dir/advisor-sol.toml
+astra_current=$target_dir/advisor-astra.toml
 terra_current_retired=$terra_current.retired-v1.1.0
 sol_current_retired=$sol_current.retired-v1.1.0
 terra_v130_retired=$terra_current.retired-v1.3.0
@@ -148,8 +150,21 @@ classify_history() {
   printf '%s\n' absent
 }
 
+classify_opt_in() {
+  template=$1 current=$2
+  if path_exists "$current"; then
+    if [ -L "$current" ] || [ ! -f "$current" ]; then printf '%s\n' unsafe
+    elif cmp -s "$template" "$current"; then printf '%s\n' current
+    else printf '%s\n' conflict
+    fi
+  else
+    printf '%s\n' missing
+  fi
+}
+
 terra_current_state=$(classify_current "$terra_template" "$terra_current" "$terra_current_retired" "$terra_advisor_v110" "$terra_v130_retired" "$terra_advisor_v130" "$terra_v130_zero_retired" "$terra_advisor_v130_zero")
 sol_current_state=$(classify_current "$sol_template" "$sol_current" "$sol_current_retired" "$sol_advisor_v110" "$sol_v130_retired" "$sol_advisor_v130" "$sol_v130_zero_retired" "$sol_advisor_v130_zero")
+astra_state=$(classify_opt_in "$astra_template" "$astra_current")
 luna_state=$(classify_history "$luna" "$luna_retired" "$luna_v020" "$luna_v050" "$luna_v060")
 terra_state=$(classify_history "$terra" "$terra_retired" "$terra_v020" "$terra_v050" "$terra_intermediate" "$terra_v060")
 reviewer_state=$(classify_history "$reviewer" "$reviewer_retired" "$reviewer_v060")
@@ -161,6 +176,7 @@ if path_exists "$target_dir" && { [ -L "$target_dir" ] || [ ! -d "$target_dir" ]
 fi
 case "$terra_current_state" in current|missing|active-known-v110|active-known-v130|active-known-v130-zero|retired-known) ;; *) fail "Terra advisor destination is $terra_current_state: $terra_current" ;; esac
 case "$sol_current_state" in current|missing|active-known-v110|active-known-v130|active-known-v130-zero|retired-known) ;; *) fail "Sol advisor destination is $sol_current_state: $sol_current" ;; esac
+case "$astra_state" in current|missing) ;; *) fail "Astra advisor destination is $astra_state: $astra_current" ;; esac
 for record in "Luna:$luna_state" "Terra:$terra_state" "reviewer:$reviewer_state" "legacy advisor:$legacy_advisor_state" "neutral advisor:$neutral_advisor_state"; do
   label=${record%%:*}; state=${record#*:}
   case "$state" in absent|retired-known) ;;
@@ -172,7 +188,8 @@ done
 if [ "$check_only" -eq 1 ]; then
   [ "$terra_current_state" = current ] || fail "Terra advisor is not installed exactly"
   [ "$sol_current_state" = current ] || fail "Sol advisor is not installed exactly"
-  printf '%s\n' "CHECK PASSED: exact Terra and Sol advisors installed; known historical roles inactive."
+  [ "$astra_state" = current ] || fail "Astra advisor is not installed exactly"
+  printf '%s\n' "CHECK PASSED: exact Terra, Sol, and opt-in Astra advisors installed; known historical roles inactive."
   exit 0
 fi
 
@@ -182,6 +199,7 @@ fi
 # Revalidate every path before the first mutation.
 [ "$(classify_current "$terra_template" "$terra_current" "$terra_current_retired" "$terra_advisor_v110" "$terra_v130_retired" "$terra_advisor_v130" "$terra_v130_zero_retired" "$terra_advisor_v130_zero")" = "$terra_current_state" ] || fail "Terra advisor state changed after preflight"
 [ "$(classify_current "$sol_template" "$sol_current" "$sol_current_retired" "$sol_advisor_v110" "$sol_v130_retired" "$sol_advisor_v130" "$sol_v130_zero_retired" "$sol_advisor_v130_zero")" = "$sol_current_state" ] || fail "Sol advisor state changed after preflight"
+[ "$(classify_opt_in "$astra_template" "$astra_current")" = "$astra_state" ] || fail "Astra advisor state changed after preflight"
 [ "$(classify_history "$luna" "$luna_retired" "$luna_v020" "$luna_v050" "$luna_v060")" = "$luna_state" ] || fail "Luna state changed after preflight"
 [ "$(classify_history "$terra" "$terra_retired" "$terra_v020" "$terra_v050" "$terra_intermediate" "$terra_v060")" = "$terra_state" ] || fail "Terra state changed after preflight"
 [ "$(classify_history "$reviewer" "$reviewer_retired" "$reviewer_v060")" = "$reviewer_state" ] || fail "reviewer state changed after preflight"
@@ -234,6 +252,24 @@ install_one() {
 }
 install_one Terra "$terra_template" "$terra_current" "$terra_current_state"
 install_one Sol "$sol_template" "$sol_current" "$sol_current_state"
+
+install_opt_in() {
+  label=$1 template=$2 current=$3 state=$4
+  case "$state" in
+    current) printf '%s\n' "ALREADY CURRENT: $current"; return 0 ;;
+    missing) ;;
+    *) fail "$label advisor destination changed during install" ;;
+  esac
+  staged=$(mktemp "$target_dir/.advisor.XXXXXX") || fail "could not stage $label advisor role"
+  trap 'rm -f "$staged"' 0 HUP INT TERM
+  cp "$template" "$staged" || fail "could not copy $label advisor role"
+  [ ! -e "$current" ] && [ ! -L "$current" ] || fail "$label advisor destination appeared during install"
+  ln "$staged" "$current" || fail "$label advisor destination appeared during install"
+  rm -f "$staged"
+  trap - 0 HUP INT TERM
+  printf '%s\n' "INSTALLED: $current"
+}
+install_opt_in Astra "$astra_template" "$astra_current" "$astra_state"
 
 sh "$0" --target-dir "$target_dir" --check >/dev/null
 printf '%s\n' "INSTALL PASSED: consultation roles exact; historical roles inactive."

@@ -1,6 +1,6 @@
 {
   "name": "advisor",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "One fresh, read-only consultation for material technical decisions in Codex CLI and Codex desktop.",
   "author": {
     "name": "David Schmidt / Zero Delta LLC"
@@ -18,7 +18,7 @@
   "interface": {
     "displayName": "Codex Advisor",
     "shortDescription": "Read-only technical advice",
-    "longDescription": "Codex Advisor automatically adds a fresh, read-only second opinion when Codex identifies a material technical decision.\n\nIt activates for architecture, interface and API design, data models, compatibility changes, migrations, security boundaries, and competing diagnoses. Advisor reviews the relevant context, explains the tradeoffs, identifies risks, and recommends a path forward. Routine factual, mechanical, or explicitly no-delegation work is left alone.\n\nEvery consultation runs in a separate read-only, tool-free process. It cannot change your files, run commands, browse the web, or make decisions for you. You remain in control: Advisor does not implement, deploy, or perform final review.",
+    "longDescription": "Codex Advisor automatically adds a fresh, read-only second opinion when Codex identifies a material technical decision.\n\nIt activates for architecture, interface and API design, data models, compatibility changes, migrations, security boundaries, and competing diagnoses. Standard remains Terra/high and Specialist remains Sol/high. A separate advisor-astra role offers explicit-only Astra/high consultation for the most complex uses; it is never selected automatically, uses more Codex allowance, and remains subject to account and runtime availability.\n\nEvery consultation runs in a separate read-only, tool-free process. It cannot change your files, run commands, browse the web, or make decisions for you. You remain in control: Advisor does not implement, deploy, or perform final review.",
     "developerName": "David Schmidt / Zero Delta LLC",
     "websiteURL": "https://zerodelta.dev/advisor/",
     "privacyPolicyURL": "https://zerodelta.dev/advisor/privacy/",

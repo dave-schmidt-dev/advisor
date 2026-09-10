@@ -261,3 +261,6 @@ Legacy cached integrations may use `--role advisor-terra` or `--role advisor-sol
 Those compatibility routes remain fixed to Terra/high and Sol/high and do not follow
 `advisor.toml`. They cannot be combined with a tier or preset. New calls use the tier
 interface above; raw model and effort flags are never accepted by the wrapper.
+The explicit `--role advisor-astra` route is a separate fixed opt-in to gpt-6-astra/high.
+It is never selected by Standard/Specialist defaults, trigger selection, fallback, or
+audit tier counts, and cannot be combined with a tier or preset.

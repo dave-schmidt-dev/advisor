@@ -27,6 +27,8 @@ sh scripts/advisor-config.sh doctor
 The helper reports the active path and digest. It never automatically upgrades or
 falls back. The old `--role advisor-terra` and `--role advisor-sol` aliases are legacy
 fixed pins and do not follow the file.
+`--role advisor-astra` is an explicit fixed opt-in pin for Astra/high; it is not a tier
+default, trigger selection, fallback, or audit tier.
 
 ## Advanced legacy tools
 
@@ -46,8 +48,9 @@ It does not trigger a consultation, and a failed probe remains safe-unavailable.
 The catalog, an account's model list, and a saved selection are not consent. Success
 records the actual local CLI version (baseline `0.153.2`) as provenance plus the transport contract, but
 leaves tier selections unchanged. CLI updates do not stale the receipt; only its exact
-model, effort, or transport contract can do so. Local tests mock this path; no real
-model canary has been accepted for 1.4.2.
+model, effort, or transport contract can do so. Local tests mock the synthetic canary
+path. Separately, one explicit `advisor-astra` consultation completed successfully on
+1.4.3 with verified Astra/high, read-only, zero-tool runtime evidence.
 
 ## Local state and privacy
 
@@ -59,7 +62,7 @@ The content-free usage journal is off by default. `journal enable`, `journal sta
 decision packets or response content; unavailable counters remain null and aggregate
 coverage can be partial.
 
-## Proposed privacy disclosure for owner approval
+## Published privacy disclosure
 
 > Codex Advisor stores local configuration and model-catalog evidence under the Codex
 > home directory. Its optional content-free usage journal is disabled by default; when
@@ -68,5 +71,7 @@ coverage can be partial.
 > the user. Advisor uses configurable OpenAI models in the local Codex runtime and
 > does not operate a Zero Delta relay.
 
-The deployed privacy copy still says consultation data resides solely in session logs
-and names only Terra and Sol. Live privacy reconciliation is still a publication prerequisite; it has not been published or owner-approved here.
+The deployed privacy copy now documents local configuration/catalog state, the optional
+content-free journal, automatic Terra/Sol defaults, and the separate explicit-only
+Astra role. The owner approved the refreshed copy and the live page byte-matches the
+repository candidate.

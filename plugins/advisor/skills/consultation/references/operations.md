@@ -60,7 +60,10 @@ sh scripts/install-agents.sh
 sh scripts/install-agents.sh --check
 ```
 
-The installer adds only `advisor-terra.toml` and `advisor-sol.toml`. During an attended upgrade it
+The installer adds `advisor-terra.toml`, `advisor-sol.toml`, and the explicit opt-in
+`advisor-astra.toml`. Astra is byte-exactly installed and checked as an independent
+fixed role; it is never selected by Standard/Specialist defaults, trigger selection,
+or fallback. During an attended upgrade it
 recoverably retires byte-exact known historical Luna, Terra, and Sol-reviewer files
 to `<role>.toml.retired-v0.6.0`, the old Sol consultation role to
 `sol-advisor.toml.retired-v1.0.0`, and the obsolete neutral role to
@@ -118,6 +121,8 @@ A borderline role choice uses Standard. The parent model is irrelevant.
 Legacy cached callers may still use `--role advisor-terra` or `--role advisor-sol`;
 those routes remain fixed to Terra/high and Sol/high, do not follow `advisor.toml`,
 and cannot be mixed with a tier or preset.
+An explicit caller may use `--role advisor-astra` for the fixed Astra/high opt-in;
+that route is not a tier default or fallback and cannot be mixed with a tier or preset.
 
 Never call `codex exec` directly or pass a model/effort override. Invoke the fixed
 installed-plugin wrapper through the shell tool's
@@ -275,9 +280,9 @@ usage counters. Missing sandbox, tool, token, or duration evidence is JSON `null
 with an `unavailable` availability value, never an inferred value. It reports receipt
 attempts and allowlisted `ADVISOR DECISION` routes (`consult`, `skip`, and
 `unavailable`) in an exact top-level `decisions` object; decision availability is a
-separate field. Schema v2 identifies exact current `advisor-terra` and `advisor-sol`
-child sessions from full-file `session_meta` before applying the half-open window to
-their activity. It reports those child sessions separately from deduplicated parent
+separate field. Schema v2 identifies exact current `advisor-terra`, `advisor-sol`,
+and `advisor-astra` child sessions from full-file `session_meta` before applying the
+half-open window to their activity. It reports those child sessions separately from deduplicated parent
 `spawn_agent` completion evidence; parent completion counts are JSON `null` with
 explicit `unavailable` availability unless a completed role-bearing spawn event
 exists. Current parent `function_call` spawn requests and role-free
@@ -287,7 +292,9 @@ selected role or completion, and activity is counted only by correlation to an e
 current child ID. Standard
 and Specialist selections, evidenced dispositions, stale `sol_advisor`/`sol-advisor`
 attempts, sandbox counts, advisor tool-call counts, duration aggregates, and token
-totals remain aggregate-only. It never changes sessions or Codex configuration.
+totals remain aggregate-only. Astra is included in child-session and parent-completion
+role aggregates, but never in the exact `{standard, specialist}` selected-role counts.
+It never changes sessions or Codex configuration.
 
 ## Trigger evaluation
 
@@ -309,7 +316,7 @@ PATH` requires subscription-only routing and disabled overage. The parent proces
 the live authenticated Codex home and runs with ignored user configuration/rules,
 ephemeral state, and a read-only sandbox. Each feature state gets an isolated temporary
 project and child runtime: the project links the consultation skill and repository-local
-plugin, while the companion installer places and checks both exact roles in the child
+plugin, while the companion installer places and checks all three exact roles in the child
 runtime. The evaluator does not copy or link authentication and does not add a plugin
 or marketplace during live evaluation.
 
@@ -335,4 +342,4 @@ Use `--allow-unavailable` only to accept a typed unavailable artifact as evidenc
 an unavailable evaluation, never as a passing consultation result.
 # Usage and local support data
 
-The consultation envelope records an opaque consultation ID plus per-attempt and aggregate duration/token accounting when the host provides structured counters. This preserves the canonical eight-line response and never infers spend or allowance. Local content-free usage journaling is disabled by default and is controlled with `advisor-config.sh journal enable`, `disable`, `status`, and `clear`; records omit prompts, answers, paths, child/session IDs, authentication material, and raw errors. Journal failure is surfaced as a sanitized warning without retrying a model or failing otherwise accepted advice.
+The consultation envelope records an opaque consultation ID plus per-attempt and aggregate duration/token accounting when the host provides structured counters. This preserves the canonical eight-line response and never infers spend or allowance. Local content-free usage journaling is disabled by default and is controlled with `advisor-config.sh journal enable`, `disable`, `status`, and `clear`; explicit Astra records preserve tier `opt-in`, and all records omit prompts, answers, paths, child/session IDs, authentication material, and raw errors. Journal failure is surfaced as a sanitized warning without retrying a model or failing otherwise accepted advice.

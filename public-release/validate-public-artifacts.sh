@@ -35,6 +35,7 @@ skill=$plugin_dir/skills/consultation/SKILL.md
 operations=$plugin_dir/skills/consultation/references/operations.md
 advisor_terra=$plugin_dir/agents/advisor-terra.toml
 advisor_sol=$plugin_dir/agents/advisor-sol.toml
+advisor_astra=$plugin_dir/agents/advisor-astra.toml
 
 candidate_contract() {
   [ -f "$manifest" ] || fail "missing manifest: $manifest"
@@ -184,7 +185,7 @@ scan_file() {
     fi
     allowed_models=$(
       {
-        awk -F ' = ' '$1 == "model" { gsub(/"/, "", $2); print $2 }' "$advisor_terra" "$advisor_sol"
+        awk -F ' = ' '$1 == "model" { gsub(/"/, "", $2); print $2 }' "$advisor_terra" "$advisor_sol" "$advisor_astra"
         python3 - "$plugin_dir/models.json" <<'PY'
 import json
 import sys
@@ -239,6 +240,7 @@ case "$mode" in
     for companion in \
       agents/advisor-terra.toml \
       agents/advisor-sol.toml \
+      agents/advisor-astra.toml \
       evals/trigger-cases.json \
       scripts/install-agents.sh; do
       [ -f "$plugin_dir/$companion" ] || fail "missing permitted source-validation companion: $plugin_dir/$companion"

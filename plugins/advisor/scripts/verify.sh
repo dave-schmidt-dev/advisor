@@ -13,6 +13,7 @@ manifest=$plugin_dir/.codex-plugin/plugin.json
 marketplace=$repo_dir/.agents/plugins/marketplace.json
 terra_role=$plugin_dir/agents/advisor-terra.toml
 sol_role=$plugin_dir/agents/advisor-sol.toml
+astra_role=$plugin_dir/agents/advisor-astra.toml
 skill=$plugin_dir/skills/consultation/SKILL.md
 ui=$plugin_dir/skills/consultation/agents/openai.yaml
 operations=$plugin_dir/skills/consultation/references/operations.md
@@ -43,12 +44,12 @@ walkthrough=$repo_dir/docs/advisor-1.4-walkthrough.md
 release_notes=$repo_dir/docs/release-notes-draft.md
 package_test=$repo_dir/public-release/test_candidate_package.py
 
-for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$transport" "$response_schema" "$audit" "$evaluator" "$config_test" "$transport_test" "$usage_test" "$cli_test" "$process_helper" "$config_helper" "$config_wrapper" "$live_config" "$models" "$settings_schema" "$model_doc" "$walkthrough" "$release_notes" "$package_test" "$readme" "$notice" "$license"; do
+for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$astra_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$transport" "$response_schema" "$audit" "$evaluator" "$config_test" "$transport_test" "$usage_test" "$cli_test" "$process_helper" "$config_helper" "$config_wrapper" "$live_config" "$models" "$settings_schema" "$model_doc" "$walkthrough" "$release_notes" "$package_test" "$readme" "$notice" "$license"; do
   [ -f "$file" ] || fail "missing required file: $file"
 done
-[ "$(find "$plugin_dir/agents" -maxdepth 1 -type f -name '*.toml' | wc -l | tr -d ' ')" -eq 2 ] || fail "expected exactly two active roles"
+[ "$(find "$plugin_dir/agents" -maxdepth 1 -type f -name '*.toml' | wc -l | tr -d ' ')" -eq 3 ] || fail "expected exactly three active roles"
 [ "$(find "$plugin_dir/skills" -type f -name SKILL.md | wc -l | tr -d ' ')" -eq 1 ] || fail "expected exactly one skill"
-pass "required inventory: one skill, two model pins, read-only transport, parent/child inspectors, evaluator, documentation"
+pass "required inventory: one skill, three model pins including explicit opt-in Astra, read-only transport, parent/child inspectors, evaluator, documentation"
 
 jq -e '
   .type == "object" and .additionalProperties == false and
@@ -61,19 +62,20 @@ jq -e '
 [ ! -L "$response_schema" ] || fail "response schema must not be a symlink"
 pass "strict seven-field response schema"
 
-python3 - "$manifest" "$marketplace" "$terra_role" "$sol_role" "$fixtures" "$ui" "$models" "$live_config" <<'PY'
+python3 - "$manifest" "$marketplace" "$terra_role" "$sol_role" "$astra_role" "$fixtures" "$ui" "$models" "$live_config" <<'PY'
 import json, re, sys, tomllib
 from pathlib import Path
 manifest=json.loads(Path(sys.argv[1]).read_text())
 market=json.loads(Path(sys.argv[2]).read_text())
 terra=tomllib.loads(Path(sys.argv[3]).read_text())
 sol=tomllib.loads(Path(sys.argv[4]).read_text())
-cases=json.loads(Path(sys.argv[5]).read_text())
-ui=Path(sys.argv[6]).read_text()
-models=json.loads(Path(sys.argv[7]).read_text())
-live=tomllib.loads(Path(sys.argv[8]).read_text())
+astra=tomllib.loads(Path(sys.argv[5]).read_text())
+cases=json.loads(Path(sys.argv[6]).read_text())
+ui=Path(sys.argv[7]).read_text()
+models=json.loads(Path(sys.argv[8]).read_text())
+live=tomllib.loads(Path(sys.argv[9]).read_text())
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or version!="1.4.2": raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or version!="1.4.3": raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if author_name!="David Schmidt / Zero Delta LLC": raise SystemExit("plugin developer identity")
@@ -90,7 +92,7 @@ entry=market.get("plugins",[])
 if market.get("name")!="advisor" or market.get("interface",{}).get("displayName")!="Codex Advisor": raise SystemExit("marketplace identity")
 if len(entry)!=1 or entry[0].get("name")!="advisor" or entry[0].get("source")!={"source":"local","path":"./plugins/advisor"}: raise SystemExit("marketplace source")
 if entry[0].get("policy")!={"installation":"AVAILABLE","authentication":"ON_INSTALL"} or not entry[0].get("category"): raise SystemExit("marketplace policy")
-pairs=((terra,{"name":"advisor-terra","description":"Standard fresh, read-only advisor for material technical decisions and generic advisor requests.","model":"gpt-5.6-terra","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(sol,{"name":"advisor-sol","description":"Specialist fresh, read-only advisor for narrowly qualified unresolved critical decisions.","model":"gpt-5.6-sol","model_reasoning_effort":"high","sandbox_mode":"read-only"}))
+pairs=((terra,{"name":"advisor-terra","description":"Standard fresh, read-only advisor for material technical decisions and generic advisor requests.","model":"gpt-5.6-terra","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(sol,{"name":"advisor-sol","description":"Specialist fresh, read-only advisor for narrowly qualified unresolved critical decisions.","model":"gpt-5.6-sol","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(astra,{"name":"advisor-astra","description":"Explicit opt-in, fresh, read-only advisor for higher-usage technical consultations.","model":"gpt-6-astra","model_reasoning_effort":"high","sandbox_mode":"read-only"}))
 for role,pins in pairs:
     if any(role.get(k)!=v for k,v in pins.items()): raise SystemExit("role pins")
     if not all(isinstance(role.get(k),str) and role[k].strip() for k in ("description","developer_instructions")): raise SystemExit("role text")
@@ -331,6 +333,7 @@ clean=$tmp/clean
 sh "$installer" --target-dir "$clean" >/dev/null
 cmp -s "$terra_role" "$clean/advisor-terra.toml" || fail "clean Terra install differs"
 cmp -s "$sol_role" "$clean/advisor-sol.toml" || fail "clean Sol install differs"
+cmp -s "$astra_role" "$clean/advisor-astra.toml" || fail "clean Astra install differs"
 sh "$installer" --target-dir "$clean" --check >/dev/null
 before=$(snapshot "$clean"); sh "$installer" --target-dir "$clean" >/dev/null; after=$(snapshot "$clean")
 [ "$before" = "$after" ] || fail "second install changed exact state"
@@ -378,6 +381,7 @@ if sh "$installer" --target-dir "$v110" --check >/dev/null 2>&1; then fail "chec
 sh "$installer" --target-dir "$v110" >/dev/null
 cmp -s "$terra_role" "$v110/advisor-terra.toml" || fail "Advisor 1.1.0 Terra upgrade did not install 1.3.0 exactly"
 cmp -s "$sol_role" "$v110/advisor-sol.toml" || fail "Advisor 1.1.0 Sol upgrade did not install 1.3.0 exactly"
+cmp -s "$astra_role" "$v110/advisor-astra.toml" || fail "Advisor 1.1.0 upgrade did not install Astra exactly"
 assert_v110_digest "$v110/advisor-terra.toml.retired-v1.1.0" 95be7e69ee4d5350ea199a66280e180774309371fefcf1a2765f782ec1a670c0
 assert_v110_digest "$v110/advisor-sol.toml.retired-v1.1.0" 5ab78b10e1abd4b86d8adeb7d71aa6b4d1c79b1a44457d2c717f5a03cd360367
 sh "$installer" --target-dir "$v110" --check >/dev/null
@@ -389,6 +393,7 @@ cp "$v110/advisor-sol.toml.retired-v1.1.0" "$v110_interrupted/advisor-sol.toml.r
 sh "$installer" --target-dir "$v110_interrupted" >/dev/null
 cmp -s "$terra_role" "$v110_interrupted/advisor-terra.toml" || fail "retired-only Terra upgrade did not resume"
 cmp -s "$sol_role" "$v110_interrupted/advisor-sol.toml" || fail "retired-only Sol upgrade did not resume"
+cmp -s "$astra_role" "$v110_interrupted/advisor-astra.toml" || fail "retired-only upgrade did not install Astra exactly"
 sh "$installer" --target-dir "$v110_interrupted" --check >/dev/null
 pass "exact Advisor 1.1.0 same-path upgrade, recoverable retirement, and idempotency"
 
@@ -431,6 +436,7 @@ if sh "$installer" --target-dir "$v130" --check >/dev/null 2>&1; then fail "chec
 sh "$installer" --target-dir "$v130" >/dev/null
 cmp -s "$terra_role" "$v130/advisor-terra.toml" || fail "Advisor 1.3.0 Terra upgrade did not install current role exactly"
 cmp -s "$sol_role" "$v130/advisor-sol.toml" || fail "Advisor 1.3.0 Sol upgrade did not install current role exactly"
+cmp -s "$astra_role" "$v130/advisor-astra.toml" || fail "Advisor 1.3.0 upgrade did not install Astra exactly"
 assert_v110_digest "$v130/advisor-terra.toml.retired-v1.3.0-zero-tool" e939a9c7e96d2a74dde015838802d6a481d36520616464a192daff0412dccaba
 assert_v110_digest "$v130/advisor-sol.toml.retired-v1.3.0-zero-tool" 294b5fe76799200b0ff814decc575a82ddbf4d426a4a680750113608de6516cd
 sh "$installer" --target-dir "$v130" --check >/dev/null
@@ -461,6 +467,7 @@ cp "$v110/advisor-sol.toml.retired-v1.1.0" "$v130_early/advisor-sol.toml.retired
 sh "$installer" --target-dir "$v130_early" >/dev/null
 cmp -s "$terra_role" "$v130_early/advisor-terra.toml" || fail "early Advisor 1.3.0 Terra upgrade did not install current role exactly"
 cmp -s "$sol_role" "$v130_early/advisor-sol.toml" || fail "early Advisor 1.3.0 Sol upgrade did not install current role exactly"
+cmp -s "$astra_role" "$v130_early/advisor-astra.toml" || fail "early Advisor 1.3.0 upgrade did not install Astra exactly"
 assert_v110_digest "$v130_early/advisor-terra.toml.retired-v1.3.0" 4ad79cb613cc9865cb3d1db02f2e98b3b117524153c075a2de3d6bd249798c5e
 assert_v110_digest "$v130_early/advisor-sol.toml.retired-v1.3.0" 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4
 sh "$installer" --target-dir "$v130_early" --check >/dev/null
@@ -527,6 +534,7 @@ exercise_retirement() {
   sh "$installer" --target-dir "$target" >/dev/null
   cmp -s "$terra_role" "$target/advisor-terra.toml" || fail "$label Terra advisor install mismatch"
   cmp -s "$sol_role" "$target/advisor-sol.toml" || fail "$label Sol advisor install mismatch"
+  cmp -s "$astra_role" "$target/advisor-astra.toml" || fail "$label Astra advisor install mismatch"
   for old in "$@"; do
     suffix=.retired-v0.6.0
     [ "$old" != sol-advisor.toml ] || suffix=.retired-v1.0.0
@@ -543,12 +551,15 @@ exercise_retirement intermediate "$intermediate" sol-advisor-terra-implementer.t
 exercise_retirement through-v1.0.1 "$historical" advisor.toml sol-advisor.toml sol-advisor-luna-implementer.toml sol-advisor-terra-implementer.toml sol-advisor-sol-reviewer.toml
 pass "all historical digests retire dynamically and every vintage is second-run idempotent"
 
-for kind in modified symlink nonregular dual collision neutral-modified neutral-dual v110-modified v110-dual v110-collision; do
+for kind in modified symlink nonregular astra-modified astra-symlink astra-nonregular dual collision neutral-modified neutral-dual v110-modified v110-dual v110-collision; do
   target=$tmp/refuse-$kind; mkdir "$target"
   case "$kind" in
     modified) printf 'unknown\n' >"$target/sol-advisor-luna-implementer.toml" ;;
     symlink) ln -s "$terra_role" "$target/sol-advisor-luna-implementer.toml" ;;
     nonregular) mkdir "$target/sol-advisor-luna-implementer.toml" ;;
+    astra-modified) printf 'unknown\n' >"$target/advisor-astra.toml" ;;
+    astra-symlink) ln -s "$astra_role" "$target/advisor-astra.toml" ;;
+    astra-nonregular) mkdir "$target/advisor-astra.toml" ;;
     dual) cp "$historical/sol-advisor-luna-implementer.toml.retired-v0.6.0" "$target/sol-advisor-luna-implementer.toml"; cp "$target/sol-advisor-luna-implementer.toml" "$target/sol-advisor-luna-implementer.toml.retired-v0.6.0" ;;
     collision) printf 'unknown\n' >"$target/sol-advisor-luna-implementer.toml.retired-v0.6.0" ;;
     neutral-modified) printf 'unknown\n' >"$target/advisor.toml" ;;
@@ -561,7 +572,7 @@ for kind in modified symlink nonregular dual collision neutral-modified neutral-
   if sh "$installer" --target-dir "$target" >/dev/null 2>&1; then fail "installer accepted $kind state"; fi
   after=$(snapshot "$target"); [ "$before" = "$after" ] || fail "$kind refusal mutated target"
 done
-pass "modified, symlink, nonregular, dual-path, destination-collision, obsolete-neutral, and 1.1.0 upgrade refusal"
+pass "modified, symlink, nonregular, Astra destination, dual-path, destination-collision, obsolete-neutral, and 1.1.0 upgrade refusal"
 
 sessions=$tmp/sessions/2026/08/27; mkdir -p "$sessions"
 id=11111111-1111-7111-8111-111111111111
@@ -862,6 +873,17 @@ for progress_line in 'launching advisor-terra (gpt-5.6-terra, high, read-only)' 
   grep -Fq "$progress_line" "$transport_err" || fail "transport stderr progress missing: $progress_line"
 done
 
+astra_transport_out=$tmp/astra-transport-out.json
+astra_transport_err=$tmp/astra-transport-err.txt
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=valid FAKE_EXPECTED_MODEL=gpt-6-astra FAKE_PARENT_ID="$transport_parent" \
+  sh "$transport" --role advisor-astra --parent-thread "$transport_parent" <"$valid_packet" >"$astra_transport_out" 2>"$astra_transport_err" || {
+    sed -n '1,20p' "$astra_transport_err" >&2
+    fail "valid fake Astra transport failed"
+  }
+jq -e '.status=="completed" and .selection.tier=="opt-in" and .selection.model=="gpt-6-astra" and .selection.effort=="high" and .selection.source=="explicit-fixed" and .runtime.model=="gpt-6-astra" and .runtime.effort=="high" and .runtime.sandbox_policy_type=="read-only"' "$astra_transport_out" >/dev/null || fail "explicit Astra alias did not remain fixed and isolated"
+if grep -Eq 'tier=(standard|specialist); model=gpt-6-astra|role=advisor-tier-(standard|specialist).*gpt-6-astra' "$transport"; then fail "Astra leaked into a normal tier route"; fi
+pass "explicit Astra/high fixed alias is isolated from Standard/Specialist defaults"
+
 heartbeat_err=$tmp/heartbeat-err.txt
 PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=heartbeat FAKE_PARENT_ID="$transport_parent" \
   sh "$transport" --role advisor-terra --parent-thread "$transport_parent" <"$valid_packet" >"$tmp/heartbeat-out.json" 2>"$heartbeat_err" || fail "heartbeat transport fixture failed"
@@ -1036,6 +1058,7 @@ write("root.jsonl",[
     activity("sol-private-id","interrupted",17,"activity-sol-interrupted"),
     activity("sol-private-id","completed",18,"activity-sol-completed"),
     activity("sol-private-id","completed",18,"activity-sol-completed"),
+    spawn("advisor-astra",19),
 ])
 terra_entries=[
     {"timestamp":"2025-12-31T23:59:59Z","type":"session_meta","payload":{"agent_role":"advisor-terra","id":"terra-private-id","source":{"subagent":{"thread_spawn":{"agent_role":"advisor-terra"}}},"prompt":"DO_NOT_LEAK_TERRA_META"}},
@@ -1051,6 +1074,9 @@ write("sol.jsonl",[
     {"timestamp":stamp(22),"type":"turn_context","payload":{"sandbox_policy":{"type":"workspace-write"}}},
     {"timestamp":stamp(23),"type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"DO_NOT_LEAK_RESPONSE"}]}},
     {"timestamp":stamp(24),"type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":20,"cached_input_tokens":5,"output_tokens":6,"reasoning_output_tokens":7}}}},
+])
+write("astra.jsonl",[
+    {"timestamp":stamp(25),"type":"session_meta","payload":{"agent_role":"advisor-astra","id":"astra-private-id","source":{"subagent":{"thread_spawn":{"agent_role":"advisor-astra"}}}}},
 ])
 # A legacy nested role mention is parent metadata, not exact current child metadata.
 write("legacy-nested-role.jsonl",[
@@ -1074,8 +1100,8 @@ jq -e '
   .decisions=={"consult":1,"skip":1,"unavailable":1} and
   .availability.decisions=="evidenced" and
   .consultations.attempted==2 and
-  .consultations.advisor_child_sessions=={"total":2,"by_role":{"advisor-terra":1,"advisor-sol":1}} and
-  .consultations.parent_spawn_completions=={"total":2,"by_role":{"advisor-terra":1,"advisor-sol":1},"availability":"evidenced"} and
+  .consultations.advisor_child_sessions=={"total":3,"by_role":{"advisor-astra":1,"advisor-terra":1,"advisor-sol":1}} and
+  .consultations.parent_spawn_completions=={"total":3,"by_role":{"advisor-astra":1,"advisor-terra":1,"advisor-sol":1},"availability":"evidenced"} and
   .consultations.parent_spawn_requests=={"count":2,"availability":"evidenced"} and
   .consultations.parent_subagent_activity=={"count":6,"by_kind":{"started":2,"interacted":1,"completed":2,"interrupted":1},"availability":"evidenced"} and
   .consultations.selected_roles=={"standard":1,"specialist":1} and
@@ -1095,7 +1121,7 @@ empty_audit=$tmp/empty-advisor-audit.json
 sh "$audit" --sessions-dir "$empty_sessions" --since 2026-01-01T00:00:00Z --until 2026-01-02T00:00:00Z >"$empty_audit" 2>/dev/null
 jq -e '
   .decisions=={"consult":0,"skip":0,"unavailable":0} and .availability.decisions=="unavailable" and
-  .consultations.advisor_child_sessions=={"total":0,"by_role":{"advisor-terra":0,"advisor-sol":0}} and
+  .consultations.advisor_child_sessions=={"total":0,"by_role":{"advisor-astra":0,"advisor-terra":0,"advisor-sol":0}} and
   .consultations.parent_spawn_completions=={"total":null,"by_role":null,"availability":"unavailable"} and
   .consultations.parent_spawn_requests=={"count":null,"availability":"unavailable"} and
   .consultations.parent_subagent_activity=={"count":null,"by_kind":null,"availability":"unavailable"} and
@@ -1408,7 +1434,10 @@ for phrase in \
   'models test MODEL --effort EFFORT --authorize-usage --parent-thread THREAD_ID' \
   '0.153.2' 'safe-unavailable' 'no background deletion service' \
   'prunes records older than 30 days' 'transport contract' 'does not trigger a consultation' \
-  'live privacy reconciliation is still a publication prerequisite'; do
+  'The deployed privacy copy now documents' 'local configuration/catalog state' \
+  'optional content-free usage journal' 'automatic Terra/Sol defaults' \
+  'separate explicit-only' 'Astra role' 'owner approved the refreshed copy' \
+  'live page byte-matches' 'repository candidate'; do
   grep -Fqi "$phrase" "$model_doc" || fail "model configuration documentation omits: $phrase"
 done
 grep -Eq '^Candidate content digest: `[0-9a-f]{64}`\.$' "$release_notes" || fail "candidate digest placeholder missing"
@@ -1416,7 +1445,11 @@ grep -Eq '^Candidate content digest: `[0-9a-f]{64}`\.$' "$release_notes" || fail
 grep -Fqi 'historical archive fingerprint' "$release_notes" || fail "historical 1.3.4 fingerprint label missing"
 grep -Fqi 'Repository-root documentation is not in the ZIP' "$release_notes" || fail "ZIP boundary documentation missing"
 grep -Fqi 'Mocked' "$walkthrough" || fail "walkthrough must label mocked evidence"
-grep -Fqi 'owner acceptance' "$walkthrough" || fail "walkthrough must retain owner acceptance gate"
+for phrase in \
+  'owner approved the website walkthrough and deployment' \
+  'website, privacy, and terms bytes are deployed and live-byte verified'; do
+  grep -Fqi "$phrase" "$walkthrough" || fail "walkthrough omits post-approval deployment evidence: $phrase"
+done
 pass "1.4 model, privacy, candidate walkthrough, release-history, and ZIP-boundary documentation"
 
 python3 -m unittest discover -s "$plugin_dir/tests" -p 'test_advisor_*.py'
@@ -1426,4 +1459,4 @@ pass "Advisor behavior tests and 17 candidate packaging tests"
 sh -n "$script_dir"/*.sh
 [ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.4.2 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.4.3 consultation-only static contract"

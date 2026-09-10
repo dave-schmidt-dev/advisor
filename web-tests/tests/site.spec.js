@@ -191,7 +191,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
   await page.goto('/');
   const body = (await bodyText(page)).toLowerCase();
 
-  expect(body).toContain('documentation v1.4.2');
+  expect(body).toContain('documentation v1.4.3');
   expect(body).toContain('automatic read-only advice');
   expect(body).toContain('smart defaults');
   expect(body).toContain('optional models');
@@ -201,7 +201,11 @@ test('claim surface matches the validated listing', async ({ page }) => {
   expect(body).toContain('gpt-5.6-terra');
   expect(body).toContain('gpt-5.6-sol');
   expect(body).toContain('next consultation');
-  expect(body).toContain('no setup conversation or separate canary is required.');
+  expect(body).toContain('advisor-astra');
+  expect(body).toContain('separate explicit-only');
+  expect(body).toContain('never selected automatically');
+  expect(body).toContain('uses more of your codex allowance');
+  expect(body).toContain('subject to account and runtime availability');
   expect(body).toContain('plugin updates may replace edits to the bundled file.');
   expect(body).not.toContain('advisor-terra');
   expect(body).not.toContain('advisor-sol');
@@ -210,7 +214,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
 test('each route carries the candidate release metadata', async ({ page }) => {
   for (const { path } of PAGES) {
     await page.goto(path);
-    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.2');
+    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.3');
   }
 });
 
@@ -230,6 +234,9 @@ test('support page uses published directory recovery guidance', async ({ page })
   expect(support).toContain('do not copy it');
   expect(support).toContain('Invalid TOML');
   expect(support).toContain('unsupported-model');
+  expect(support).toContain('advisor-astra');
+  expect(support).toContain('separate explicit-only');
+  expect(support).toContain('never selected automatically');
   expect(support).toContain('does not silently fall back');
   expect(support).toContain('may replace edits');
   expect(support).toContain('ADVISOR DECISION');
@@ -272,7 +279,7 @@ test('public boundary and installation language are exact and the cursor is remo
   expect(privacy).not.toContain('local execution.');
   expect(privacy).not.toContain('zero-tool sandboxing.');
   expect(privacy).toContain('no zero delta relay. consultation packets are sent directly through your authenticated codex/openai account. zero delta receives no packets, runs no proxy, and collects no telemetry.');
-  expect(privacy).toContain('effective date: 5 september 2026');
+  expect(privacy).toContain('effective date: 10 september 2026');
   expect(privacy).toContain('live');
   expect(privacy).toContain('advisor.toml');
   expect(privacy).toContain('advanced settings and model-catalog data');
@@ -282,7 +289,9 @@ test('public boundary and installation language are exact and the cursor is remo
   expect(privacy).toContain('older than 30 days');
   expect(privacy).toContain('no background deletion service');
   expect(privacy).toContain('uninstalling the plugin may leave user state and session logs behind');
-  expect(privacy).toContain('optional astra');
+  expect(privacy).toContain('advisor-astra');
+  expect(privacy).toContain('explicit-only');
+  expect(privacy).toContain('never selected automatically');
   expect(privacy).not.toContain('offline inference');
   expect(privacy).not.toContain('all consultation data resides solely');
   expect(privacy).not.toContain('no third-party transmission');
@@ -292,10 +301,13 @@ test('terms describe configured model responsibility and preserve legal terms', 
   await page.goto('/terms/');
   const terms = await bodyText(page);
 
-  expect(terms).toContain('Effective date: 5 September 2026');
+  expect(terms).toContain('Effective date: 10 September 2026');
   expect(terms).toContain('models and effort configured in the bundled');
-  expect(terms).toContain('Terra/high and Sol/high as defaults');
-  expect(terms).toContain('optional Astra');
+  expect(terms).toContain('Automatic Standard remains Terra/high');
+  expect(terms).toContain('automatic Specialist remains Sol/high');
+  expect(terms).toContain('advisor-astra');
+  expect(terms).toContain('explicit-only');
+  expect(terms).toContain('never selected automatically');
   expect(terms).toContain('OpenAI usage, quotas, and fees');
   expect(terms).toContain('update or reinstall may replace those edits');
   expect(terms).toContain('MIT License');

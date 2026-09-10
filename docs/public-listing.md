@@ -10,7 +10,7 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | --- | --- |
 | **Plugin Name** | `advisor` |
 | **Display Name** | Codex Advisor |
-| **Version** | `1.4.2` |
+| **Version** | `1.4.3` |
 | **Category** | Productivity |
 | **Capabilities** | Interactive, Read |
 | **Author / Maintainer** | David Schmidt / Zero Delta LLC |
@@ -24,8 +24,10 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | **Geographic Availability** | United States |
 | **Pricing Model** | Free / Open Source (MIT); requires user's own Codex model access |
 
-**Candidate status:** This document contains proposed 1.4.2 submission copy.
-Directory publication and the matching live website have not been verified here.
+**Candidate status:** This document contains the approved 1.4.3 submission copy. The
+exact role files are installed, one explicit Astra/high smoke completed successfully,
+and the approved website is deployed with a verified live byte match. Marketplace
+upload and GitHub release publication remain separate gates.
 
 ## Descriptions
 
@@ -33,7 +35,7 @@ Directory publication and the matching live website have not been verified here.
 Automatic second opinions with your choice of models
 
 ### Long Description
-Codex Advisor automatically adds a fresh, read-only second opinion for important technical decisions in Codex CLI and Codex desktop. Smart defaults work immediately: Standard uses Terra and Specialist uses Sol. To choose another model or reasoning effort, edit the commented advisor.toml file included with the plugin. Astra is optional and uses more of your Codex allowance. Future model selectors can be entered directly, subject to your account access and runtime support. No configuration conversation or separate compatibility test is required. Each consultation is tool-free, and your main agent retains control of implementation and final decisions. Plugin updates may replace edits to the bundled configuration file. Consultations use your own authenticated Codex/OpenAI account; Zero Delta operates no relay or hosted backend.
+Codex Advisor automatically adds a fresh, read-only second opinion for important technical decisions in Codex CLI and Codex desktop. Smart defaults work immediately: Standard uses Terra/high and Specialist uses Sol/high. Version 1.4.3 adds `advisor-astra`, a separate explicit-only Astra/high role reserved for the most complex uses. It is never selected automatically, uses more of your Codex allowance, and remains subject to account and runtime availability. Each consultation is tool-free, and your main agent retains control of implementation and final decisions. Consultations use your own authenticated Codex/OpenAI account; Zero Delta operates no relay or hosted backend.
 
 ## Surface and Host Compatibility
 
@@ -66,10 +68,11 @@ When any prerequisite is absent, the system safely records `route: unavailable` 
 
 ## Model Availability and Requirements
 
-Execution of consultations depends on the models and effort configured in the bundled `advisor.toml` through the user's authenticated Codex account:
+Execution uses the user's authenticated Codex account. Normal tier consultations use the models and effort configured in the bundled `advisor.toml`:
 - Standard defaults to Terra with high reasoning effort.
 - Specialist defaults to Sol with high reasoning effort.
-- Optional Astra uses more of the user's Codex allowance.
+- `advisor-astra` is a separate explicit-only Astra/high role; automatic selection never invokes it.
+- Astra uses more of the user's Codex allowance and remains subject to account and runtime availability.
 - Future model selectors are subject to account access and runtime support. Invalid TOML or an unsupported model reports an error; there is no silent fallback.
 
 ## Directory Test Cases
@@ -86,10 +89,12 @@ Execution of consultations depends on the models and effort configured in the bu
 2. **Mechanical Implementation:** "Rename variable `old_path` to `source_path` across all helper functions in `utils.py`." (Skips consultation; deterministic mechanical edit).
 3. **Diff Review / No Delegation:** "Review the committed git diff for typos and formatting errors, and do not delegate to an advisor." (Skips consultation; owned by review workflow and explicit no-delegation).
 
-## Candidate Notes (v1.4.2)
+## Candidate Notes (v1.4.3)
 
 - Automatic read-only advice uses configurable Standard and Specialist sections in the live bundled `advisor.toml` file.
-- Terra/high and Sol/high are the defaults; optional Astra uses more of the user's Codex allowance.
+- Terra/high and Sol/high remain the automatic defaults.
+- The separate `advisor-astra` role is explicit-only, pinned to Astra/high, and never selected automatically.
+- Astra uses more of the user's Codex allowance and remains subject to account and runtime availability.
 - Editing the installed file applies to the next consultation, with independent effort settings. Invalid TOML and unsupported models report errors without silent fallback.
 - No setup conversation or separate compatibility test is required, and plugin updates may replace bundled configuration edits.
 - Consultations send bounded packets through the user's authenticated Codex/OpenAI account; Zero Delta operates no relay or hosted backend.

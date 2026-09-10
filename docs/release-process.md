@@ -29,8 +29,8 @@
 
 Repeat this sequence for every version. Release completion requires the website,
 descriptions, matching GitHub release, and owner-confirmed marketplace publication;
-no previous receipt substitutes for current evidence. A built ZIP, including the
-existing 1.4.2 candidate, remains candidate-only until this current gate passes. Do
+no previous receipt substitutes for current evidence. A built ZIP remains
+candidate-only until this current gate passes. Do
 not rebuild or alter a plugin ZIP solely because external listing text changed.
 
 The upload-readiness script validates only the ZIP, listing, and website. GitHub

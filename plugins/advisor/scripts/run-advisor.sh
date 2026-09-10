@@ -50,9 +50,13 @@ elif [ -n "$role" ]; then
   case "$role" in
     advisor-terra) tier=standard; model=gpt-5.6-terra; effort=high; deadline_seconds=300 ;;
     advisor-sol) tier=specialist; model=gpt-5.6-sol; effort=high; deadline_seconds=300 ;;
+    advisor-astra) tier=opt-in; model=gpt-6-astra; effort=high; deadline_seconds=300 ;;
     *) fail "unsupported role" ;;
   esac
-  selection_source=legacy-fixed
+  case "$role" in
+    advisor-astra) selection_source=explicit-fixed ;;
+    *) selection_source=legacy-fixed ;;
+  esac
 else
   resolution_label='live Advisor configuration'
   fallback_error='advisor.toml is unavailable'

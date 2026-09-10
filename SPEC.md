@@ -8,7 +8,7 @@ technical decisions; it never implements, routes implementation, or performs
 final verification.
 
 The distributable plugin identity is `advisor`. Its single skill is `consultation`, and
-the current local candidate version is `1.4.2`. Release archives use that exact version
+the current local candidate version is `1.4.3`. Release archives use that exact version
 only after an owner-approved candidate freeze and packaging step. A built ZIP is only a
 local candidate: it may be described as upload-ready or uploaded only after the current
 public release evidence gate passes against that exact ZIP immediately before upload.
@@ -27,7 +27,11 @@ permitted subject to account/runtime support; Specialist Astra is higher usage. 
 retry reuses the frozen record and never migrates, falls back, or automatically selects
 a newer model. Plugin updates or reinstall may replace edits. Legacy `--role
 advisor-terra` and `--role advisor-sol` remain fixed Terra/high and Sol/high routes
-and do not follow the live file. Explicit model
+and do not follow the live file. The explicit `--role advisor-astra` alias is a separate
+opt-in fixed `gpt-6-astra` / high route; it is never selected by either tier, trigger
+selection, or fallback. Its content-free journal tier is `opt-in`, and audit role
+aggregates include `advisor-astra`, while `consultations.selected_roles` remains
+exactly `{standard, specialist}`. Explicit model
 refresh starts an owned `codex app-server --ignore-user-config --ignore-rules`
 process with the existing Codex home and requests only initialize, initialized, and
 paginated `model/list` with `includeHidden: true`; it neither reads/copies auth nor
@@ -321,8 +325,9 @@ it never implies that a technical choice was accepted when no technical choice w
   emits stable redacted JSON only. It may parse only allowlisted metadata, fixed
   receipt enums, event kinds, timestamps, and usage counters; it must not emit
   content, identifiers, paths, filenames, contact data, secret-shaped values, or
-  cost estimates. Schema v2 must derive exact current `advisor-terra` and
-  `advisor-sol` child-session identity from full-file `session_meta` before applying
+  cost estimates. Schema v2 must derive exact current `advisor-terra`,
+  `advisor-sol`, and `advisor-astra` child-session identity from full-file
+  `session_meta` before applying
   the half-open window to session activity. It must parse only allowlisted
   `ADVISOR DECISION` routes (`consult`, `skip`, and `unavailable`) in an exact
   top-level `decisions` object with separate availability, deduplicate repeated
@@ -335,7 +340,8 @@ it never implies that a technical choice was accepted when no technical choice w
   establish selected role or completion; activity may be counted only by correlation
   to an exact current child ID.
   Unknown runtime evidence is unavailable, never inferred.
-- Installation may add only the exact `advisor-terra` and `advisor-sol` custom-agent TOMLs through a
+- Installation may add only the exact `advisor-terra`, `advisor-sol`, and explicit opt-in
+  `advisor-astra` custom-agent TOMLs through a
   fail-closed, idempotent companion installer. An attended upgrade must also
   deactivate byte-exact known historical Sol Advisor role files by recoverably renaming
   implementation/review roles to `<role>.toml.retired-v0.6.0` and the historical
@@ -361,7 +367,7 @@ it never implies that a technical choice was accepted when no technical choice w
   `06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d`,
   used by the intermediate v0.3.0/v0.4.0/pre-revert v0.5.0 history. Unknown blobs
   still fail closed.
-- Plugin installation identity is `advisor`. Set version `1.4.2` and make
+- Plugin installation identity is `advisor`. Set version `1.4.3` and make
   the manifest author identify David Schmidt / Zero Delta LLC. Preserve Daniel
   McAteer's MIT copyright in `LICENSE` and keep upstream provenance in root
   `NOTICE.md`; do not add upstream attribution to the marketplace listing,
@@ -374,6 +380,7 @@ plugins/advisor/
   .codex-plugin/plugin.json
   agents/advisor-terra.toml
   agents/advisor-sol.toml
+  agents/advisor-astra.toml
   scripts/install-agents.sh
   scripts/inspect-parent-runtime.sh
   scripts/inspect-agent-runtime.sh
@@ -397,12 +404,13 @@ trigger retired behavior.
 The repository verifier must prove:
 
 1. Manifest JSON, marketplace JSON, TOML, YAML, and shell syntax are valid.
-2. The plugin exposes exactly one skill and ships exactly two model-pinned custom-agent roles.
+2. The plugin exposes exactly one skill and ships exactly three model-pinned custom-agent roles,
+   with Astra present only as an explicit opt-in role and Standard/Specialist defaults unchanged.
 3. Implicit invocation is enabled and the skill description contains explicit
    consult and skip boundaries.
 4. Retired `solo`, `delegate`, `audit`, `full`, Luna, Terra, and final-review
    contracts are absent from active plugin content.
-5. The advisor roles pin the exact Terra/high and Sol/high pairs, request read-only
+5. The advisor roles pin the exact Terra/high, Sol/high, and opt-in Astra/high pairs, request read-only
    sandboxing, and forbid tools, file inspection, web fetches, and independent
    research; static fixtures prove decision-risk role selection and exact spawn evidence.
 6. The installer is fail-closed, idempotent, supports an isolated target, and
@@ -462,7 +470,7 @@ keeps its authenticated Codex home; the evaluator neither copies nor links auth
 material. Each feature state uses an isolated temporary project and child runtime,
 with `--ignore-user-config`, `--ignore-rules`, `--ephemeral`, and a read-only
 sandbox. The project links only the repository-local consultation skill and plugin,
-and `install-agents.sh --target-dir` installs and checks both exact roles in the child
+and `install-agents.sh --target-dir` installs and checks all three exact roles in the child
 runtime. The evaluator applies `--disable multi_agent_v2` and `--enable
 multi_agent_v2` in separate runs when a persisted-runtime evaluation is available.
 Its current ephemeral preflight must instead emit `route: unavailable`, with no
@@ -511,4 +519,4 @@ actions; a missing external review or runtime spawn evidence is unavailable, not
 approval to continue.
 # Usage and audit (1.4)
 
-The versioned wrapper envelope retains the canonical eight-line response and legacy runtime keys while adding an opaque consultation ID, frozen selection, per-attempt duration and available input/cached-input/output/reasoning counters. Cached input is a subset of input and reasoning is never added twice to output. Missing counters are null with explicit partial availability. The optional content-free local usage journal is disabled by default; `advisor-config.sh journal enable|disable|status|clear` controls owner-only, atomic 30-day receipts. It never stores prompts, answers, paths, child/session IDs, or raw errors. A journal failure is a redacted warning, not an advice failure.
+The versioned wrapper envelope retains the canonical eight-line response and legacy runtime keys while adding an opaque consultation ID, frozen selection, per-attempt duration and available input/cached-input/output/reasoning counters. Cached input is a subset of input and reasoning is never added twice to output. Missing counters are null with explicit partial availability. The optional content-free local usage journal is disabled by default; `advisor-config.sh journal enable|disable|status|clear` controls owner-only, atomic 30-day receipts. Astra records preserve tier `opt-in`; Astra role sessions appear in child-session and parent-completion role aggregates but never in the Standard/Specialist `selected_roles` counts. The journal never stores prompts, answers, paths, child/session IDs, or raw errors. A journal failure is a redacted warning, not an advice failure.

@@ -50,6 +50,9 @@ Advisor freezes the model, effort, content-digest source revision, transport con
 and 30–900 second total deadline before launch, so retries do not choose a newer model
 or fallback. The legacy `--role advisor-terra` and `--role advisor-sol` aliases remain
 fixed Terra/high and Sol/high routes and do not follow `advisor.toml`.
+The explicit `--role advisor-astra` alias is a separate opt-in Astra/high route; it is
+never chosen by Standard/Specialist defaults or trigger selection and does not change
+tier defaults.
 
 The installed copy includes `scripts/advisor-config.sh`. `show` and `doctor` display
 the actual `advisor.toml` pairs, path, and source revision. Its catalog, preset, and

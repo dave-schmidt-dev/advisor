@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <title>Support &amp; Troubleshooting — Codex Advisor</title>
 <meta name="description" content="Support channels, prerequisites checklist, and troubleshooting guide for the Codex Advisor plugin.">
-<meta name="advisor-release" content="1.4.2">
+<meta name="advisor-release" content="1.4.3">
 <link rel="canonical" href="https://zerodelta.dev/advisor/support/">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/style.css">
@@ -54,7 +54,7 @@
 <section aria-labelledby="configuration">
     <h2 id="configuration">3. Configure models</h2>
     <p>Find <code>advisor.toml</code> in the installed plugin root. The plugin root is two directories above the directory containing <code>skills/consultation/SKILL.md</code>. Edit that bundled file in place; do not copy it and do not use repository commands. Changes apply to the next consultation, with independent settings for Standard and Specialist.</p>
-    <p>Terra/high and Sol/high are the defaults. You may select another model, including optional Astra, subject to your account access and runtime support. Invalid TOML and unsupported-model values produce an explicit error; Advisor does not silently fall back. An update or reinstall may replace edits to the bundled file. There is no GUI settings screen in the normal flow.</p>
+    <p>Automatic Standard remains Terra/high and automatic Specialist remains Sol/high. <code>advisor-astra</code> is a separate explicit-only Astra/high role for the most complex uses; it is never selected automatically, uses more Codex allowance, and remains subject to account and runtime availability. Invalid TOML and unsupported-model values produce an explicit error; Advisor does not silently fall back. An update or reinstall may replace edits to the bundled file. There is no GUI settings screen in the normal flow.</p>
 </section>
 
 <section aria-labelledby="scope">
@@ -100,6 +100,7 @@ route: unavailable</code></pre>
     <p><strong>Symptom.</strong> The consultation launcher reports a failure or an unexpected model response.</p>
     <p><strong>Cause.</strong> The configured model is unavailable or unauthorized for your authenticated Codex/OpenAI account.</p>
     <p><strong>Remedies.</strong> Check the <code>model</code> and <code>effort</code> values in the installed <code>advisor.toml</code>, verify account access and usage availability, and correct the file in place. An unsupported model or invalid TOML reports an error; there is no silent fallback.</p>
+    <p>For <code>advisor-astra</code>, also confirm that the request was explicit. Automatic Standard and Specialist routing will not select Astra.</p>
 
     <h3>C. Response classification retry</h3>
     <p><strong>Symptom.</strong> Stderr shows a single retry during consultation.</p>

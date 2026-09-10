@@ -1,14 +1,20 @@
-# Advisor 1.4.2 candidate walkthrough
+# Advisor 1.4.3 candidate walkthrough
 
-Date: 2026-09-04. This is a local candidate walkthrough, not publication, installation,
-real-model-canary, or owner acceptance evidence.
+Date: 2026-09-10. This is a local candidate walkthrough, not publication or owner
+acceptance evidence.
+
+The Astra checkpoint is source/static and installed-runtime verified: `advisor-astra` is explicit-only,
+pinned to `gpt-6-astra` / High, and separate from the unchanged automatic Standard and
+Specialist defaults. The exact role was installed and one live read-only, zero-tool Astra
+smoke completed successfully. The owner approved the website walkthrough and deployment.
 
 The installed helper keeps its state under Codex home, outside the plugin cache.
 
 | Surface | Expected behavior | Evidence and remaining gate |
 | --- | --- | --- |
 | Live configuration | The installed `advisor.toml` has only Standard and Specialist model/effort sections. Editing either pair applies to the next tier consultation; comments list efforts, future-selector limits, Astra usage, and upgrade replacement risk. | Mocked configuration tests cover defaults, future selectors, malformed/missing/unsafe input, and content-digest revision. No user file was edited. |
-| Tier consultation | `run-advisor.sh --tier standard` resolves the live Standard pair; Specialist independently resolves its pair. Saved stale selections do not win. Retries reuse the frozen pair, source revision, and total deadline. | Mocked wrapper tests cover Astra, independent effort, future selectors without catalog/canary/state, stale-state precedence, retry, and exact runtime mismatch rejection. Actual Terra, Sol, or Astra inference has not run. |
+| Tier consultation | `run-advisor.sh --tier standard` resolves the live Standard pair; Specialist independently resolves its pair. Saved stale selections do not win. Retries reuse the frozen pair, source revision, and total deadline. | Mocked wrapper tests cover Astra, independent effort, future selectors without catalog/canary/state, stale-state precedence, retry, and exact runtime mismatch rejection. Automatic Terra and Sol inference did not run; the separate explicit Astra role did. |
+| Explicit Astra role | `--role advisor-astra` is an explicit-only `gpt-6-astra` / High route. It is separate from automatic Standard/Specialist selection and does not change either default. | The exact role is installed. Consultation `6399af37-85f2-4ee5-b90f-0a3e27644285` completed with verified Astra/high, read-only, zero-tool runtime evidence and accepted the routing contract. |
 | Legacy aliases | `--role advisor-terra` and `--role advisor-sol` remain fixed Terra/high and Sol/high. They cannot be mixed with tier or preset. | Static and transport tests cover the pins. |
 | Current and legacy tools | `show` and `doctor` report actual live pairs, config path, and digest. Catalogs/presets/canaries are advanced-only; `set` and `reset` reject and `restore` labels legacy-only state recovery. | Mocked CLI diagnostics cover live values and stale saved-state precedence. |
 | Deadline | `deadline` displays the total deadline; `deadline SECONDS` accepts 30–900 seconds and defaults to 300. Frozen launch and retry share that budget. | CLI tests cover valid and rejected values. |
@@ -26,7 +32,8 @@ marketplace identity plus the skills-only contract; it does not scan all public 
 verification record after the phase gate.
 
 The package ships only `plugins/advisor`; this walkthrough and other repository-root
-docs are not inside the ZIP. A future owner walkthrough must inspect an installed copy,
-exercise config editing, malformed-file recovery, supported host states, and separately
-accept any real model canary before publication. Live website, privacy, terms, portal URL autofill, directory listing,
-marketplace state, and release publication are unverified.
+docs are not inside the ZIP. The exact three role files passed installed-state checks.
+Config editing and malformed-file recovery remain automated-test evidence rather than
+manual interaction. Live website, privacy, terms, portal URL autofill, directory listing,
+marketplace state and GitHub release publication remain unverified. The approved
+website, privacy, and terms bytes are deployed and live-byte verified.

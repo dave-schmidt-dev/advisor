@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <title>Privacy Policy — Codex Advisor</title>
 <meta name="description" content="Privacy policy for Codex Advisor, including authenticated OpenAI transmission, live configuration, and optional content-free usage data.">
-<meta name="advisor-release" content="1.4.2">
+<meta name="advisor-release" content="1.4.3">
 <link rel="canonical" href="https://zerodelta.dev/advisor/privacy/">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/style.css">
@@ -29,7 +29,7 @@
         <span class="eyebrow">Legal</span>
         <h1>Privacy Policy</h1>
         <div class="doc-meta">
-            <div>Effective date: 5 September 2026</div>
+            <div>Effective date: 10 September 2026</div>
             <div>Publisher and controller: Zero Delta LLC (Commonwealth of Virginia, United States)</div>
             <div>Contact: <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a></div>
             <div>Website: <a href="https://zerodelta.dev">zerodelta.dev</a></div>
@@ -73,7 +73,7 @@
         <li>The optional content-free usage journal is disabled by default.</li>
         <li>If enabled, it stores operational metadata and aggregate usage counters only. It stores no consultation packets and no response content.</li>
         <li>Later journal writes prune entries older than 30 days and enforce a bounded count. There is no background deletion service.</li>
-        <li>Terra/high and Sol/high are the defaults; models are configurable, and selecting optional Astra uses more of your Codex allowance.</li>
+        <li>Automatic Standard remains Terra/high and automatic Specialist remains Sol/high. The separate <code>advisor-astra</code> role is explicit-only, uses Astra/high, is never selected automatically, uses more Codex allowance, and remains subject to account and runtime availability.</li>
     </ul>
 </section>
 
@@ -85,7 +85,7 @@
 <section aria-labelledby="third-party">
     <h2 id="third-party">5. Third-party services and surfaces</h2>
     <ul>
-        <li><strong>OpenAI Codex.</strong> Consultation requests execute via your local Codex installation communicating with the models configured in <code>advisor.toml</code>, with Terra/high and Sol/high as defaults and optional Astra. Data handling by OpenAI is governed by OpenAI's terms.</li>
+        <li><strong>OpenAI Codex.</strong> Consultation requests execute via your local Codex installation. Standard remains Terra/high, Specialist remains Sol/high, and the separate explicit-only <code>advisor-astra</code> role uses Astra/high subject to account and runtime availability. Data handling by OpenAI is governed by OpenAI's terms.</li>
         <li><strong>No MCP or hosted service.</strong> Codex Advisor provides no MCP server, no hosted service, and no background cloud service.</li>
     </ul>
 </section>

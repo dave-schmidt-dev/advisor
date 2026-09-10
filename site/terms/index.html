@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <title>Terms of Service — Codex Advisor</title>
 <meta name="description" content="Terms of service for the Codex Advisor plugin, distributed under the MIT License.">
-<meta name="advisor-release" content="1.4.2">
+<meta name="advisor-release" content="1.4.3">
 <link rel="canonical" href="https://zerodelta.dev/advisor/terms/">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/style.css">
@@ -29,7 +29,7 @@
         <span class="eyebrow">Legal</span>
         <h1>Terms of Service</h1>
         <div class="doc-meta">
-            <div>Effective date: 5 September 2026</div>
+            <div>Effective date: 10 September 2026</div>
             <div>Publisher and maintainer: Zero Delta LLC</div>
             <div>Contact: <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a></div>
             <div>Governing law: Commonwealth of Virginia, United States</div>
@@ -75,7 +75,7 @@
     <h2 id="responsibilities">4. Prerequisites and your responsibilities</h2>
     <ul>
         <li><strong>Host prerequisites.</strong> You are solely responsible for providing and maintaining the required local host prerequisites, including a supported host (Codex CLI or Codex desktop), a POSIX shell, <code>jq</code>, and the appropriate execution permissions.</li>
-        <li><strong>Model availability.</strong> Execution uses the models and effort configured in the bundled <code>advisor.toml</code>, with Terra/high and Sol/high as defaults and optional Astra available subject to account and runtime support. You are responsible for model availability, all OpenAI usage, quotas, and fees on your account.</li>
+        <li><strong>Model availability.</strong> Execution uses the models and effort configured in the bundled <code>advisor.toml</code>. Automatic Standard remains Terra/high and automatic Specialist remains Sol/high. The separate <code>advisor-astra</code> role is explicit-only, uses Astra/high, is never selected automatically, uses more Codex allowance, and remains subject to account and runtime availability. You are responsible for model availability, all OpenAI usage, quotas, and fees on your account.</li>
         <li><strong>Configuration changes.</strong> You may edit the bundled configuration in place, but a plugin update or reinstall may replace those edits.</li>
         <li><strong>Data protection.</strong> You are responsible for ensuring that credentials, confidential keys, and unauthorized proprietary data are not included in consultation packets.</li>
     </ul>

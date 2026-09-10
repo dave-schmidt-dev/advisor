@@ -2,10 +2,10 @@
 
 ## Published package
 
-The published identity is version `1.3.3`, pinned by Git tag `v1.3.3` at commit
-`2cd47df0fc86931f34a05b982f38232a6b51c2e9`. The release archive is
-`Codex-Advisor-1.3.3.zip` with SHA-256
-`a0064662cfabd419a120c4e583068bb86905bb17aeb0482005d93f8b5cde505d`.
+The published identity is version `1.4.2`, pinned by Git tag `v1.4.2` at commit
+`57dad72989c175ae08d7e7c7ee1a981b1d177fb4`. The release archive is
+`Codex-Advisor-1.4.2.zip` with SHA-256
+`21324cf22eee2424859ab8825ea76eb2046fd2cd772190ad7ab822ab794df6c6`.
 
 ## Marketplace candidate
 
@@ -45,18 +45,33 @@ content-digest revisions, retry freezing, and fail-closed TOML errors were cover
 locally. Normal tiers no longer depend on saved selections, catalog registration,
 discovery, or synthetic canaries.
 
-Candidate content digest: `5dae43e5d226b95a375d54876e2dec7ff132d8361d8ee6d8905001f45ba01f39`.
+Candidate content digest: `a66a32cfe165e5aa6b0ac9b578d2dd885697ca4b672c2988ccfe0e905f57d78b`.
 
 The manifest contains supported `websiteURL`, `privacyPolicyURL`, and
 `termsOfServiceURL` fields. It contains no supported `supportURL` field; portal URL
 autofill is unverified. The release owner approved the refreshed Terms captures, and
 the approved Terms release was deployed and live-byte verified on 5 September 2026.
 
+## Advisor 1.4.3 candidate release notes
+
+Version `1.4.3` adds `advisor-astra`, a separate explicit-only consultation role
+pinned to Astra/high for the most complex uses. It is never selected automatically:
+automatic Standard remains Terra/high and automatic Specialist remains Sol/high.
+Astra uses more Codex allowance and remains subject to account and runtime
+availability.
+
+The exact three role files are installed, and one explicit Astra/high consultation
+completed with verified read-only, zero-tool runtime evidence. The owner approved the
+website walkthrough; all seven public files are deployed and live-byte verified.
+Marketplace upload and GitHub release publication are not claimed yet.
+The deterministic handoff archive is `Codex-Advisor-1.4.3.zip` with SHA-256
+`85c86f5a1c582c43a99bc274f9f54a60445cae316683892668b608e8054b54c2`.
+
 ## Candidate contents
 
 The candidate ZIP packages only `plugins/advisor`: its single consultation skill, local
 runtime references and scripts, configuration helper, schemas, catalog, assets, and
-the two read-only advisor profiles. Repository-root documentation is not in the ZIP.
+the three read-only advisor profiles. Repository-root documentation is not in the ZIP.
 It adds no networked service component.
 
 ## Candidate preparation

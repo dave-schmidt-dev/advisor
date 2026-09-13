@@ -14,9 +14,10 @@ Candidate archive: `Codex-Advisor-1.4.4.zip`; SHA-256
 Marketplace publication was owner-confirmed on 13 September 2026. GitHub release
 [`v1.4.4`](https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.4) was
 published at commit `a2f84e65bc551ea6c826baf29d8b792252ae04b0`; its downloaded
-asset matches this SHA-256. Public-site deployment and independent live-listing
-inspection remain separate and are not claimed by this draft. The 1.4.3 publication
-record below remains historical.
+asset matches this SHA-256. The 1.4.4 public site is deployed, and its seven
+deployable files byte-match the release source. Independent authenticated live-listing
+inspection is not claimed by this draft. The 1.4.3 publication record below remains
+historical.
 
 ## Published package
 

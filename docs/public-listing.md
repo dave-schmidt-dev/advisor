@@ -30,8 +30,9 @@ based on owner confirmation. The published 1.4.4 archive is
 `36876ac573b5c752259b687295a34d2cd70c51c9a72a07b2a808f776f710b6ba`.
 GitHub release [`v1.4.4`](https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.4)
 is published at commit `a2f84e65bc551ea6c826baf29d8b792252ae04b0`; its downloaded
-asset matches this SHA-256. Public-site deployment and independent live-listing
-inspection remain separate and are not claimed here.
+asset matches this SHA-256. The 1.4.4 public site is deployed, and its seven
+deployable files byte-match the release source. Independent authenticated live-listing
+inspection is not claimed here.
 
 ## Descriptions
 

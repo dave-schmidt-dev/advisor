@@ -1,13 +1,12 @@
 # Codex Advisor public site walkthrough — 2026-09-13
 
-Candidate walkthrough for version `1.4.4` at `https://zerodelta.dev/advisor/`.
+Release walkthrough for version `1.4.4` at `https://zerodelta.dev/advisor/`.
 
-**Evidence boundary:** This walkthrough records candidate-current static source and
-browser-assertion coverage. Owner approval, website deployment, and live byte-match
-verification below refer to the historical 1.4.3 site; 1.4.4 website publication
-remains pending. Marketplace publication was owner-confirmed on 13 September 2026;
-GitHub release `v1.4.4` is published with a downloaded asset matching the marketplace
-archive. Neither fact is live website deployment evidence.
+**Evidence boundary:** This walkthrough records candidate-current static source,
+browser-assertion coverage, owner-approved website deployment, and live byte-match
+verification for 1.4.4. Marketplace publication was owner-confirmed on 13 September
+2026; GitHub release `v1.4.4` is published with a downloaded asset matching the
+marketplace archive. Independent authenticated directory inspection is not claimed.
 The exact plugin roles are installed and a successful live `advisor-astra` smoke is
 recorded separately in `docs/advisor-1.4-walkthrough.md`.
 
@@ -147,10 +146,10 @@ The prior 1.4.3 captures were reviewed screen by screen and approved by the owne
 
 | File | SHA-256 |
 | --- | --- |
-| `site/index.html` | `84c341dba7c2242ec4768279e9a01765c4b4f6fd44e175363e879fcd40f2d02e` |
-| `site/support/index.html` | `d4c93fcebc13803b0f9719ad63fcedb9c17008d64713bea3a2252e841062bf2a` |
-| `site/privacy/index.html` | `6fc19a0ac1e9a47554ab4fff4feef16873778d56f0c216377681b7886c762fe6` |
-| `site/terms/index.html` | `58d73329a682a5e337d42f7da04f313d28b82b58b339855a3d3ab6c0001191ea` |
+| `site/index.html` | `1133e65c5eb60c89fc2b0c4bf002d0ea259e73438d39452dff1559a6266729a6` |
+| `site/support/index.html` | `1400f96bcf4ff7c0d56f44368c21b03c9bccda8ca0cd6f6069da938bcf2a2f86` |
+| `site/privacy/index.html` | `bee947c2ca22b0aa629fe7e9e1e0e8cca954c511cec67bd27b805d2e4ce141c1` |
+| `site/terms/index.html` | `8bf560119b9631f297913b77234af4921d9c8788a5abf90929fc1b9d5d3ddad3` |
 | `site/assets/style.css` | `8a5e30c6d1c331a667577ae30b49c90d0db3fe40048b9bfe8c05c9a237d8df3a` |
 | `site/assets/logo.svg` | `5cdf5277721efc07305ef9129410a2aefbc1fdd61e46c3d8946caa888210f0e2` |
 | `site/sitemap.xml` | `a6baf34abddca5c09f2659d226c605771a25b65089e0dd66874856b32141b792` |
@@ -170,7 +169,7 @@ and do not identify the 1.4.3 candidate:
 | `site/assets/logo.svg` | `5cdf5277721efc07305ef9129410a2aefbc1fdd61e46c3d8946caa888210f0e2` |
 | `site/sitemap.xml` | `a6baf34abddca5c09f2659d226c605771a25b65089e0dd66874856b32141b792` |
 
-The approved 1.4.3 website was deployed on 10 September 2026. The 1.4.4 candidate
-requires a new deployment after owner review. The repository upload gate
-then verified all seven public files byte-for-byte against this snapshot. Marketplace
-upload and GitHub release publication remain separate gates.
+The approved 1.4.3 website was deployed on 10 September 2026. After owner approval,
+the 1.4.4 website was deployed on 13 September 2026, and the repository upload gate
+verified all seven public files byte-for-byte against this snapshot. Marketplace and
+GitHub release publication are recorded separately above.

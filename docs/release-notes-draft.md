@@ -11,8 +11,9 @@ remains Sol/high, and explicit-only Astra remains unchanged with no model fallba
 
 Candidate archive: `Codex-Advisor-1.4.4.zip`; SHA-256
 `36876ac573b5c752259b687295a34d2cd70c51c9a72a07b2a808f776f710b6ba`.
-GitHub release and marketplace publication are release-in-progress and are not
-claimed by this draft. The 1.4.3 publication record below remains historical.
+Marketplace publication was owner-confirmed on 13 September 2026. The GitHub release,
+public-site deployment, and independent live-listing inspection remain separate and
+are not claimed by this draft. The 1.4.3 publication record below remains historical.
 
 ## Published package
 

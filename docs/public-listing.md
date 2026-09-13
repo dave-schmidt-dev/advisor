@@ -24,11 +24,12 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | **Geographic Availability** | United States |
 | **Pricing Model** | Free / Open Source (MIT); requires user's own Codex model access |
 
-**Candidate status:** This document contains the approved 1.4.4 submission copy. The
-1.4.4 candidate ZIP is `Codex-Advisor-1.4.4.zip` with SHA-256
+**Publication status:** Advisor 1.4.4 is published in the OpenAI Plugins Directory,
+based on owner confirmation. The published 1.4.4 archive is
+`Codex-Advisor-1.4.4.zip` with SHA-256
 `36876ac573b5c752259b687295a34d2cd70c51c9a72a07b2a808f776f710b6ba`.
-GitHub publication and marketplace upload remain owner-controlled and are not claimed
-here; marketplace publication is release-in-progress.
+The GitHub release, public-site deployment, and independent live-listing inspection
+remain separate and are not claimed here.
 
 ## Descriptions
 

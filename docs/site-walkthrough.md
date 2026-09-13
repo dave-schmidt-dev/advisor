@@ -4,9 +4,9 @@ Candidate walkthrough for version `1.4.4` at `https://zerodelta.dev/advisor/`.
 
 **Evidence boundary:** This walkthrough records candidate-current static source and
 browser-assertion coverage. Owner approval, website deployment, and live byte-match
-verification below refer to the historical 1.4.3 site; 1.4.4 publication remains
-pending. Marketplace upload and GitHub release publication are release-in-progress
-and are not claimed here.
+verification below refer to the historical 1.4.3 site; 1.4.4 website publication
+remains pending. Marketplace publication was owner-confirmed on 13 September 2026;
+GitHub release publication remains release-in-progress and is not claimed here.
 The exact plugin roles are installed and a successful live `advisor-astra` smoke is
 recorded separately in `docs/advisor-1.4-walkthrough.md`.
 

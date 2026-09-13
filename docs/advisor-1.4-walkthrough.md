@@ -35,7 +35,8 @@ verification record after the phase gate.
 The package ships only `plugins/advisor`; this walkthrough and other repository-root
 docs are not inside the ZIP. The exact three role files passed installed-state checks.
 Config editing and malformed-file recovery remain automated-test evidence rather than
-manual interaction. Live website, privacy, terms, portal URL autofill, directory listing,
-marketplace state remains unverified. The approved 1.4.3 website, privacy, and terms bytes are deployed and live-byte verified; the 1.4.4 candidate remains pending deployment.
+manual interaction. Live website, privacy, terms, portal URL autofill, and directory
+listing remain independently unverified. Marketplace publication was owner-confirmed
+on 13 September 2026. Historical 1.4.3 deployment evidence: website, privacy, and terms bytes are deployed and live-byte verified. The 1.4.4 candidate remains pending deployment.
 The historical GitHub release `v1.4.3` resolves to the exact
 source commit and its downloaded ZIP is byte-identical to the handoff archive.

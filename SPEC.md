@@ -186,6 +186,11 @@ ordinary `route: skip` path remains unchanged.
    transport root, and an unconditional exit trap removes it after every wrapper exit.
    Progress is stderr-only; successful stdout is one verified JSON object containing
    runtime evidence and the canonical receipt.
+   A nonempty shell-tool `session_id` is nonterminal progress: the caller drains that
+   exact handle with `write_stdin`, accumulates all tool-output chunks, and only after
+   terminal exit extracts and emits exactly one schema-v3 envelope. An outer wait or
+   heartbeat is not a result and must not trigger a receipt or unavailable
+   classification.
 8. Treat a response that passed runtime inspection as advice, not authority. A valid
    processed response contains either a recommendation grounded in the packet or a
    concrete `FOLLOW-UP AREAS` entry. The root checks its cited source references and

@@ -165,6 +165,51 @@ ADVISOR_PACKET
 # or use: --tier specialist
 ```
 
+When the shell tool is called through the Codex tool runtime, a deferred result
+must be drained before it is classified. Use this caller-side pattern for every
+tier and role (the wrapper's model does not change the handoff contract):
+
+```javascript
+let process = await tools.exec_command({cmd: transportCommand});
+let combinedOutput = process.output ?? "";
+while (process.session_id) {
+  process = await tools.write_stdin({
+    session_id: process.session_id,
+    chars: "",
+    yield_time_ms: 5000,
+    max_output_tokens: 20000,
+  });
+  combinedOutput += process.output ?? "";
+}
+if (process.session_id || process.exit_code == null) {
+  throw new Error("Advisor transport did not reach a terminal result");
+}
+if (process.exit_code !== 0) {
+  throw new Error("Advisor transport failed");
+}
+const candidates = combinedOutput.split(/\r?\n/).flatMap((line) => {
+  try { return [JSON.parse(line)]; } catch { return []; }
+}).filter((value) => value && value.schema_version === 3);
+if (candidates.length !== 1) {
+  throw new Error("Advisor transport did not return exactly one schema-v3 envelope");
+}
+const verifiedEnvelope = candidates[0];
+text(JSON.stringify(verifiedEnvelope));
+```
+
+A nonempty `session_id` from `exec_command` is nonterminal: keep polling the
+same session with `write_stdin` and preserve every returned output chunk in
+`combinedOutput`. The initial yielded result is nonterminal progress, never an
+Advisor envelope. Likewise, an outer `functions.wait` result or heartbeat is nonterminal progress.
+Do not parse it, emit a receipt, or classify the consultation until the owning
+`functions.exec` call has drained the exact process and validated its terminal
+output. Parse `combinedOutput` only after the process has no `session_id` and a
+terminal `exit_code`. Because the shell tool may merge stderr progress into
+`output`, extract exactly one parseable `schema_version: 3` JSON object from the
+complete accumulator and reject zero or multiple candidates. Only then use
+`text(JSON.stringify(verifiedEnvelope))` to deliver that verified envelope from
+the enclosing `functions.exec`; nested shell-tool output is not itself a result.
+
    Use this single-quoted heredoc form, after proving the delimiter is absent from the
    packet. Never use `< packet.txt`, an unquoted heredoc, `eval`, or shell-interpolated
    packet text at this elevated boundary. The packet exists only on the wrapper's

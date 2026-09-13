@@ -85,3 +85,10 @@ one fresh corrective retry, with at most two children. Runtime, identity,
 isolation, provenance, or tool failures are terminal. Rejected content remains private
 to the mode-0700 consultation directory, is never emitted or copied into a retry
 prompt, and is removed by unconditional cleanup.
+
+When the Codex shell tool returns a nonempty `session_id`, that is nonterminal
+progress, not an Advisor result. The caller drains that exact handle with
+`write_stdin`, accumulates all returned tool output, waits for terminal exit, and
+then extracts exactly one schema-v3 envelope and explicitly emits it from the
+enclosing call before rendering a receipt. Outer waits and heartbeats are not result
+evidence.

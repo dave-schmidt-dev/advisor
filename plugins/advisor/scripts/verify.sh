@@ -288,6 +288,42 @@ grep -Fq '($b|unique)!=["read-only"]' "$inspector" || fail "inspector does not b
 grep -Fq '($tool_events|length)!=0' "$inspector" || fail "inspector does not block advisor tool use"
 grep -Fq 'parent_thread_id=${CODEX_THREAD_ID-}' "$parent_inspector" || fail "parent inspector does not require CODEX_THREAD_ID"
 if grep -Fq 'CODEX_SESSION_ID' "$parent_inspector"; then fail "parent inspector falls back to CODEX_SESSION_ID"; fi
+for document in "$skill" "$operations"; do
+  grep -Fq 'nonempty `session_id`' "$document" || fail "deferred handoff contract omits nonterminal session_id: $document"
+  grep -Fq 'await tools.write_stdin' "$document" || fail "deferred handoff contract omits write_stdin polling: $document"
+  grep -Fq 'while (process.session_id)' "$document" || fail "deferred handoff contract omits session polling loop: $document"
+  grep -Fq 'combinedOutput += process.output ?? ""' "$document" || fail "deferred handoff contract does not preserve tool-output chunks: $document"
+  grep -Fq 'const candidates = combinedOutput.split(/\r?\n/).flatMap' "$document" || fail "deferred handoff contract omits mixed-output extraction: $document"
+  grep -Fq 'value.schema_version === 3' "$document" || fail "deferred handoff contract omits schema-v3 envelope check: $document"
+  grep -Fq 'const verifiedEnvelope = candidates[0];' "$document" || fail "deferred handoff contract omits post-drain envelope handoff: $document"
+  grep -Fq 'text(JSON.stringify(verifiedEnvelope));' "$document" || fail "deferred handoff contract omits final envelope delivery: $document"
+  grep -Fq 'outer `functions.wait`' "$document" || fail "deferred handoff contract omits outer wait rule: $document"
+done
+for document in "$readme" "$repo_dir/SPEC.md" "$repo_dir/INVARIANTS.md"; do
+  grep -Fq 'session_id' "$document" || fail "deferred handoff lifecycle documentation omits session handle: $document"
+  grep -Fqi 'nonterminal' "$document" || fail "deferred handoff lifecycle documentation omits terminality rule: $document"
+  grep -Fq 'exactly one schema-v3 envelope' "$document" || fail "deferred handoff lifecycle documentation omits final-envelope rule: $document"
+done
+python3 - "$skill" "$operations" <<'PY'
+import sys
+from pathlib import Path
+
+for filename in sys.argv[1:]:
+    lines = Path(filename).read_text(encoding="utf-8").splitlines()
+    poll = next(i for i, line in enumerate(lines) if "while (process.session_id)" in line)
+    parse = next(i for i, line in enumerate(lines) if "JSON.parse(line)" in line)
+    emit = next(i for i, line in enumerate(lines) if "text(JSON.stringify(verifiedEnvelope));" in line)
+    if parse <= poll:
+        raise SystemExit(f"deferred handoff parses before draining session: {filename}")
+    if emit <= parse:
+        raise SystemExit(f"deferred handoff emits before envelope validation: {filename}")
+    if not any("initial yielded result" in line and "nonterminal" in line for line in lines):
+        raise SystemExit(f"initial yielded result terminality rule missing: {filename}")
+    if not any("functions.wait" in line and "nonterminal" in line for line in lines):
+        raise SystemExit(f"outer functions.wait terminality rule missing: {filename}")
+print("deferred handoff contract ordering valid")
+PY
+pass "deferred exec results are drained with write_stdin and one final envelope is parsed after terminal exit"
 for phrase in 'codex exec --json --ignore-user-config --ignore-rules' '--sandbox read-only --model "$model"' 'model_reasoning_effort="high"' '--skip-git-repo-check' '--output-schema "$response_schema"' '--output-last-message' 'ADVISOR TRANSPORT:' '--expected-parent "$parent_thread_id"' 'jq --stream' 'consultation reused the parent thread' 'response validation failed' 'advisor response was not verified'; do
   grep -Fq -- "$phrase" "$transport" || fail "transport contract omits: $phrase"
 done

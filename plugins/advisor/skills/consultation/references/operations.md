@@ -141,6 +141,54 @@ ADVISOR_PACKET
 # or use: --tier specialist
 ```
 
+### Deferred shell-tool result handoff
+
+The shell tool can yield a process handle before the wrapper exits. A nonempty `session_id`
+from `exec_command` is nonterminal for every Advisor role and tier;
+drain that exact session while accumulating tool output, then parse the preserved
+final output. The caller-side pattern is:
+
+```javascript
+let process = await tools.exec_command({cmd: transportCommand});
+let combinedOutput = process.output ?? "";
+while (process.session_id) {
+  process = await tools.write_stdin({
+    session_id: process.session_id,
+    chars: "",
+    yield_time_ms: 5000,
+    max_output_tokens: 20000,
+  });
+  combinedOutput += process.output ?? "";
+}
+if (process.session_id || process.exit_code == null) {
+  throw new Error("Advisor transport did not reach a terminal result");
+}
+if (process.exit_code !== 0) {
+  throw new Error("Advisor transport failed");
+}
+const candidates = combinedOutput.split(/\r?\n/).flatMap((line) => {
+  try { return [JSON.parse(line)]; } catch { return []; }
+}).filter((value) => value && value.schema_version === 3);
+if (candidates.length !== 1) {
+  throw new Error("Advisor transport did not return exactly one schema-v3 envelope");
+}
+const verifiedEnvelope = candidates[0];
+text(JSON.stringify(verifiedEnvelope));
+```
+
+Never treat the initial yielded result as terminal: it is nonterminal progress, not
+the verified envelope, and must not be parsed. An outer `functions.wait` result or heartbeat is also nonterminal progress;
+it must not produce an `ADVISOR RESULT`,
+unavailable classification, or receipt. Drain and validate the exact process inside
+the owning `functions.exec`, preserving every tool-output chunk in `combinedOutput`,
+then extract exactly one parseable `schema_version: 3` JSON envelope. The shell tool
+may merge stderr progress into `output`, so zero or multiple schema-v3 candidates
+is a fail-closed handoff error. Only after validation, emit
+`text(JSON.stringify(verifiedEnvelope))` so the enclosing call delivers the verified
+envelope; nested shell-tool output is not itself a result. A missing terminal exit
+status or a still-present `session_id` is a handoff failure, not a model failure and
+not evidence that the consultation returned no response.
+
 Resolve `<absolute-installed-plugin-root>` from the loaded `SKILL.md` path, two
 directories above its containing directory. Require regular, nonsymlinked scripts
 beneath that root. Never elevate a repository-relative or workspace-resolved

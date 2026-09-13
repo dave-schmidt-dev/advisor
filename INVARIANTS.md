@@ -62,10 +62,10 @@ threshold: 3
 rationale: Overnight work stops at a validated local checkpoint without live installation, push, marketplace mutation, or publication.
 
 ### INV-10 — Visible consultation lifecycle
-area: ["plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]
+area: ["plugins/advisor/skills/consultation/**", "plugins/advisor/scripts/verify.sh", "README.md", "SPEC.md"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
-rationale: Every consult emits a visible running `ADVISOR CALL` receipt and a completed or unavailable `ADVISOR RESULT` receipt; unavailable evidence records `decision: blocked` and remains fail-closed, receipts do not replace runtime proof, the distinct Codex consultation thread remains inspectable, and skips emit neither receipt nor transport invocation.
+rationale: Every consult emits a visible running `ADVISOR CALL` receipt and a completed or unavailable `ADVISOR RESULT` receipt; unavailable evidence records `decision: blocked` and remains fail-closed, receipts do not replace runtime proof, the distinct Codex consultation thread remains inspectable, and skips emit neither receipt nor transport invocation. A nonempty shell-tool `session_id` is nonterminal: the caller drains that exact handle, preserves all tool output, requires terminal exit, emits exactly one schema-v3 envelope, and only then renders a receipt; an outer wait or heartbeat is never result evidence.
 
 ### INV-11 — Bounded zero-tool consultation
 area: ["plugins/advisor/agents/**", "plugins/advisor/skills/consultation/**", "README.md", "SPEC.md"]

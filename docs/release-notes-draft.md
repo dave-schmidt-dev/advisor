@@ -1,5 +1,19 @@
 # Release record
 
+## Advisor 1.4.4 release-in-progress
+
+Version `1.4.4` repairs the deferred shell handoff that could leave the enclosing
+caller without the result it had launched. The caller treats a nonterminal
+`session_id` as progress, drains it with `write_stdin`, requires terminal exit,
+validates exactly one schema-v3 envelope, and explicitly returns that receipt.
+This is a delivery-contract repair only: Standard remains Terra/high, Specialist
+remains Sol/high, and explicit-only Astra remains unchanged with no model fallback.
+
+Candidate archive: `Codex-Advisor-1.4.4.zip`; SHA-256
+`36876ac573b5c752259b687295a34d2cd70c51c9a72a07b2a808f776f710b6ba`.
+GitHub release and marketplace publication are release-in-progress and are not
+claimed by this draft. The 1.4.3 publication record below remains historical.
+
 ## Published package
 
 The published GitHub identity is version `1.4.3`, pinned by Git tag `v1.4.3` at

@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <title>Support &amp; Troubleshooting — Codex Advisor</title>
 <meta name="description" content="Support channels, prerequisites checklist, and troubleshooting guide for the Codex Advisor plugin.">
-<meta name="advisor-release" content="1.4.3">
+<meta name="advisor-release" content="1.4.4">
 <link rel="canonical" href="https://zerodelta.dev/advisor/support/">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/style.css">
@@ -105,6 +105,11 @@ route: unavailable</code></pre>
     <h3>C. Response classification retry</h3>
     <p><strong>Symptom.</strong> Stderr shows a single retry during consultation.</p>
     <p><strong>Behavior.</strong> This is by design. A runtime-valid first child whose response is empty or structurally malformed gets exactly one fresh retry. If the retry also fails, the plugin records <code>recommendation: unavailable</code> and <code>decision: blocked</code> and stops. Packet, launcher, identity, runtime, wrong-model, wrong-effort, and tool-use failures are terminal and never retry.</p>
+
+    <h3>D. Deferred handoff returns no receipt</h3>
+    <p><strong>Symptom.</strong> A long consultation appears to launch, but the enclosing call reports no validated result.</p>
+    <p><strong>Behavior in 1.4.4.</strong> A nonterminal shell <code>session_id</code> is progress, not a receipt. The caller drains that exact session with <code>write_stdin</code>, accumulates its output, requires terminal exit, and validates exactly one schema-v3 envelope before returning it. An outer wait or heartbeat is not terminal evidence.</p>
+    <p><strong>Recovery.</strong> Update or reinstall 1.4.4 from the official OpenAI Plugins Directory, then start a new Codex thread and repeat the explicit request. This repair changes result delivery only; it does not add model fallback or alter Standard, Specialist, or explicit-only Astra routing.</p>
 </section>
 
 <section aria-labelledby="diagnostics">

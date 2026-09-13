@@ -1,10 +1,12 @@
-# Codex Advisor public site walkthrough — 2026-09-10
+# Codex Advisor public site walkthrough — 2026-09-13
 
-Candidate walkthrough for version `1.4.3` at `https://zerodelta.dev/advisor/`.
+Candidate walkthrough for version `1.4.4` at `https://zerodelta.dev/advisor/`.
 
-**Evidence boundary:** This walkthrough records candidate-current static source,
-browser-assertion coverage, owner approval, website deployment, and live byte-match
-verification. Marketplace upload and GitHub release publication are not claimed here.
+**Evidence boundary:** This walkthrough records candidate-current static source and
+browser-assertion coverage. Owner approval, website deployment, and live byte-match
+verification below refer to the historical 1.4.3 site; 1.4.4 publication remains
+pending. Marketplace upload and GitHub release publication are release-in-progress
+and are not claimed here.
 The exact plugin roles are installed and a successful live `advisor-astra` smoke is
 recorded separately in `docs/advisor-1.4-walkthrough.md`.
 
@@ -18,7 +20,7 @@ Candidate-current static source evidence on all four routes:
 - Footer links reach Support, Privacy, Terms, and Source where present.
 - The static site has no settings UI, form, authentication flow, role-dependent
   UI, loading state, disabled control, or system-owned sheet.
-- All four pages carry `advisor-release` metadata set to `1.4.3`.
+- All four pages carry `advisor-release` metadata set to `1.4.4`.
 - The pages make no GUI settings promise. Host-404 behavior is not a candidate
   website-copy check.
 
@@ -26,8 +28,8 @@ Candidate-current static source evidence on all four routes:
 
 Candidate-current static source evidence:
 
-- The badge reads `Open source · Documentation v1.4.3`; the page metadata has
-  `advisor-release` set to `1.4.3`.
+- The badge reads `Open source · Documentation v1.4.4`; the page metadata has
+  `advisor-release` set to `1.4.4`.
 - The hero explains automatic read-only advice, smart defaults, and optional
   models. Install from OpenAI and View source remain visible.
 - What it does contains the three static decision, challenge, and disposition
@@ -37,6 +39,9 @@ Candidate-current static source evidence:
   explicit-only Astra/high role that is never selected automatically, uses more
   Codex allowance, and remains subject to account and runtime availability.
 - Install from OpenAI retains the Plugins Directory CTA and new-thread handoff.
+- The landing page explains the 1.4.4 deferred-handoff repair: drain nonterminal
+  shell sessions, require terminal exit, validate one schema-v3 envelope, and return
+  it; no model fallback or routing change is claimed.
 - Compatibility explains authenticated Codex/OpenAI transmission and no
   Zero Delta relay; Resources exposes Support, Privacy, Terms, and Issues.
 
@@ -44,7 +49,7 @@ Candidate-current static source evidence:
 
 Candidate-current static source evidence:
 
-- The route metadata has `advisor-release` set to `1.4.3`.
+- The route metadata has `advisor-release` set to `1.4.4`.
 - Support channels, directory update/reinstall guidance, and the new Codex
   thread handoff are visible.
 - Configuration guidance identifies `advisor.toml` two directories above the
@@ -60,12 +65,15 @@ Candidate-current static source evidence:
 - Receipt labels `ADVISOR DECISION`, `ADVISOR CALL`, and `ADVISOR RESULT` remain
   available for diagnostics, along with prerequisites, recovery, and ticket
   submission controls.
+- Deferred handoff recovery documents `session_id` as nonterminal progress,
+  `write_stdin` draining, terminal exit, exactly one schema-v3 envelope, and a new
+  thread after update or reinstall.
 
 ## Privacy — `/advisor/privacy/`
 
 Candidate-current static source evidence:
 
-- The route metadata has `advisor-release` set to `1.4.3`; the effective date is
+- The route metadata has `advisor-release` set to `1.4.4`; the effective date is
   10 September 2026.
 - The page retains authenticated OpenAI transmission and the explicit
   no-Zero-Delta-relay statement.
@@ -84,7 +92,7 @@ Candidate-current static source evidence:
 
 Candidate-current static source evidence:
 
-- The route metadata has `advisor-release` set to `1.4.3`; the effective date is
+- The route metadata has `advisor-release` set to `1.4.4`; the effective date is
   10 September 2026.
 - The prerequisites section assigns responsibility for configured model
   availability and account usage, and says bundled configuration edits may be
@@ -109,11 +117,12 @@ the support page exposes update/reinstall and configuration-error guidance. The
 website copy contains no settings control that implies GUI model configuration.
 This static review did not install the plugin, start a live consultation, upload a
 marketplace build, publish a GitHub release, deploy the website, or check Astra
-availability.
+availability. Update or reinstall, then start a new Codex thread before testing
+deferred handoff recovery.
 
 ## Automated evidence
 
-`web-tests/tests/site.spec.js` expects version `1.4.3` on all four routes and checks
+`web-tests/tests/site.spec.js` expects version `1.4.4` on all four routes and checks
 the explicit-only `advisor-astra` wording, non-automatic selection, higher allowance
 use, and account/runtime availability. It also covers route rendering, console and
 network errors, internal links, navigation, canonical URLs, horizontal overflow,
@@ -129,9 +138,9 @@ support recovery, privacy, and terms. The candidate-current run completed on
 | Privacy | [capture](../web-tests/test-results/site--privacy-renders-without-errors-desktop/page.png) | [capture](../web-tests/test-results/site--privacy-renders-without-errors-mobile/page.png) |
 | Terms | [capture](../web-tests/test-results/site--terms-renders-without-errors-desktop/page.png) | [capture](../web-tests/test-results/site--terms-renders-without-errors-mobile/page.png) |
 
-These captures were regenerated by the successful candidate-current browser run,
-reviewed screen by screen, and approved by the owner on 10 September 2026 before
-deployment.
+These captures were regenerated by the successful candidate-current browser run.
+The prior 1.4.3 captures were reviewed screen by screen and approved by the owner on
+10 September 2026 before deployment.
 
 ## Candidate file snapshot
 
@@ -160,6 +169,7 @@ and do not identify the 1.4.3 candidate:
 | `site/assets/logo.svg` | `5cdf5277721efc07305ef9129410a2aefbc1fdd61e46c3d8946caa888210f0e2` |
 | `site/sitemap.xml` | `a6baf34abddca5c09f2659d226c605771a25b65089e0dd66874856b32141b792` |
 
-The approved website was deployed on 10 September 2026. The repository upload gate
+The approved 1.4.3 website was deployed on 10 September 2026. The 1.4.4 candidate
+requires a new deployment after owner review. The repository upload gate
 then verified all seven public files byte-for-byte against this snapshot. Marketplace
 upload and GitHub release publication remain separate gates.

@@ -1,6 +1,6 @@
-# Advisor 1.4.3 candidate walkthrough
+# Advisor 1.4.4 candidate walkthrough
 
-Date: 2026-09-10. This is a local candidate walkthrough, not publication or owner
+Date: 2026-09-13. This is a local candidate walkthrough, not publication or owner
 acceptance evidence.
 
 The Astra checkpoint is source/static and installed-runtime verified: `advisor-astra` is explicit-only,
@@ -23,6 +23,7 @@ The installed helper keeps its state under Codex home, outside the plugin cache.
 | Journal | Disabled by default; status, enable, disable, and clear are explicit. A subsequent journal write performs the 30-day prune; there is no background task. | Usage tests cover retention, null/partial accounting, and clear behavior. |
 | Errors and recovery | Missing, malformed, duplicate, unknown-key/table, symlinked, nonregular, oversized, unsafe selector, or invalid effort live config fails before child launch with a redacted `advisor.toml` error. Runtime model/effort errors remain terminal. | Mocked error paths prove no model launch on invalid TOML. |
 | Transport terminal paths | A runtime-valid response error gets one frozen-pair retry. Launch, identity, isolation, tool, timeout, or cancellation failures are terminal/unavailable; cancellation reaps only the wrapper-owned group. | Mocked transport tests cover retry, timeout, cancellation, and fail-closed cases. |
+| Deferred shell handoff | A nonterminal `session_id` is progress. The caller drains that exact session with `write_stdin`, accumulates output, requires terminal exit, validates exactly one schema-v3 envelope, and returns it from the enclosing call. No model fallback or routing change is involved. | The installed 1.4.4 candidate was rebuilt with this caller contract; a synthetic deferred handoff returned one terminal validated receipt. |
 
 The canonical command `sh plugins/advisor/scripts/verify.sh --static` runs Advisor
 tests plus 17 candidate packaging tests in this checkout;
@@ -35,6 +36,6 @@ The package ships only `plugins/advisor`; this walkthrough and other repository-
 docs are not inside the ZIP. The exact three role files passed installed-state checks.
 Config editing and malformed-file recovery remain automated-test evidence rather than
 manual interaction. Live website, privacy, terms, portal URL autofill, directory listing,
-marketplace state remains unverified. The approved website, privacy, and terms bytes are deployed and live-byte verified.
-GitHub release `v1.4.3` resolves to the exact
+marketplace state remains unverified. The approved 1.4.3 website, privacy, and terms bytes are deployed and live-byte verified; the 1.4.4 candidate remains pending deployment.
+The historical GitHub release `v1.4.3` resolves to the exact
 source commit and its downloaded ZIP is byte-identical to the handoff archive.

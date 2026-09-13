@@ -191,7 +191,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
   await page.goto('/');
   const body = (await bodyText(page)).toLowerCase();
 
-  expect(body).toContain('documentation v1.4.3');
+  expect(body).toContain('documentation v1.4.4');
   expect(body).toContain('automatic read-only advice');
   expect(body).toContain('smart defaults');
   expect(body).toContain('optional models');
@@ -207,6 +207,9 @@ test('claim surface matches the validated listing', async ({ page }) => {
   expect(body).toContain('uses more of your codex allowance');
   expect(body).toContain('subject to account and runtime availability');
   expect(body).toContain('plugin updates may replace edits to the bundled file.');
+  expect(body).toContain('drain the nonterminal shell handoff');
+  expect(body).toContain('exactly one schema-v3 result envelope');
+  expect(body).toContain('without changing model routing or adding fallback');
   expect(body).not.toContain('advisor-terra');
   expect(body).not.toContain('advisor-sol');
 });
@@ -214,7 +217,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
 test('each route carries the candidate release metadata', async ({ page }) => {
   for (const { path } of PAGES) {
     await page.goto(path);
-    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.3');
+    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.4');
   }
 });
 
@@ -242,6 +245,11 @@ test('support page uses published directory recovery guidance', async ({ page })
   expect(support).toContain('ADVISOR DECISION');
   expect(support).toContain('ADVISOR CALL');
   expect(support).toContain('ADVISOR RESULT');
+  expect(support).toContain('Deferred handoff returns no receipt');
+  expect(support).toContain('nonterminal shell');
+  expect(support).toContain('write_stdin');
+  expect(support).toContain('exactly one schema-v3 envelope');
+  expect(support).toContain('does not add model fallback');
   expect(support).not.toContain('install-agents.sh');
   expect(support).not.toContain('sh plugins/advisor/');
 });

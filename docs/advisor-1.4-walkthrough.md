@@ -38,5 +38,7 @@ Config editing and malformed-file recovery remain automated-test evidence rather
 manual interaction. Live website, privacy, terms, portal URL autofill, and directory
 listing remain independently unverified. Marketplace publication was owner-confirmed
 on 13 September 2026. Historical 1.4.3 deployment evidence: website, privacy, and terms bytes are deployed and live-byte verified. The 1.4.4 candidate remains pending deployment.
-The historical GitHub release `v1.4.3` resolves to the exact
-source commit and its downloaded ZIP is byte-identical to the handoff archive.
+GitHub release `v1.4.4` resolves to
+`a2f84e65bc551ea6c826baf29d8b792252ae04b0`, and its downloaded ZIP is
+byte-identical to the marketplace archive. The historical GitHub release `v1.4.3`
+also resolves to its exact source commit and handoff archive.

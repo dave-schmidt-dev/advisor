@@ -75,13 +75,14 @@ ui=Path(sys.argv[7]).read_text()
 models=json.loads(Path(sys.argv[8]).read_text())
 live=tomllib.loads(Path(sys.argv[9]).read_text())
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or version!="1.4.4": raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or version!="1.4.5": raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if author_name!="David Schmidt / Zero Delta LLC": raise SystemExit("plugin developer identity")
 if manifest.get("skills")!="./skills/" or any(k in manifest for k in ("hooks","apps","mcpServers")): raise SystemExit("unsupported plugin components")
 interface=manifest.get("interface",{})
 if {key: interface.get(key) for key in ("websiteURL","privacyPolicyURL","termsOfServiceURL")} != {"websiteURL":"https://zerodelta.dev/advisor/","privacyPolicyURL":"https://zerodelta.dev/advisor/privacy/","termsOfServiceURL":"https://zerodelta.dev/advisor/terms/"}: raise SystemExit("manifest URL fields")
+if "Project importance, security adjacency, or an ordinary architecture question alone stays Standard." not in interface.get("longDescription",""): raise SystemExit("manifest routing caveat")
 if "supportURL" in interface: raise SystemExit("unsupported support URL field")
 if models.get("transport_contract_version")!="1.4" or models.get("tested_codex_cli")!="codex-cli 0.153.2": raise SystemExit("model transport provenance")
 if models.get("defaults")!={"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-5.6-sol","effort":"high"}}: raise SystemExit("model defaults")
@@ -99,25 +100,34 @@ for role,pins in pairs:
     required=("Use zero tools.", "Do not call any tool or function", "inspect files or repositories", "browse, fetch, or search the web", "independent", "FOLLOW-UP AREAS", "research-first", "Do not spawn or route another agent")
     if any(phrase not in role["developer_instructions"] for phrase in required): raise SystemExit("role zero-tool contract")
 items=cases.get("cases",[])
-if len(items)!=12 or len({c.get("id") for c in items})!=12: raise SystemExit("fixture inventory")
+if len(items)!=14 or len({c.get("id") for c in items})!=14: raise SystemExit("fixture inventory")
 counts={k:sum(c.get("class")==k for c in items) for k in ("consult","skip","boundary")}
-if counts!={"consult":4,"skip":4,"boundary":4}: raise SystemExit(f"fixture classes {counts}")
+if counts!={"consult":6,"skip":4,"boundary":4}: raise SystemExit(f"fixture classes {counts}")
 if any(c.get("expected") not in ("consult","skip") or not c.get("prompt") for c in items): raise SystemExit("fixture fields")
 risks={k:sum(c.get("risk")==k for c in items) for k in ("standard","specialist")}
-if risks!={"standard":10,"specialist":2}: raise SystemExit(f"fixture risk tiers {risks}")
-if {c["id"] for c in items if c.get("risk")=="specialist"}!={"consult-security","boundary-high-risk"}: raise SystemExit("specialist fixture scope")
+if risks!={"standard":10,"specialist":4}: raise SystemExit(f"fixture risk tiers {risks}")
+if {c["id"] for c in items if c.get("risk")=="specialist"}!={"consult-security","boundary-high-risk","consult-unresolved-compatibility","consult-competing-diagnoses"}: raise SystemExit("specialist fixture scope")
 if "allow_implicit_invocation: true" not in ui or "interface:" not in ui or "policy:" not in ui: raise SystemExit("UI YAML contract")
 print("structured files valid")
 PY
-pass "manifest, marketplace, live TOML, YAML, and 4/4/4 evaluator fixtures"
+pass "manifest, marketplace, live TOML, YAML, and 6/4/4 evaluator fixtures"
 
 for phrase in \
-  'material architecture' 'interface' 'data-model' 'compatibility' \
+  'ordinary bounded material architecture' 'interface' 'data-model' 'compatibility' \
   'cross-module' 'competing diagnoses' 'security' 'privacy' 'authorization' \
   'migration' 'recovery' 'irreversible-state' 'explicit advisor' \
   'factual/status/summarization' 'mechanical edits' 'formatting/renaming/docs synchronization' \
   'settled-plan execution' 'final review owned elsewhere' 'no-delegation' 'borderline case'; do
   grep -Fqi "$phrase" "$skill" || fail "skill description/contract omits: $phrase"
+done
+skill_header=$(sed -n '1,3p' "$skill")
+for phrase in 'authorization' 'challenge' 'second-opinion' 'architecture-review'; do
+  printf '%s\n' "$skill_header" | grep -Fqi "$phrase" || fail "skill selection vocabulary omits: $phrase"
+done
+for document in "$skill" "$operations" "$repo_dir/SPEC.md"; do
+  for phrase in 'targeted evidence' 'leaves unresolved' 'compatibility or concurrency' 'competing diagnosis'; do
+    grep -Fqi "$phrase" "$document" || fail "routing contract omits: $phrase: $document"
+  done
 done
 for phrase in 'ADVISOR DECISION' 'route: consult | skip | unavailable' 'inspect-parent-runtime.sh' 'CODEX_THREAD_ID' 'CODEX_SESSION_ID' 'run-advisor.sh' \
   '--role advisor-terra' '--role advisor-sol' 'actual resolved model and effort metadata' \
@@ -1470,10 +1480,10 @@ for phrase in \
   'models test MODEL --effort EFFORT --authorize-usage --parent-thread THREAD_ID' \
   '0.153.2' 'safe-unavailable' 'no background deletion service' \
   'prunes records older than 30 days' 'transport contract' 'does not trigger a consultation' \
-  'The deployed privacy copy now documents' 'local configuration/catalog state' \
+  'configuration/catalog' \
   'optional content-free usage journal' 'automatic Terra/Sol defaults' \
-  'separate explicit-only' 'Astra role' 'owner approved the refreshed copy' \
-  'live page byte-matches' 'repository candidate'; do
+  'separate explicit-only' 'Astra' \
+  '1.4.4 deployment record' 'not yet deployed'; do
   grep -Fqi "$phrase" "$model_doc" || fail "model configuration documentation omits: $phrase"
 done
 grep -Eq '^Candidate content digest: `[0-9a-f]{64}`\.$' "$release_notes" || fail "candidate digest placeholder missing"
@@ -1495,4 +1505,4 @@ pass "Advisor behavior tests and 17 candidate packaging tests"
 sh -n "$script_dir"/*.sh
 [ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.4.4 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.4.5 consultation-only static contract"

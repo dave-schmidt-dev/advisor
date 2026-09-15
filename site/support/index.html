@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <title>Support &amp; Troubleshooting — Codex Advisor</title>
 <meta name="description" content="Support channels, prerequisites checklist, and troubleshooting guide for the Codex Advisor plugin.">
-<meta name="advisor-release" content="1.4.4">
+<meta name="advisor-release" content="1.4.5">
 <link rel="canonical" href="https://zerodelta.dev/advisor/support/">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/style.css">
@@ -54,7 +54,7 @@
 <section aria-labelledby="configuration">
     <h2 id="configuration">3. Configure models</h2>
     <p>Find <code>advisor.toml</code> in the installed plugin root. The plugin root is two directories above the directory containing <code>skills/consultation/SKILL.md</code>. Edit that bundled file in place; do not copy it and do not use repository commands. Changes apply to the next consultation, with independent settings for Standard and Specialist.</p>
-    <p>Automatic Standard remains Terra/high and automatic Specialist remains Sol/high. <code>advisor-astra</code> is a separate explicit-only Astra/high role for the most complex uses; it is never selected automatically, uses more Codex allowance, and remains subject to account and runtime availability. Invalid TOML and unsupported-model values produce an explicit error; Advisor does not silently fall back. An update or reinstall may replace edits to the bundled file. There is no GUI settings screen in the normal flow.</p>
+    <p>Automatic Standard remains Terra/high for ordinary bounded architecture, interface, data-model, and generic-advisor decisions. Automatic Specialist remains Sol/high only when targeted evidence still leaves an eligible cross-system, compatibility/concurrency, competing-diagnosis, security/trust, recovery, irreversible-migration, or data-loss decision unresolved. Project importance, security adjacency, or an ordinary architecture question alone stays Standard. <code>advisor-astra</code> is a separate explicit-only Astra/high role; it is never selected automatically. Invalid TOML and unsupported-model values produce an explicit error; Advisor does not silently fall back. An update or reinstall may replace edits to the bundled file. There is no GUI settings screen in the normal flow.</p>
 </section>
 
 <section aria-labelledby="scope">
@@ -108,8 +108,8 @@ route: unavailable</code></pre>
 
     <h3>D. Deferred handoff returns no receipt</h3>
     <p><strong>Symptom.</strong> A long consultation appears to launch, but the enclosing call reports no validated result.</p>
-    <p><strong>Behavior in 1.4.4.</strong> A nonterminal shell <code>session_id</code> is progress, not a receipt. The caller drains that exact session with <code>write_stdin</code>, accumulates its output, requires terminal exit, and validates exactly one schema-v3 envelope before returning it. An outer wait or heartbeat is not terminal evidence.</p>
-    <p><strong>Recovery.</strong> Update or reinstall 1.4.4 from the official OpenAI Plugins Directory, then start a new Codex thread and repeat the explicit request. This repair changes result delivery only; it does not add model fallback or alter Standard, Specialist, or explicit-only Astra routing.</p>
+    <p><strong>Behavior.</strong> A nonterminal shell <code>session_id</code> is progress, not a receipt. The caller drains that exact session with <code>write_stdin</code>, accumulates its output, requires terminal exit, and validates exactly one schema-v3 envelope before returning it. An outer wait or heartbeat is not terminal evidence.</p>
+    <p><strong>Recovery.</strong> Install an available update from the official OpenAI Plugins Directory, then start a new Codex thread and repeat the explicit request. This repair does not add model fallback; Standard, Specialist, and explicit-only Astra retain their documented routing.</p>
 </section>
 
 <section aria-labelledby="diagnostics">

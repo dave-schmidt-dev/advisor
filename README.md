@@ -9,16 +9,20 @@ browse the web, implement work, deploy, or make the final decision.
 Install [**Codex Advisor** from the official Plugins Directory](https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521). It requires
 **Codex CLI** or **Codex desktop**; generic ChatGPT is not a supported runtime.
 
-Advisor activates automatically for material design, architecture, migration,
-security, compatibility, and competing-diagnosis decisions. It leaves factual,
-mechanical, and explicitly no-delegation work alone.
+Advisor uses Standard (Terra/high) for ordinary bounded material architecture,
+interface, data-model, and generic-advisor decisions. It uses Specialist (Sol/high)
+only when targeted evidence still leaves a cross-module/system design, compatibility
+or concurrency boundary, competing diagnosis, security/trust boundary, recovery,
+irreversible migration, or data-loss decision unresolved. Project importance,
+security adjacency, or an ordinary architecture question alone stays Standard. It
+leaves factual, mechanical, and explicitly no-delegation work alone.
 
 ## Links
 
 - [Support](https://zerodelta.dev/advisor/support/)
 - [Privacy Policy](https://zerodelta.dev/advisor/privacy/)
 - [Terms of Service](https://zerodelta.dev/advisor/terms/)
-- [Public listing draft](docs/public-listing.md) and [site walkthrough](docs/site-walkthrough.md)
+- [Public listing draft](docs/public-listing.md) and [1.4.5 site walkthrough](docs/site-walkthrough-1.4.5.md)
 
 ## Development
 

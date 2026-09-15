@@ -8,7 +8,7 @@ technical decisions; it never implements, routes implementation, or performs
 final verification.
 
 The distributable plugin identity is `advisor`. Its single skill is `consultation`, and
-the current local candidate version is `1.4.3`. Release archives use that exact version
+the current local candidate version is `1.4.5`. Release archives use that exact version
 only after an owner-approved candidate freeze and packaging step. A built ZIP is only a
 local candidate: it may be described as upload-ready or uploaded only after the current
 public release evidence gate passes against that exact ZIP immediately before upload.
@@ -135,13 +135,15 @@ ordinary `route: skip` path remains unchanged.
    emit the required unavailable decision and do not invoke the transport.
 2. Verify the installed plugin includes `run-advisor.sh` and both runtime inspectors.
 3. Select the tier from decision risk. Standard consultation uses
-   `--tier standard`, defaulting to GPT-5.6 Terra / high, for material architecture,
-   interface, data-model, compatibility, cross-boundary, competing-diagnosis,
-   and generic advisor requests. Specialist consultation uses `--tier specialist`,
-   defaulting to GPT-5.6 Sol / high, only for an unresolved security or trust boundary,
-   an irreversible migration or data-loss decision, or a credible unresolved
-   High-severity disagreement. Security adjacency and project importance alone
-   do not qualify; a borderline role choice uses Terra. Parent model is irrelevant.
+   `--tier standard`, defaulting to GPT-5.6 Terra / high, for ordinary bounded
+   material architecture, interface, data-model, and generic advisor requests.
+   Specialist consultation uses `--tier specialist`, defaulting to GPT-5.6 Sol / high,
+   only when targeted evidence still leaves unresolved a cross-module or system design,
+   compatibility or concurrency boundary, competing diagnosis, security or trust
+   boundary, recovery, irreversible migration or data-loss decision, or credible
+   unresolved High-severity disagreement. Security adjacency, project importance,
+   and an ordinary architecture question alone do not qualify; a borderline role
+   choice uses Terra. Parent model is irrelevant.
 4. Immediately before transport invocation, emit a visible `ADVISOR CALL` receipt containing
    the selected tier and role, task-specific reason, bounded question, and
    `status: running`.
@@ -372,7 +374,7 @@ it never implies that a technical choice was accepted when no technical choice w
   `06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d`,
   used by the intermediate v0.3.0/v0.4.0/pre-revert v0.5.0 history. Unknown blobs
   still fail closed.
-- Plugin installation identity is `advisor`. Set version `1.4.3` and make
+- Plugin installation identity is `advisor`. Set version `1.4.5` and make
   the manifest author identify David Schmidt / Zero Delta LLC. Preserve Daniel
   McAteer's MIT copyright in `LICENSE` and keep upstream provenance in root
   `NOTICE.md`; do not add upstream attribution to the marketplace listing,
@@ -442,9 +444,9 @@ typed unavailable artifact only when `--allow-unavailable` is explicit.
 
 ### Trigger evaluation
 
-Static fixtures exercise the checked-in table of at least twelve prompts:
+Static fixtures exercise the checked-in table of at least fourteen prompts:
 
-- four clear consult cases;
+- six clear consult cases;
 - four clear skip cases;
 - four adversarial boundary cases, including explicit no-delegation, an explicit
   advisor request, a routine implementation, and a high-risk decision.
@@ -495,7 +497,7 @@ cache files are explicitly excluded. Standalone nonmutation checks without this
 paired snapshot are invalid.
 
 Evaluation may use only the already-enabled subscription-backed Codex route with
-overage disabled. The initial matrix is 24 root sessions across both schemas;
+overage disabled. The initial matrix is 28 root sessions across both schemas;
 boundary-only reruns cap the total at 40. Any API-key-billed route, enabled
 overage, added provider, or expansion beyond 40 root sessions is Red and parked.
 

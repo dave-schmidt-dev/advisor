@@ -109,15 +109,15 @@ remains unchanged.
 
 For a consult, select the tier from decision risk:
 
-- Standard: `--tier standard`, defaulting to Terra / `high`. This covers
-  material architecture, interface, data-model, compatibility, cross-boundary,
-  competing-diagnosis, and generic advisor requests.
-- Specialist: `--tier specialist`, defaulting to Sol / `high`, only for an unresolved
-  security or trust boundary, an irreversible migration or data-loss decision,
-  or a credible unresolved High-severity disagreement.
+- Standard: `--tier standard`, defaulting to Terra / `high`. This covers ordinary
+  bounded material architecture, interface, data-model, and generic advisor requests.
+- Specialist: `--tier specialist`, defaulting to Sol / `high`, only when targeted evidence still leaves unresolved a cross-module or system design, compatibility or concurrency boundary, competing diagnosis, an unresolved security or trust boundary,
+  recovery, an irreversible migration or data-loss decision, or a credible unresolved
+  High-severity disagreement.
 
-Security adjacency and project importance alone do not qualify for Specialist.
-A borderline role choice uses Standard. The parent model is irrelevant.
+Security adjacency or project importance alone, or an ordinary architecture question
+alone, does not qualify for Specialist. A borderline role choice uses Standard. The
+parent model is irrelevant.
 Legacy cached callers may still use `--role advisor-terra` or `--role advisor-sol`;
 those routes remain fixed to Terra/high and Sol/high, do not follow `advisor.toml`,
 and cannot be mixed with a tier or preset.

@@ -1,6 +1,21 @@
 # Release record
 
-## Advisor 1.4.4 release-in-progress
+## Advisor 1.4.5 candidate
+
+Version `1.4.5` expands Specialist eligibility to evidence-unresolved complex
+decisions while keeping the models unchanged: Standard remains Terra/high for ordinary bounded material architecture,
+interface, data-model, and generic-advisor decisions. Specialist remains Sol/high
+when targeted evidence still leaves a cross-module/system design, compatibility or
+concurrency boundary, competing diagnosis, security/trust boundary, recovery,
+irreversible migration, or data-loss decision unresolved. Project importance,
+security adjacency, or an ordinary architecture question alone remains Standard.
+Explicit-only Astra is unchanged. The optional content-free journal remains disabled
+by default, with no schema or retention change.
+
+This is a local candidate only. No archive, final SHA-256, commit, tag, upload,
+publication, deployment, or marketplace action is claimed.
+
+## Advisor 1.4.4 publication record
 
 Version `1.4.4` repairs the deferred shell handoff that could leave the enclosing
 caller without the result it had launched. The caller treats a nonterminal
@@ -66,7 +81,7 @@ content-digest revisions, retry freezing, and fail-closed TOML errors were cover
 locally. Normal tiers no longer depend on saved selections, catalog registration,
 discovery, or synthetic canaries.
 
-Candidate content digest: `a66a32cfe165e5aa6b0ac9b578d2dd885697ca4b672c2988ccfe0e905f57d78b`.
+Candidate content digest: `be10237ac93e7c44e29a69aa0633195423bd44fbcaa39cdc717d383e3b788c26`.
 
 The manifest contains supported `websiteURL`, `privacyPolicyURL`, and
 `termsOfServiceURL` fields. It contains no supported `supportURL` field; portal URL

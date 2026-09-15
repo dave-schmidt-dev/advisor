@@ -30,6 +30,13 @@ fixed pins and do not follow the file.
 `--role advisor-astra` is an explicit fixed opt-in pin for Astra/high; it is not a tier
 default, trigger selection, fallback, or audit tier.
 
+Standard is for ordinary bounded material architecture, interface, data-model, and
+generic-advisor decisions. Specialist is for cases where targeted evidence still leaves
+an unresolved cross-module/system design, compatibility or concurrency boundary,
+competing diagnosis, security/trust boundary, recovery, irreversible migration, or
+data-loss decision. Project importance, security adjacency, and an ordinary
+architecture question alone remain Standard.
+
 ## Advanced legacy tools
 
 `models refresh`, `models add`, named presets, and synthetic canaries remain isolated
@@ -71,7 +78,7 @@ coverage can be partial.
 > the user. Advisor uses configurable OpenAI models in the local Codex runtime and
 > does not operate a Zero Delta relay.
 
-The deployed privacy copy now documents local configuration/catalog state, the optional
-content-free journal, automatic Terra/Sol defaults, and the separate explicit-only
-Astra role. The owner approved the refreshed copy and the live page byte-matches the
-repository candidate.
+The 1.4.4 deployment record says the then-live privacy page byte-matched its repository
+candidate. This 1.4.5 candidate updates that copy for the same local configuration/catalog
+state, content-free journal, automatic Terra/Sol defaults, and separate explicit-only Astra
+role; it is not yet deployed.

@@ -1,10 +1,10 @@
 {
   "version": 1,
   "cases": [
-    {"id":"consult-architecture","class":"consult","expected":"consult","risk":"standard","prompt":"Choose between an event log and mutable snapshots for a cross-process recovery design."},
-    {"id":"consult-interface","class":"consult","expected":"consult","risk":"standard","prompt":"Decide the compatibility behavior for a public interface used by two independently deployed clients."},
-    {"id":"consult-diagnosis","class":"consult","expected":"consult","risk":"standard","prompt":"Evidence still supports both a cache race and producer staleness; decide the next diagnostic path."},
-    {"id":"consult-security","class":"consult","expected":"consult","risk":"specialist","prompt":"Choose an authorization and rollback design for an unresolved irreversible account migration that can lose user data."},
+    {"id":"consult-architecture","class":"consult","expected":"consult","risk":"standard","prompt":"Choose a bounded service architecture for this module; its interfaces and data model are already understood."},
+    {"id":"consult-interface","class":"consult","expected":"consult","risk":"standard","prompt":"Targeted evidence has settled compatibility for this cross-boundary cache/API interface; choose the bounded interface."},
+    {"id":"consult-diagnosis","class":"consult","expected":"consult","risk":"standard","prompt":"Ask for a generic advisor opinion on this material data-model choice after the evidence settled the diagnosis."},
+    {"id":"consult-security","class":"consult","expected":"consult","risk":"specialist","prompt":"Targeted evidence still leaves unresolved whether a cross-module authorization migration's compatibility and concurrency boundary can recover without losing user data."},
     {"id":"skip-factual","class":"skip","expected":"skip","risk":"standard","prompt":"Report the manifest version and custom role name from these files."},
     {"id":"skip-mechanical","class":"skip","expected":"skip","risk":"standard","prompt":"Rename this local variable everywhere; the exact transformation and test are supplied."},
     {"id":"skip-doc-sync","class":"skip","expected":"skip","risk":"standard","prompt":"Synchronize README wording with the already settled command name."},
@@ -12,6 +12,8 @@
     {"id":"boundary-no-delegation","class":"boundary","expected":"skip","risk":"standard","prompt":"Do not delegate or use subagents. Summarize the architecture decision already recorded in SPEC.md."},
     {"id":"boundary-explicit-advisor","class":"boundary","expected":"consult","risk":"standard","prompt":"Ask Advisor for a generic second opinion on whether this persistence boundary should be transactional."},
     {"id":"boundary-routine-implementation","class":"boundary","expected":"skip","risk":"standard","prompt":"Implement the settled one-line constant change and run its named unit test."},
-    {"id":"boundary-high-risk","class":"boundary","expected":"consult","risk":"specialist","prompt":"Choose between unresolved recovery semantics for a security-sensitive migration that can destroy user state."}
+    {"id":"boundary-high-risk","class":"boundary","expected":"consult","risk":"specialist","prompt":"Targeted evidence still leaves two competing diagnoses for a cross-system recovery design at a security trust boundary; choose the path before irreversible data loss."},
+    {"id":"consult-unresolved-compatibility","class":"consult","expected":"consult","risk":"specialist","prompt":"Targeted evidence still leaves the cache/API compatibility and concurrency boundary unresolved."},
+    {"id":"consult-competing-diagnoses","class":"consult","expected":"consult","risk":"specialist","prompt":"Targeted evidence still leaves two competing diagnoses: a cache race or producer staleness. Choose the next diagnostic path."}
   ]
 }

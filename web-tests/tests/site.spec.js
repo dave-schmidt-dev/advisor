@@ -191,7 +191,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
   await page.goto('/');
   const body = (await bodyText(page)).toLowerCase();
 
-  expect(body).toContain('documentation v1.4.4');
+  expect(body).toContain('candidate documentation v1.4.5');
   expect(body).toContain('automatic read-only advice');
   expect(body).toContain('smart defaults');
   expect(body).toContain('optional models');
@@ -209,7 +209,11 @@ test('claim surface matches the validated listing', async ({ page }) => {
   expect(body).toContain('plugin updates may replace edits to the bundled file.');
   expect(body).toContain('drain the nonterminal shell handoff');
   expect(body).toContain('exactly one schema-v3 result envelope');
-  expect(body).toContain('without changing model routing or adding fallback');
+  expect(body).toContain('retains the 1.4.4 result-delivery repair without adding fallback');
+  expect(body).not.toContain('without changing model routing');
+  expect(body).toContain('standard covers ordinary bounded architecture');
+  expect(body).toContain('targeted evidence still leaves a cross-system');
+  expect(body).toContain('project importance, security adjacency, or an ordinary architecture question alone stays standard');
   expect(body).not.toContain('advisor-terra');
   expect(body).not.toContain('advisor-sol');
 });
@@ -217,7 +221,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
 test('each route carries the candidate release metadata', async ({ page }) => {
   for (const { path } of PAGES) {
     await page.goto(path);
-    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.4');
+    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.5');
   }
 });
 
@@ -250,6 +254,8 @@ test('support page uses published directory recovery guidance', async ({ page })
   expect(support).toContain('write_stdin');
   expect(support).toContain('exactly one schema-v3 envelope');
   expect(support).toContain('does not add model fallback');
+  expect(support).toContain('targeted evidence still leaves an eligible cross-system');
+  expect(support).toContain('Project importance, security adjacency, or an ordinary architecture question alone stays Standard.');
   expect(support).not.toContain('install-agents.sh');
   expect(support).not.toContain('sh plugins/advisor/');
 });

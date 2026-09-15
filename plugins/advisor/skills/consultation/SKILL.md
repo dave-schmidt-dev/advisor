@@ -1,6 +1,6 @@
 ---
 name: consultation
-description: Consult for material architecture, interface, data-model, or compatibility choices; cross-module, process, persistence, trust, or concurrency boundaries; competing diagnoses after evidence; security, privacy, authorization, migration, recovery, or irreversible-state changes; and explicit advisor, challenge, second-opinion, or architecture-review requests; and the completion consultation that complex multi-phase or multi-file work takes before it is declared complete. Skip factual/status/summarization work, fully determined mechanical edits, formatting/renaming/docs synchronization, settled-plan execution, final review owned elsewhere, explicit no-delegation/root-only requests, and every borderline case.
+description: Consult for ordinary material architecture, interface, data-model, or explicit advisor, generic-advisor, authorization, challenge, second-opinion, or architecture-review choices; or, when targeted evidence still leaves unresolved cross-module or system design, compatibility or concurrency boundaries, competing diagnoses, security, privacy, or trust boundaries, recovery, irreversible-state migration, or data-loss decisions; and the completion consultation that complex multi-phase or multi-file work takes before it is declared complete. Skip factual/status/summarization work, fully determined mechanical edits, formatting/renaming/docs synchronization, settled-plan execution, final review owned elsewhere, explicit no-delegation/root-only requests, and every borderline case.
 ---
 
 # Advisor consultation
@@ -91,13 +91,12 @@ unavailable without changing state; it is not a live model canary.
    `--tier standard`. Its live file model and effort default to Terra / `high` with no
    setup, discovery, or canary. This permits the real consultation attempt, not a
    compatibility claim; post-run runtime inspection remains required. This is the
-   default for material architecture, interface, data-model, compatibility,
-   cross-boundary, competing-diagnosis, and explicit generic advisor requests.
+   default for ordinary bounded material architecture, interface, data-model, and
+   explicit generic advisor requests.
    Specialist consultation uses `--tier specialist`. Its live file model and effort
-   default to Sol / `high` with the same zero-setup launch permission, only for an unresolved security or trust boundary, an
-   irreversible migration or data-loss decision, or a credible unresolved High-severity disagreement.
-   Security adjacency or project importance alone
-   does not qualify. A borderline choice uses Standard. The parent model and sandbox are irrelevant to selection.
+   default to Sol / `high` with the same zero-setup launch permission, only when
+   targeted evidence still leaves unresolved a cross-module or system design,
+   compatibility or concurrency boundary, competing diagnosis, an unresolved security or trust boundary, recovery, an irreversible migration or data-loss decision, or a credible unresolved High-severity disagreement. Security adjacency or project importance alone, or an ordinary architecture question alone, does not qualify. A borderline choice uses Standard. The parent model and sandbox are irrelevant to selection.
 3. Resolve the selected tier through the installed helper. Before invoking the
    consultation transport, emit this visible main-chat receipt using the actual resolved model and effort metadata:
 

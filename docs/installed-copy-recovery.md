@@ -13,8 +13,7 @@ If the installed copy is missing or stale, reinstall or update Advisor from the
 [official OpenAI Plugins Directory](https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521),
 then start a new Codex thread. Ask Advisor for a bounded consultation and inspect its
 `ADVISOR DECISION`, `ADVISOR CALL`, or `ADVISOR RESULT` receipts. Consultation
-continues to run through the local Codex runtime; the published package adds no
-hosted service or MCP server.
+continues to run through the local Codex runtime; the published package adds no hosted service or MCP server.
 
 ## Update to a newer candidate
 

@@ -252,7 +252,7 @@ class AdvisorCliTests(unittest.TestCase):
         settings_dir = self.home / "advisor"
         settings = {
             "schema_version": 1, "revision": 1,
-            "selections": {"standard": {"model": "manual/model", "effort": "high"}, "specialist": {"model": "gpt-5.6-sol", "effort": "high"}},
+            "selections": {"standard": {"model": "manual/model", "effort": "high"}, "specialist": {"model": "gpt-6-sol", "effort": "high"}},
             "presets": {}, "deadline_seconds": 300, "usage_journal_enabled": True,
         }
         (settings_dir / "settings.json").write_text(json.dumps(settings) + "\n")

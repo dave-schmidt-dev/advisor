@@ -94,7 +94,7 @@ unavailable without changing state; it is not a live model canary.
    default for ordinary bounded material architecture, interface, data-model, and
    explicit generic advisor requests.
    Specialist consultation uses `--tier specialist`. Its live file model and effort
-   default to Sol / `high` with the same zero-setup launch permission, only when
+   default to GPT-6 Sol / `high` with the same zero-setup launch permission, only when
    targeted evidence still leaves unresolved a cross-module or system design,
    compatibility or concurrency boundary, competing diagnosis, an unresolved security or trust boundary, recovery, an irreversible migration or data-loss decision, or a credible unresolved High-severity disagreement. Security adjacency or project importance alone, or an ordinary architecture question alone, does not qualify. A borderline choice uses Standard. The parent model and sandbox are irrelevant to selection.
 3. Resolve the selected tier through the installed helper. Before invoking the
@@ -302,7 +302,7 @@ See [operations](references/operations.md) for installation, runtime evidence, a
 evaluation details.
 
 Legacy cached integrations may use `--role advisor-terra` or `--role advisor-sol`.
-Those compatibility routes remain fixed to Terra/high and Sol/high and do not follow
+Those compatibility routes remain fixed to Terra/high and GPT-6 Sol/high and do not follow
 `advisor.toml`. They cannot be combined with a tier or preset. New calls use the tier
 interface above; raw model and effort flags are never accepted by the wrapper.
 The explicit `--role advisor-astra` route is a separate fixed opt-in to gpt-6-astra/high.

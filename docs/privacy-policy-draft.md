@@ -56,7 +56,7 @@ Codex Advisor relies exclusively on your existing local Codex host authenticatio
 
 ## 5. Third-Party Services and Surfaces
 
-- **OpenAI Codex:** Consultation requests are executed via your local Codex installation communicating with OpenAI models (`gpt-5.6-terra` and `gpt-5.6-sol`). Data handling by OpenAI is governed by OpenAI's terms.
+- **OpenAI Codex:** Consultation requests execute via your local Codex installation using the configured OpenAI models. The 1.4.6 candidate defaults are `gpt-5.6-terra` and `gpt-6-sol` at High effort; the installed `advisor.toml` can be edited. Data handling by OpenAI is governed by OpenAI's terms.
 - **No MCP or Hosted Service:** Codex Advisor provides no MCP servers, no hosted services, and no background cloud services.
 
 ## 6. User Control and Data Deletion

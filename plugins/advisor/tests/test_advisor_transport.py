@@ -95,7 +95,7 @@ if case == "hang":
 
 if case == "mutate-retry" and attempt == 1:
     Path(os.environ["ADVISOR_LIVE_CONFIG"]).write_text(
-        '[standard]\nmodel = "gpt-5.6-sol"\neffort = "ultra"\n\n'
+        '[standard]\nmodel = "gpt-6-sol"\neffort = "ultra"\n\n'
         '[specialist]\nmodel = "gpt-6-astra"\neffort = "max"\n'
     )
 
@@ -251,7 +251,7 @@ class AdvisorTransportTests(unittest.TestCase):
             [(row["model"], row["effort"]) for row in self.rows()],
             [
                 ("gpt-5.6-terra", "high"),
-                ("gpt-5.6-sol", "high"),
+                ("gpt-6-sol", "high"),
                 ("gpt-5.6-terra", "high"),
                 ("gpt-5.6-terra", "high"),
             ],
@@ -293,14 +293,14 @@ class AdvisorTransportTests(unittest.TestCase):
     def test_live_astra_and_independent_effort_launch_without_catalog_or_state(self) -> None:
         with self.live_config(
             {"model": "gpt-6-astra", "effort": "max"},
-            {"model": "gpt-5.6-sol", "effort": "low"},
+            {"model": "gpt-6-sol", "effort": "low"},
         ):
             standard = self.run_transport("--tier", "standard")
             specialist = self.run_transport("--tier", "specialist")
         self.assertEqual((standard.returncode, specialist.returncode), (0, 0))
         self.assertEqual(
             [(row["model"], row["effort"]) for row in self.rows()],
-            [("gpt-6-astra", "max"), ("gpt-5.6-sol", "low")],
+            [("gpt-6-astra", "max"), ("gpt-6-sol", "low")],
         )
         self.assertFalse(self.paths.root.exists(), "live config must not create state")
         selection = json.loads(standard.stdout)["selection"]
@@ -310,7 +310,7 @@ class AdvisorTransportTests(unittest.TestCase):
     def test_live_future_selector_needs_no_catalog_or_canary_and_invalid_toml_launches_nothing(self) -> None:
         with self.live_config(
             {"model": "future/provider-2049", "effort": "ultra"},
-            {"model": "gpt-5.6-sol", "effort": "high"},
+            {"model": "gpt-6-sol", "effort": "high"},
         ):
             future = self.run_transport("--tier", "standard")
         self.assertEqual(future.returncode, 0, future.stderr)
@@ -324,7 +324,7 @@ class AdvisorTransportTests(unittest.TestCase):
         self.assertEqual(len(self.rows()), 1, "invalid config must fail before child launch")
         self.live_config_path.write_text(
             '[standard]\nmodel = "bad selector!"\neffort = "high"\n\n'
-            '[specialist]\nmodel = "gpt-5.6-sol"\neffort = "high"\n'
+            '[specialist]\nmodel = "gpt-6-sol"\neffort = "high"\n'
         )
         invalid_selector = self.run_transport("--tier", "standard")
         self.assertNotEqual(invalid_selector.returncode, 0)
@@ -461,7 +461,7 @@ class AdvisorTransportTests(unittest.TestCase):
         self.assertEqual(next_result.returncode, 0, next_result.stderr)
         self.assertEqual(
             (self.rows()[2]["model"], self.rows()[2]["effort"]),
-            ("gpt-5.6-sol", "ultra"),
+            ("gpt-6-sol", "ultra"),
         )
         self.assertNotEqual(
             json.loads(next_result.stdout)["selection"]["source_revision"],

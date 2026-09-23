@@ -17,14 +17,13 @@ be filed publicly.
 
 ## 2. Reinstall or Update Advisor
 
-Codex Advisor v1.3.3 is distributed through the
+Codex Advisor is distributed through the
 [official OpenAI Plugins Directory](https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521).
 If Advisor is missing, outdated, or not responding, reinstall or update it there,
 then start a new Codex thread so the installed plugin is available to the session.
 
 The Directory package is skills-only. Consultations execute through the
-authenticated local Codex runtime on the user's own machine; there is no hosted
-service or MCP server.
+authenticated local Codex runtime on the user's own machine. There is no hosted service or MCP server.
 
 ## 3. Supported Platforms and Scope
 
@@ -43,7 +42,7 @@ Before opening a support ticket, ensure that Codex CLI or desktop is installed a
 operational, `jq` is on `$PATH`, a POSIX shell is available, an active persisted
 Codex session rollout exists, `CODEX_THREAD_ID` is set in the active parent
 context, the installed plugin can use its declared `require_escalated` launcher
-permission, and the account has access to `gpt-5.6-terra` and `gpt-5.6-sol`.
+permission, and the account has access to `gpt-5.6-terra` and `gpt-6-sol`.
 
 ## 5. Common Troubleshooting Scenarios
 
@@ -56,7 +55,7 @@ and start a new Codex thread.
 ### Model availability or authorization failure
 
 Verify that the authenticated OpenAI account and subscription provide
-`gpt-5.6-terra` and `gpt-5.6-sol` at the required reasoning effort, then verify
+`gpt-5.6-terra` and `gpt-6-sol` at the required reasoning effort, then verify
 Codex authentication with the standard CLI commands.
 
 ### Response classification retry

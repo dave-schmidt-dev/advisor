@@ -191,7 +191,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
   await page.goto('/');
   const body = (await bodyText(page)).toLowerCase();
 
-  expect(body).toContain('candidate documentation v1.4.5');
+  expect(body).toContain('candidate documentation v1.4.6');
   expect(body).toContain('automatic read-only advice');
   expect(body).toContain('smart defaults');
   expect(body).toContain('optional models');
@@ -199,7 +199,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
   expect(body).toContain('[specialist]');
   expect(body).toContain('gpt-6-astra');
   expect(body).toContain('gpt-5.6-terra');
-  expect(body).toContain('gpt-5.6-sol');
+  expect(body).toContain('gpt-6-sol');
   expect(body).toContain('next consultation');
   expect(body).toContain('advisor-astra');
   expect(body).toContain('separate explicit-only');
@@ -221,7 +221,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
 test('each route carries the candidate release metadata', async ({ page }) => {
   for (const { path } of PAGES) {
     await page.goto(path);
-    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.5');
+    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.6');
   }
 });
 
@@ -318,7 +318,7 @@ test('terms describe configured model responsibility and preserve legal terms', 
   expect(terms).toContain('Effective date: 10 September 2026');
   expect(terms).toContain('models and effort configured in the bundled');
   expect(terms).toContain('Automatic Standard remains Terra/high');
-  expect(terms).toContain('automatic Specialist remains Sol/high');
+  expect(terms).toContain('automatic Specialist remains GPT-6 Sol/high');
   expect(terms).toContain('advisor-astra');
   expect(terms).toContain('explicit-only');
   expect(terms).toContain('never selected automatically');

@@ -111,10 +111,12 @@ credentials into the fresh root.
 ### Eligible consultation
 
 One eligible consultation then completed in a new fresh-root Codex session. Its
-captured allowlisted runtime receipt identifies `advisor-terra` with `gpt-5.6-terra` or
-`advisor-sol` with `gpt-5.6-sol`, `codex-exec` transport, high effort, a read-only
-sandbox, and a managed permission profile. The receipt is runtime evidence only:
-it intentionally does not preserve conversation content or session identifiers.
+captured allowlisted runtime receipt identified `advisor-terra` with `gpt-5.6-terra` or
+`advisor-sol` with the then-current GPT-5.6 Sol model, `codex-exec` transport, high effort,
+a read-only sandbox, and a managed permission profile. The receipt is historical
+runtime evidence only: it intentionally does not preserve conversation content or
+session identifiers. For the 1.4.6 candidate, the expected `advisor-sol` runtime
+model is `gpt-6-sol`; a fresh live 1.4.6 consultation is not claimed here.
 
 ### Structured-response acceptance
 

@@ -75,7 +75,7 @@ ui=Path(sys.argv[7]).read_text()
 models=json.loads(Path(sys.argv[8]).read_text())
 live=tomllib.loads(Path(sys.argv[9]).read_text())
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or version!="1.4.5": raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or version!="1.4.6": raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if author_name!="David Schmidt / Zero Delta LLC": raise SystemExit("plugin developer identity")
@@ -85,15 +85,15 @@ if {key: interface.get(key) for key in ("websiteURL","privacyPolicyURL","termsOf
 if "Project importance, security adjacency, or an ordinary architecture question alone stays Standard." not in interface.get("longDescription",""): raise SystemExit("manifest routing caveat")
 if "supportURL" in interface: raise SystemExit("unsupported support URL field")
 if models.get("transport_contract_version")!="1.4" or models.get("tested_codex_cli")!="codex-cli 0.153.2": raise SystemExit("model transport provenance")
-if models.get("defaults")!={"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-5.6-sol","effort":"high"}}: raise SystemExit("model defaults")
-if live != {"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-5.6-sol","effort":"high"}}: raise SystemExit("live config defaults")
+if models.get("defaults")!={"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-6-sol","effort":"high"}}: raise SystemExit("model defaults")
+if live != {"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-6-sol","effort":"high"}}: raise SystemExit("live config defaults")
 if any("codex_cli_version_pattern" in (item.get("compatibility_baseline") or {}) for item in models.get("models", [])): raise SystemExit("CLI version eligibility pin")
-if {item.get("model") for item in models.get("models",[])} != {"gpt-5.6-terra","gpt-5.6-sol","gpt-6-astra"}: raise SystemExit("model catalog inventory")
+if {item.get("model") for item in models.get("models",[])} != {"gpt-5.6-terra","gpt-6-sol","gpt-6-astra"}: raise SystemExit("model catalog inventory")
 entry=market.get("plugins",[])
 if market.get("name")!="advisor" or market.get("interface",{}).get("displayName")!="Codex Advisor": raise SystemExit("marketplace identity")
 if len(entry)!=1 or entry[0].get("name")!="advisor" or entry[0].get("source")!={"source":"local","path":"./plugins/advisor"}: raise SystemExit("marketplace source")
 if entry[0].get("policy")!={"installation":"AVAILABLE","authentication":"ON_INSTALL"} or not entry[0].get("category"): raise SystemExit("marketplace policy")
-pairs=((terra,{"name":"advisor-terra","description":"Standard fresh, read-only advisor for material technical decisions and generic advisor requests.","model":"gpt-5.6-terra","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(sol,{"name":"advisor-sol","description":"Specialist fresh, read-only advisor for narrowly qualified unresolved critical decisions.","model":"gpt-5.6-sol","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(astra,{"name":"advisor-astra","description":"Explicit opt-in, fresh, read-only advisor for higher-usage technical consultations.","model":"gpt-6-astra","model_reasoning_effort":"high","sandbox_mode":"read-only"}))
+pairs=((terra,{"name":"advisor-terra","description":"Standard fresh, read-only advisor for material technical decisions and generic advisor requests.","model":"gpt-5.6-terra","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(sol,{"name":"advisor-sol","description":"Specialist fresh, read-only advisor for narrowly qualified unresolved critical decisions.","model":"gpt-6-sol","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(astra,{"name":"advisor-astra","description":"Explicit opt-in, fresh, read-only advisor for higher-usage technical consultations.","model":"gpt-6-astra","model_reasoning_effort":"high","sandbox_mode":"read-only"}))
 for role,pins in pairs:
     if any(role.get(k)!=v for k,v in pins.items()): raise SystemExit("role pins")
     if not all(isinstance(role.get(k),str) and role[k].strip() for k in ("description","developer_instructions")): raise SystemExit("role text")
@@ -414,6 +414,10 @@ for source,(new,old) in replacements.items():
     if text.count(follow_up_output)!=1: raise SystemExit(f"current role follow-up fixture mismatch: {source}")
     prior=text.replace(new,old).replace(zero_tool_block,"").replace(follow_up_output,"")
     prior=prior.replace("Do not spawn or route another agent", "Do not spawn another agent")
+    if source==sol:
+        current_pin='model = "gpt-6-sol"'
+        if prior.count(current_pin)!=1: raise SystemExit("current Sol model fixture mismatch")
+        prior=prior.replace(current_pin,'model = "gpt-5.6-sol"')
     target.joinpath(source.name).write_text(prior,encoding="utf-8")
 PY
 assert_v110_digest() {
@@ -472,6 +476,10 @@ for source in map(Path,sys.argv[1:3]):
     if text.count(follow_up_output)!=1: raise SystemExit(f"current role follow-up fixture mismatch: {source}")
     prior=text.replace(current_block,prior_block).replace(follow_up_output,"")
     prior=prior.replace("Do not spawn or route another agent", "Do not spawn another agent")
+    if source.name=="advisor-sol.toml":
+        current_pin='model = "gpt-6-sol"'
+        if prior.count(current_pin)!=1: raise SystemExit("current Sol model fixture mismatch")
+        prior=prior.replace(current_pin,'model = "gpt-5.6-sol"')
     Path(sys.argv[3],source.name).write_text(prior,encoding="utf-8")
 PY
 assert_v110_digest "$v130/advisor-terra.toml" e939a9c7e96d2a74dde015838802d6a481d36520616464a192daff0412dccaba
@@ -518,6 +526,51 @@ assert_v110_digest "$v130_early/advisor-terra.toml.retired-v1.3.0" 4ad79cb613cc9
 assert_v110_digest "$v130_early/advisor-sol.toml.retired-v1.3.0" 4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4
 sh "$installer" --target-dir "$v130_early" --check >/dev/null
 pass "both prior Advisor 1.3.0 generations upgrade to separate retirement paths"
+
+# Upgrade the exact v1.4.5 Sol role, preserving it at a versioned recovery path.
+v145=$tmp/advisor-v145; mkdir "$v145"
+python3 - "$sol_role" "$v145/advisor-sol.toml" <<'PY'
+from pathlib import Path
+import sys
+source,target=map(Path,sys.argv[1:])
+text=source.read_text(encoding="utf-8")
+current='model = "gpt-6-sol"'
+if text.count(current)!=1: raise SystemExit("current Sol model fixture mismatch")
+target.write_text(text.replace(current,'model = "gpt-5.6-sol"'),encoding="utf-8")
+PY
+actual=$(shasum -a 256 "$v145/advisor-sol.toml" | awk '{print $1}')
+[ "$actual" = 8923bc56c5cd43db004bf1f2bfdabf3cee56dbcbe13434bb0b01cd5cdb523a7c ] || fail "Advisor 1.4.5 Sol fixture digest mismatch: $actual"
+before=$(snapshot "$v145")
+if sh "$installer" --target-dir "$v145" --check >/dev/null 2>&1; then fail "check accepted active Advisor 1.4.5 Sol role"; fi
+after=$(snapshot "$v145"); [ "$before" = "$after" ] || fail "check mutated active Advisor 1.4.5 Sol role"
+sh "$installer" --target-dir "$v145" >/dev/null
+cmp -s "$sol_role" "$v145/advisor-sol.toml" || fail "Advisor 1.4.5 Sol upgrade did not install current role exactly"
+actual=$(shasum -a 256 "$v145/advisor-sol.toml.retired-v1.4.5" | awk '{print $1}')
+[ "$actual" = 8923bc56c5cd43db004bf1f2bfdabf3cee56dbcbe13434bb0b01cd5cdb523a7c ] || fail "Advisor 1.4.5 Sol retirement digest mismatch: $actual"
+sh "$installer" --target-dir "$v145" --check >/dev/null
+before=$(snapshot "$v145"); sh "$installer" --target-dir "$v145" >/dev/null; after=$(snapshot "$v145")
+[ "$before" = "$after" ] || fail "Advisor 1.4.5 Sol upgrade is not idempotent"
+
+v145_interrupted=$tmp/advisor-v145-interrupted; mkdir "$v145_interrupted"
+cp "$v145/advisor-sol.toml.retired-v1.4.5" "$v145_interrupted/advisor-sol.toml.retired-v1.4.5"
+sh "$installer" --target-dir "$v145_interrupted" >/dev/null
+cmp -s "$sol_role" "$v145_interrupted/advisor-sol.toml" || fail "retired-only Advisor 1.4.5 upgrade did not resume"
+sh "$installer" --target-dir "$v145_interrupted" --check >/dev/null
+before=$(snapshot "$v145_interrupted"); sh "$installer" --target-dir "$v145_interrupted" >/dev/null; after=$(snapshot "$v145_interrupted")
+[ "$before" = "$after" ] || fail "retired-only Advisor 1.4.5 state is not idempotent"
+
+for kind in v145-edited v145-collision; do
+  target=$tmp/refuse-$kind; mkdir "$target"
+  cp "$v145/advisor-sol.toml.retired-v1.4.5" "$target/advisor-sol.toml"
+  case "$kind" in
+    v145-edited) printf '\n# owner edit\n' >>"$target/advisor-sol.toml" ;;
+    v145-collision) printf 'unknown retirement collision\n' >"$target/advisor-sol.toml.retired-v1.4.5" ;;
+  esac
+  before=$(snapshot "$target")
+  if sh "$installer" --target-dir "$target" >/dev/null 2>&1; then fail "installer accepted $kind Sol state"; fi
+  after=$(snapshot "$target"); [ "$before" = "$after" ] || fail "$kind refusal mutated target"
+done
+pass "exact Advisor 1.4.5 Sol upgrade, retirement recovery, idempotency, and edited/collision refusal"
 
 # Exercise all three v0.6.0 historical role types using their original exact bytes.
 historical=$tmp/historical; mkdir "$historical"
@@ -627,24 +680,24 @@ rollout=$sessions/rollout-fixture-$id.jsonl
 printf '%s\n' \
  '{"type":"response_item","payload":{"text":"DO_NOT_LEAK"}}' \
  "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$id\",\"source\":\"exec\",\"originator\":\"codex_exec\",\"agent_role\":null,\"parent_thread_id\":null}}" \
- '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$rollout"
-out=$(TMPDIR=/nonexistent-read-only-path sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$id")
-printf '%s\n' "$out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and .transport=="codex-exec" and (keys|sort)==["agent_role","effort","model","parent_thread_id","permission_profile_type","sandbox_policy_type","thread_id","transport"]' >/dev/null || fail "inspector allowlist/pins"
+ '{"type":"turn_context","payload":{"model":"gpt-6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$rollout"
+out=$(TMPDIR=/nonexistent-read-only-path sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6-sol --expected-parent "$root_id" "$id")
+printf '%s\n' "$out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and .transport=="codex-exec" and (keys|sort)==["agent_role","effort","model","parent_thread_id","permission_profile_type","sandbox_policy_type","thread_id","transport"]' >/dev/null || fail "inspector allowlist/pins"
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-terra --expected-model gpt-5.6-terra --expected-parent "$root_id" "$id" >/dev/null 2>&1; then fail "inspector accepted a role/model pair other than the selected pair"; fi
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$id" "$id" >/dev/null 2>&1; then fail "inspector accepted the parent session as the advisor session"; fi
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6-sol --expected-parent "$id" "$id" >/dev/null 2>&1; then fail "inspector accepted the parent session as the advisor session"; fi
 printf '%s\n' "$out" | grep -Fq DO_NOT_LEAK && fail "inspector leaked payload"
 desktop_id=22222222-2222-7222-8222-222222222222
 printf '%s\n' \
   '{"type":"response_item","payload":{"text":"DO_NOT_LEAK_DESKTOP"}}' \
   "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$desktop_id\",\"source\":\"exec\",\"originator\":\"Codex Desktop\",\"agent_role\":null,\"parent_thread_id\":null}}" \
-  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$desktop_id.jsonl"
-desktop_out=$(sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$desktop_id")
-printf '%s\n' "$desktop_out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and .permission_profile_type=="managed" and .transport=="codex-exec"' >/dev/null || fail "inspector rejected exact Codex Desktop provenance"
+  '{"type":"turn_context","payload":{"model":"gpt-6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$desktop_id.jsonl"
+desktop_out=$(sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6-sol --expected-parent "$root_id" "$desktop_id")
+printf '%s\n' "$desktop_out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-6-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and .permission_profile_type=="managed" and .transport=="codex-exec"' >/dev/null || fail "inspector rejected exact Codex Desktop provenance"
 printf '%s\n' "$desktop_out" | grep -Fq DO_NOT_LEAK && fail "desktop inspector leaked payload"
 assert_provenance_mismatch() {
   candidate=$1
   error=$tmp/provenance-error-$candidate.txt
-  if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$candidate" >"$tmp/provenance-out-$candidate.json" 2>"$error"; then
+  if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6-sol --expected-parent "$root_id" "$candidate" >"$tmp/provenance-out-$candidate.json" 2>"$error"; then
     fail "inspector accepted mismatched provenance"
   fi
   [ "$(cat "$error")" = 'ERROR: runtime_provenance_mismatch' ] || fail "provenance mismatch category was not fixed and stderr-only"
@@ -652,38 +705,38 @@ assert_provenance_mismatch() {
 arbitrary_provenance_id=23232323-2323-7232-8232-232323232323
 printf '%s\n' \
   "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$arbitrary_provenance_id\",\"source\":\"exec\",\"originator\":\"desktop\"}}" \
-  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$arbitrary_provenance_id.jsonl"
+  '{"type":"turn_context","payload":{"model":"gpt-6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$arbitrary_provenance_id.jsonl"
 assert_provenance_mismatch "$arbitrary_provenance_id"
 near_provenance_id=24242424-2424-7242-8242-242424242424
 printf '%s\n' \
   "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$near_provenance_id\",\"source\":\"exec\",\"originator\":\"Codex desktop\"}}" \
-  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$near_provenance_id.jsonl"
+  '{"type":"turn_context","payload":{"model":"gpt-6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$near_provenance_id.jsonl"
 assert_provenance_mismatch "$near_provenance_id"
 nonreadonly_id=33333333-3333-7333-8333-333333333333
 nonreadonly=$sessions/rollout-fixture-$nonreadonly_id.jsonl
 printf '%s\n' \
   "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$nonreadonly_id\",\"source\":\"exec\",\"originator\":\"codex_exec\"}}" \
-  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"workspace-write"},"permission_profile":{"type":"managed"}}}' >"$nonreadonly"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$nonreadonly_id" >/dev/null 2>&1; then fail "inspector accepted non-read-only runtime policy"; fi
+  '{"type":"turn_context","payload":{"model":"gpt-6-sol","effort":"high","sandbox_policy":{"type":"workspace-write"},"permission_profile":{"type":"managed"}}}' >"$nonreadonly"
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6-sol --expected-parent "$root_id" "$nonreadonly_id" >/dev/null 2>&1; then fail "inspector accepted non-read-only runtime policy"; fi
 tool_id=44444444-4444-7444-8444-444444444444
 tool_rollout=$sessions/rollout-fixture-$tool_id.jsonl
 printf '%s\n' \
   "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$tool_id\",\"source\":\"exec\",\"originator\":\"codex_exec\"}}" \
-  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' \
+  '{"type":"turn_context","payload":{"model":"gpt-6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' \
   '{"type":"response_item","payload":{"type":"function_call","name":"repo_inspection"}}' >"$tool_rollout"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$tool_id" >/dev/null 2>&1; then fail "inspector accepted advisor tool use"; fi
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6-sol --expected-parent "$root_id" "$tool_id" >/dev/null 2>&1; then fail "inspector accepted advisor tool use"; fi
 printf '%s\n' '{"type":"turn_context","payload":{"model":"gpt-5.6-terra","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >>"$rollout"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$id" >/dev/null 2>&1; then fail "inspector accepted conflicting model"; fi
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6-sol --expected-parent "$root_id" "$id" >/dev/null 2>&1; then fail "inspector accepted conflicting model"; fi
 wrong_effort_id=99999999-9999-7999-8999-999999999999
 printf '%s\n' \
   "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$wrong_effort_id\",\"source\":\"exec\",\"originator\":\"codex_exec\"}}" \
-  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"medium","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$wrong_effort_id.jsonl"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$wrong_effort_id" >/dev/null 2>&1; then fail "inspector accepted wrong effort"; fi
+  '{"type":"turn_context","payload":{"model":"gpt-6-sol","effort":"medium","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$wrong_effort_id.jsonl"
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6-sol --expected-parent "$root_id" "$wrong_effort_id" >/dev/null 2>&1; then fail "inspector accepted wrong effort"; fi
 wrong_source_id=aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa
 printf '%s\n' \
   "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$wrong_source_id\",\"source\":\"tui\",\"originator\":\"codex-tui\"}}" \
-  '{"type":"turn_context","payload":{"model":"gpt-5.6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$wrong_source_id.jsonl"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-5.6-sol --expected-parent "$root_id" "$wrong_source_id" >/dev/null 2>&1; then fail "inspector accepted non-exec provenance"; fi
+  '{"type":"turn_context","payload":{"model":"gpt-6-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$sessions/rollout-fixture-$wrong_source_id.jsonl"
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6-sol --expected-parent "$root_id" "$wrong_source_id" >/dev/null 2>&1; then fail "inspector accepted non-exec provenance"; fi
 pass "runtime inspector exact allowlist, pins, redaction, distinct session, exec provenance, wrong effort, non-read-only, tool-use, and conflict refusal"
 
 parent_home=$tmp/parent-home
@@ -1213,7 +1266,7 @@ result,rerun_result,unnecessary_result,threshold_pass_result,threshold_fail_resu
 schemas=[]; n=0
 def trial(route,risk="standard"):
   selected_role="advisor-terra" if risk=="standard" else "advisor-sol"
-  selected_model="gpt-5.6-terra" if risk=="standard" else "gpt-5.6-sol"
+  selected_model="gpt-5.6-terra" if risk=="standard" else "gpt-6-sol"
   return {"route":route,"advisor_count":1 if route=="consult" else 0,"roles":[selected_role] if route=="consult" else [],"freshness":"distinct_receiver_thread" if route=="consult" else "none","model":selected_model if route=="consult" else "none","effort":"high" if route=="consult" else "none","sandbox":"read-only" if route=="consult" else "none","risk":risk,"selected_role":selected_role,"selected_model":selected_model}
 for name,flag in (("v1",False),("v2",True)):
   cases=[]
@@ -1347,7 +1400,7 @@ root_id="11111111-1111-7111-8111-111111111111"
 child_id="22222222-2222-7222-8222-222222222222"
 def message(route, extra=""):
     return {"type":"item.completed","item":{"type":"agent_message","text":extra+f"ADVISOR_EVAL route={route}"}}
-def spawn(role="advisor-sol",model="gpt-5.6-sol",**changes):
+def spawn(role="advisor-sol",model="gpt-6-sol",**changes):
     item={"id":"spawn-1","type":"collab_tool_call","tool":"spawn_agent","receiver_thread_ids":[child_id],"receiver_agents":[{"agent_role":role,"thread_id":child_id}],"model":model,"reasoning_effort":"high","status":"completed"}
     item.update(changes)
     return {"type":"item.completed","item":item}
@@ -1362,7 +1415,7 @@ write("valid-skip",[{"type":"thread.started","thread_id":root_id},message("skip"
 write("valid-unavailable",[{"type":"thread.started","thread_id":root_id},message("unavailable","ADVISOR DECISION\nroute: unavailable\n")])
 write("unavailable-call",[{"type":"thread.started","thread_id":root_id},message("unavailable","ADVISOR DECISION\nroute: unavailable\nADVISOR CALL\n")])
 write("unavailable-spawn",[{"type":"thread.started","thread_id":root_id},message("unavailable","ADVISOR DECISION\nroute: unavailable\n"),spawn(),message("unavailable")])
-write("fabricated-no-spawn",[{"type":"thread.started","thread_id":root_id},message("consult","advisor_count=1 role=advisor-sol model=gpt-5.6-sol\n")])
+write("fabricated-no-spawn",[{"type":"thread.started","thread_id":root_id},message("consult","advisor_count=1 role=advisor-sol model=gpt-6-sol\n")])
 write("empty-wait",[{"type":"thread.started","thread_id":root_id},{"type":"item.completed","item":{"type":"collab_tool_call","tool":"wait","receiver_thread_ids":[]}},message("consult")])
 write("duplicate-spawn",base[:2]+[copy.deepcopy(base[1]),base[2]])
 write("duplicate-started",[base[0],started,copy.deepcopy(started),base[1],base[2]])
@@ -1378,18 +1431,18 @@ for name,changes in (
     write(name,[{"type":"thread.started","thread_id":root_id},spawn(**changes),message("consult")])
 PY
 events=$tmp/runtime-events
-ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-consult.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-consult.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
-jq -e '.route=="consult" and .advisor_count==1 and .roles==["advisor-sol"] and .freshness=="distinct_receiver_thread" and .model=="gpt-5.6-sol" and .effort=="high" and .sandbox=="read-only"' "$tmp/valid-consult.json" >/dev/null || fail "valid Sol consult spawn evidence was not derived exactly"
-ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-lifecycle.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-lifecycle.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
+ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-consult.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-consult.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-6-sol sh "$evaluator"
+jq -e '.route=="consult" and .advisor_count==1 and .roles==["advisor-sol"] and .freshness=="distinct_receiver_thread" and .model=="gpt-6-sol" and .effort=="high" and .sandbox=="read-only"' "$tmp/valid-consult.json" >/dev/null || fail "valid Sol consult spawn evidence was not derived exactly"
+ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-lifecycle.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-lifecycle.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-6-sol sh "$evaluator"
 jq -e '.route=="consult" and .advisor_count==1 and .roles==["advisor-sol"]' "$tmp/valid-lifecycle.json" >/dev/null || fail "one logical spawn lifecycle was not accepted"
 ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-terra.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-terra.json" ADVISOR_EXPECTED_ROLE=advisor-terra ADVISOR_EXPECTED_MODEL=gpt-5.6-terra sh "$evaluator"
 jq -e '.role==null and .roles==["advisor-terra"] and .model=="gpt-5.6-terra" and .effort=="high"' "$tmp/valid-terra.json" >/dev/null || fail "valid Terra consult spawn evidence was not derived exactly"
-ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-skip.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-skip.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
+ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-skip.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-skip.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-6-sol sh "$evaluator"
 jq -e '.route=="skip" and .advisor_count==0 and .roles==[]' "$tmp/valid-skip.json" >/dev/null || fail "valid skip/no-spawn evidence was not derived exactly"
-ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-unavailable.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-unavailable.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator"
+ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-unavailable.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-unavailable.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-6-sol sh "$evaluator"
 jq -e '.route=="unavailable" and .advisor_count==0 and .roles==[] and .freshness=="none"' "$tmp/valid-unavailable.json" >/dev/null || fail "valid unavailable/no-spawn preflight evidence was not derived exactly"
 for rejected_events in unavailable-call unavailable-spawn fabricated-no-spawn empty-wait duplicate-spawn duplicate-started extra-uncompleted-spawn wrong-role wrong-model wrong-effort root-equals-child noncompleted; do
-  if ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/$rejected_events.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/rejected.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-5.6-sol sh "$evaluator" >/dev/null 2>&1; then
+  if ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/$rejected_events.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/rejected.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-6-sol sh "$evaluator" >/dev/null 2>&1; then
     fail "runtime evidence parser accepted: $rejected_events"
   fi
 done
@@ -1400,7 +1453,7 @@ grep -Fq 'do not emit ADVISOR CALL, and do not spawn a child' "$evaluator" || fa
 
 for policy_case in \
   'standard:advisor-terra gpt-5.6-terra' 'STANDARD:advisor-terra gpt-5.6-terra' \
-  'specialist:advisor-sol gpt-5.6-sol' 'SPECIALIST:advisor-sol gpt-5.6-sol'; do
+  'specialist:advisor-sol gpt-6-sol' 'SPECIALIST:advisor-sol gpt-6-sol'; do
   risk=${policy_case%%:*}; wanted=${policy_case#*:}
   actual=$(ADVISOR_SELECT_FOR_RISK=$risk sh "$evaluator")
   [ "$actual" = "$wanted" ] || fail "wrong advisor role/model selection for $risk"
@@ -1505,4 +1558,4 @@ pass "Advisor behavior tests and 17 candidate packaging tests"
 sh -n "$script_dir"/*.sh
 [ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.4.5 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.4.6 consultation-only static contract"

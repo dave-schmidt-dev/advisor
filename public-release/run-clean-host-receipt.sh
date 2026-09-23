@@ -196,7 +196,7 @@ model=$(jq -er '
   if (.runtime? | type == "object") then .runtime.model else .model end
 ' "$evidence_abs") || fail 'evidence did not include a model'
 case "$agent_role:$model" in
-  advisor-terra:gpt-5.6-terra|advisor-sol:gpt-5.6-sol) ;;
+  advisor-terra:gpt-5.6-terra|advisor-sol:gpt-6-sol) ;;
   *) fail 'evidence role/model pair is not allowed for clean-host capture' ;;
 esac
 printf '%s\n' "$thread_id" | LC_ALL=C grep -Eq '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' || fail "thread_id is not a UUID: $thread_id"

@@ -10,7 +10,7 @@ Install [**Codex Advisor** from the official Plugins Directory](https://chatgpt.
 **Codex CLI** or **Codex desktop**; generic ChatGPT is not a supported runtime.
 
 Advisor uses Standard (Terra/high) for ordinary bounded material architecture,
-interface, data-model, and generic-advisor decisions. It uses Specialist (Sol/high)
+interface, data-model, and generic-advisor decisions. It uses Specialist (GPT-6 Sol/high)
 only when targeted evidence still leaves a cross-module/system design, compatibility
 or concurrency boundary, competing diagnosis, security/trust boundary, recovery,
 irreversible migration, or data-loss decision unresolved. Project importance,
@@ -22,7 +22,7 @@ leaves factual, mechanical, and explicitly no-delegation work alone.
 - [Support](https://zerodelta.dev/advisor/support/)
 - [Privacy Policy](https://zerodelta.dev/advisor/privacy/)
 - [Terms of Service](https://zerodelta.dev/advisor/terms/)
-- [Public listing draft](docs/public-listing.md) and [1.4.5 site walkthrough](docs/site-walkthrough-1.4.5.md)
+- [Public listing draft](docs/public-listing.md) and [1.4.6 site walkthrough](docs/site-walkthrough-1.4.6.md)
 
 ## Development
 
@@ -45,7 +45,7 @@ marketplace publication; a ZIP alone is only a candidate.
 
 New consultations use `--tier standard|specialist`. The installed live file
 `advisor.toml`, beside the loaded skill, is authoritative: Standard defaults to
-Terra/high and Specialist to Sol/high. Edit its two documented TOML sections and the
+Terra/high and Specialist to GPT-6 Sol/high. Edit its two documented TOML sections and the
 next consultation uses the changed pair. No discovery, catalog registration, canary,
 state setup, or file copy is required. A future syntactically valid selector is
 permitted subject to account/runtime support; changing Specialist to Astra opts into
@@ -53,7 +53,7 @@ its higher usage. Plugin updates or reinstalling can replace in-place edits.
 Advisor freezes the model, effort, content-digest source revision, transport contract,
 and 30–900 second total deadline before launch, so retries do not choose a newer model
 or fallback. The legacy `--role advisor-terra` and `--role advisor-sol` aliases remain
-fixed Terra/high and Sol/high routes and do not follow `advisor.toml`.
+fixed Terra/high and GPT-6 Sol/high routes and do not follow `advisor.toml`.
 The explicit `--role advisor-astra` alias is a separate opt-in Astra/high route; it is
 never chosen by Standard/Specialist defaults or trigger selection and does not change
 tier defaults.

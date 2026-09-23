@@ -10,7 +10,7 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | --- | --- |
 | **Plugin Name** | `advisor` |
 | **Display Name** | Codex Advisor |
-| **Version** | `1.4.5` |
+| **Version** | `1.4.6` |
 | **Category** | Productivity |
 | **Capabilities** | Interactive, Read |
 | **Author / Maintainer** | David Schmidt / Zero Delta LLC |
@@ -24,9 +24,19 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | **Geographic Availability** | United States |
 | **Pricing Model** | Free / Open Source (MIT); requires user's own Codex model access |
 
-**Candidate status:** Advisor 1.4.5 is a local release candidate. It is not claimed
-published, deployed, uploaded, or released; no final archive SHA-256 or commit is
-claimed.
+**Candidate status:** Advisor 1.4.6 is a local packaged release candidate. The
+28-file `Codex-Advisor-1.4.6.zip` has SHA-256
+`c262ed96736216e225fdbe63db211fe1651f0b4c3900bee50bf3201b3a7a33bd`.
+The 1.4.6 public website deployment is complete and independently verified
+below. This site-deployment record does not establish a later 1.4.6 commit, tag,
+GitHub release, or marketplace publication; each requires separate evidence.
+Marketplace upload remains owner-controlled.
+
+**Website deployment status (1.4.6):** The landing, support, privacy, and terms
+pages were deployed on 22 September 2026. `public-release/verify-upload-ready.sh
+--json Codex-Advisor-1.4.6.zip` exited 0; all seven live site files byte-match
+the local source, and the archive SHA-256 is
+`c262ed96736216e225fdbe63db211fe1651f0b4c3900bee50bf3201b3a7a33bd`.
 
 **Historical publication status (1.4.4):** Advisor 1.4.4 is published in the OpenAI Plugins Directory,
 based on owner confirmation. The published 1.4.4 archive is
@@ -44,7 +54,7 @@ inspection is not claimed here.
 Automatic second opinions with your choice of models
 
 ### Long Description
-Codex Advisor automatically adds a fresh, read-only second opinion for important technical decisions in Codex CLI and Codex desktop. Standard uses Terra/high for ordinary bounded architecture, interface, data-model, and generic-advisor decisions. Specialist uses Sol/high only when targeted evidence still leaves a cross-module/system design, compatibility or concurrency boundary, competing diagnosis, security/trust boundary, recovery, irreversible migration, or data-loss decision unresolved. Project importance, security adjacency, or an ordinary architecture question alone does not select Specialist. Version 1.4.4's deferred result-delivery repair remains in place: callers drain nonterminal shell sessions, require terminal exit, and validate exactly one schema-v3 envelope. `advisor-astra` remains a separate explicit-only Astra/high role and is never selected automatically. Each consultation is tool-free, and your main agent retains control of implementation and final decisions. Consultations use your own authenticated Codex/OpenAI account; Zero Delta operates no relay or hosted backend.
+Codex Advisor automatically adds a fresh, read-only second opinion for important technical decisions in Codex CLI and Codex desktop. Standard uses Terra/high for ordinary bounded architecture, interface, data-model, and generic-advisor decisions. Specialist uses GPT-6 Sol/high only when targeted evidence still leaves a cross-module/system design, compatibility or concurrency boundary, competing diagnosis, security/trust boundary, recovery, irreversible migration, or data-loss decision unresolved. Project importance, security adjacency, or an ordinary architecture question alone does not select Specialist. Version 1.4.4's deferred result-delivery repair remains in place: callers drain nonterminal shell sessions, require terminal exit, and validate exactly one schema-v3 envelope. `advisor-astra` remains a separate explicit-only Astra/high role and is never selected automatically. Each consultation is tool-free, and your main agent retains control of implementation and final decisions. Consultations use your own authenticated Codex/OpenAI account; Zero Delta operates no relay or hosted backend.
 
 ## Surface and Host Compatibility
 
@@ -79,7 +89,7 @@ When any prerequisite is absent, the system safely records `route: unavailable` 
 
 Execution uses the user's authenticated Codex account. Normal tier consultations use the models and effort configured in the bundled `advisor.toml`:
 - Standard defaults to Terra with high reasoning effort.
-- Specialist defaults to Sol with high reasoning effort.
+- Specialist defaults to GPT-6 Sol with high reasoning effort.
 - `advisor-astra` is a separate explicit-only Astra/high role; automatic selection never invokes it.
 - Astra uses more of the user's Codex allowance and remains subject to account and runtime availability.
 - Future model selectors are subject to account access and runtime support. Invalid TOML or an unsupported model reports an error; there is no silent fallback.
@@ -99,10 +109,10 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 2. **Mechanical Implementation:** "Rename variable `old_path` to `source_path` across all helper functions in `utils.py`." (Skips consultation; deterministic mechanical edit).
 3. **Diff Review / No Delegation:** "Review the committed git diff for typos and formatting errors, and do not delegate to an advisor." (Skips consultation; owned by review workflow and explicit no-delegation).
 
-## Candidate Notes (v1.4.5)
+## Candidate Notes (v1.4.6)
 
 - Automatic read-only advice uses configurable Standard and Specialist sections in the live bundled `advisor.toml` file.
-- Terra/high and Sol/high remain the automatic defaults.
+- Terra/high and GPT-6 Sol/high remain the automatic defaults.
 - Standard covers ordinary bounded material architecture, interface, data-model, and generic-advisor decisions.
 - Specialist applies only after targeted evidence leaves an eligible cross-system, compatibility/concurrency, competing-diagnosis, security/trust, recovery, irreversible-migration, or data-loss decision unresolved.
 - Project importance, security adjacency, and an ordinary architecture question alone remain Standard.
@@ -115,4 +125,4 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 - The optional content-free usage journal is off by default, stores operational metadata and aggregate counters only, prunes entries older than 30 days during later writes, and enforces a bounded count without a background deletion service.
 
 The 1.4.4 publication record above remains historical and is not replaced by this
-1.4.5 candidate.
+1.4.6 candidate.

@@ -166,8 +166,30 @@ is_claim_surface() {
   esac
 }
 
+is_generated_python_bytecode() {
+  # The package excludes Python caches. Skip only real local CPython bytecode
+  # under the plugin cache, not source or text disguised with a .pyc suffix.
+  case "$1" in
+    "$plugin_dir"/*/__pycache__/*.cpython-*.pyc) ;;
+    *) return 1 ;;
+  esac
+  [ -f "$1" ] && [ ! -L "$1" ] || return 1
+  python3 - "$1" <<'PY'
+import importlib.util
+import sys
+
+try:
+    with open(sys.argv[1], "rb") as source:
+        magic = source.read(4)
+except OSError:
+    raise SystemExit(1)
+raise SystemExit(0 if magic == importlib.util.MAGIC_NUMBER else 1)
+PY
+}
+
 scan_file() {
   file=$1
+  if is_generated_python_bytecode "$file"; then return 0; fi
   # The bracket expression stops this line from matching itself when the
   # validator scans its own source, and widens the check to a lowercase home.
   if grep -E -q '/[Uu]sers/' "$file"; then

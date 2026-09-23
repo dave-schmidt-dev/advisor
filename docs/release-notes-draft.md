@@ -1,19 +1,44 @@
 # Release record
 
-## Advisor 1.4.5 candidate
+## Advisor 1.4.6 candidate
 
-Version `1.4.5` expands Specialist eligibility to evidence-unresolved complex
-decisions while keeping the models unchanged: Standard remains Terra/high for ordinary bounded material architecture,
-interface, data-model, and generic-advisor decisions. Specialist remains Sol/high
-when targeted evidence still leaves a cross-module/system design, compatibility or
-concurrency boundary, competing diagnosis, security/trust boundary, recovery,
-irreversible migration, or data-loss decision unresolved. Project importance,
-security adjacency, or an ordinary architecture question alone remains Standard.
-Explicit-only Astra is unchanged. The optional content-free journal remains disabled
-by default, with no schema or retention change.
+Version `1.4.6` changes the automatic Specialist default and fixed legacy
+`advisor-sol` alias to `gpt-6-sol` / high. Standard remains `gpt-5.6-terra` /
+high, and explicit-only `advisor-astra` remains `gpt-6-astra` / high. The
+1.4.5 Specialist eligibility, read-only zero-tool runtime checks, exact
+inspection, frozen retry selection, output schema, and no-fallback behavior
+remain in place. The public site and support copy reflect the new Specialist
+model. The landing, support, privacy, and terms pages were deployed on
+22 September 2026 after the walkthrough was provided and the owner authorized
+the site update. The upload-readiness
+verification exited 0 and confirmed that all seven live site files byte-match
+the local source for the 1.4.6 candidate archive.
+The packaged installer recognizes the byte-exact 1.4.0–1.4.5 Sol role and
+retains it at `.retired-v1.4.5` during upgrade; edited role files still fail
+closed.
 
-This is a local candidate only. No archive, final SHA-256, commit, tag, upload,
-publication, deployment, or marketplace action is claimed.
+This is a local packaged candidate only. `Codex-Advisor-1.4.6.zip` contains 28
+files and has SHA-256
+`c262ed96736216e225fdbe63db211fe1651f0b4c3900bee50bf3201b3a7a33bd`.
+Candidate content digest: `085170475891ee207f50a9ae3c624d0dac0ab01de6bbccae0385cf0fd231c1f6`.
+The site update was authorized after the dated walkthrough was provided. This
+site-deployment record does not establish a later 1.4.6 commit, GitHub release,
+or marketplace publication; each requires separate evidence. Marketplace upload
+remains owner-controlled.
+
+## Advisor 1.4.5 candidate record
+
+Version `1.4.5` expanded Specialist eligibility to evidence-unresolved complex
+decisions while keeping the then-current models unchanged: Standard was
+Terra/high for ordinary bounded material architecture, interface, data-model,
+and generic-advisor decisions. Specialist was GPT-5.6 Sol/high when targeted
+evidence still left a cross-module/system design, compatibility or concurrency
+boundary, competing diagnosis, security/trust boundary, recovery, irreversible
+migration, or data-loss decision unresolved. Project importance, security
+adjacency, or an ordinary architecture question alone remained Standard.
+Explicit-only Astra was unchanged. The optional content-free journal remained
+disabled by default, with no schema or retention change. This paragraph records
+the prior candidate and does not claim marketplace publication.
 
 ## Advisor 1.4.4 publication record
 
@@ -34,9 +59,9 @@ deployable files byte-match the release source. Independent authenticated live-l
 inspection is not claimed by this draft. The 1.4.3 publication record below remains
 historical.
 
-## Published package
+## Advisor 1.4.3 publication record
 
-The published GitHub identity is version `1.4.3`, pinned by Git tag `v1.4.3` at
+The 1.4.3 GitHub identity is pinned by Git tag `v1.4.3` at
 commit `554376fd3e1da8e4d98e4c29183406510814bf56`. The release archive is
 `Codex-Advisor-1.4.3.zip` with SHA-256
 `85c86f5a1c582c43a99bc274f9f54a60445cae316683892668b608e8054b54c2`.
@@ -80,8 +105,6 @@ the two independent model/effort pairs, Astra opt-in, future selectors,
 content-digest revisions, retry freezing, and fail-closed TOML errors were covered
 locally. Normal tiers no longer depend on saved selections, catalog registration,
 discovery, or synthetic canaries.
-
-Candidate content digest: `be10237ac93e7c44e29a69aa0633195423bd44fbcaa39cdc717d383e3b788c26`.
 
 The manifest contains supported `websiteURL`, `privacyPolicyURL`, and
 `termsOfServiceURL` fields. It contains no supported `supportURL` field; portal URL

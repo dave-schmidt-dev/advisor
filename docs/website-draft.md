@@ -41,7 +41,7 @@ Routine work (such as factual lookups, mechanical edits, documentation formattin
 
 ### 2. Dual-Tier Risk-Calibrated Roles
 - **Standard Consultation (`advisor-terra`):** Powered by `gpt-5.6-terra` / High effort for general architecture, interface design, data modeling, and generic advisor requests.
-- **Specialist Consultation (`advisor-sol`):** Powered by `gpt-5.6-sol` / High effort, reserved specifically for unresolved security or trust boundaries, irreversible data migration, or critical high-severity disagreements.
+- **Specialist Consultation (`advisor-sol`):** This superseded draft focused on unresolved security or trust boundaries, irreversible data migration, and critical high-severity disagreements. The 1.4.6 candidate defaults to `gpt-6-sol` / High; see the published site for current eligibility.
 
 ### 3. Local Isolation & Zero Tools
 - Advisor processes run in a forced read-only sandbox with zero tools enabled.
@@ -76,7 +76,7 @@ To run Codex Advisor consultations, your local environment needs:
 - `jq` installed in your `$PATH`.
 - POSIX shell (`sh`).
 - Persisted Codex session rollout and valid `CODEX_THREAD_ID`.
-- Active OpenAI subscription with model availability for `gpt-5.6-terra` and `gpt-5.6-sol`.
+- Active OpenAI subscription with access to the configured models. The 1.4.6 candidate defaults to `gpt-5.6-terra` and `gpt-6-sol`.
 
 ---
 

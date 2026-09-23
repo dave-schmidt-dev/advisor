@@ -44,7 +44,7 @@ generate_receipt() {
     if (($runtime.permission_profile_type | type) != "string" or ($runtime.permission_profile_type | length) == 0) then error("permission profile missing") else . end |
     if ($runtime.permission_profile_type != "managed") then error("permission profile mismatch") else . end |
     if (($runtime.agent_role == "advisor-terra" and $runtime.model == "gpt-5.6-terra") or
-        ($runtime.agent_role == "advisor-sol" and $runtime.model == "gpt-5.6-sol")) | not then
+        ($runtime.agent_role == "advisor-sol" and $runtime.model == "gpt-6-sol")) | not then
       error("wrong role/model pair")
     else . end |
     {
@@ -71,7 +71,7 @@ receipt_matches_contract() {
     ] and
     ($r.transport == "codex-exec") and
     ((($r.agent_role == "advisor-terra" and $r.model == "gpt-5.6-terra") or
-      ($r.agent_role == "advisor-sol" and $r.model == "gpt-5.6-sol"))) and
+      ($r.agent_role == "advisor-sol" and $r.model == "gpt-6-sol"))) and
     ($r.effort == "high") and
     ($r.sandbox_policy_type == "read-only") and
     ($r.permission_profile_type == "managed")
@@ -142,7 +142,7 @@ synthetic() {
     '11111111-1111-1111-1111-111111111111' \
     '22222222-2222-2222-2222-222222222222' \
     'advisor-terra' \
-    'gpt-5.6-sol' \
+    'gpt-6-sol' \
     'read-only' \
     'managed' || fail "cannot create synthetic wrong runtime evidence"
   if generate_receipt "$wrong" "$mutated" 2>/dev/null; then
@@ -190,7 +190,7 @@ synthetic() {
     '11111111-1111-1111-1111-111111111111' \
     '22222222-2222-2222-2222-222222222222' \
     'advisor-sol' \
-    'gpt-5.6-sol' \
+    'gpt-6-sol' \
     'read-only' \
     'managed' || fail "cannot create synthetic solver runtime evidence"
   generate_receipt "$observed" "$receipt" || fail "cannot generate synthetic solver receipt"

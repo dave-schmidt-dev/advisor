@@ -40,7 +40,7 @@ The full text of the MIT License is located in the repository's `LICENSE` file. 
 ## 4. User Prerequisites and Responsibilities
 
 - **Host Prerequisites:** You are solely responsible for providing and maintaining the necessary local host prerequisites, including supported host software (Codex CLI or Codex desktop), POSIX shell, `jq`, and appropriate execution permissions.
-- **Model Availability:** Execution requires an active, authenticated OpenAI subscription with model availability for the pinned models (`gpt-5.6-terra` and `gpt-5.6-sol`). You are responsible for all OpenAI usage, quotas, and fees associated with your account.
+- **Model Availability:** Execution requires an active, authenticated OpenAI subscription with access to the configured models. The 1.4.6 candidate defaults are `gpt-5.6-terra` and `gpt-6-sol` at High effort; the installed `advisor.toml` can be edited. You are responsible for all OpenAI usage, quotas, and fees associated with your account.
 - **Data Protection:** You are responsible for ensuring that sensitive credentials, confidential API keys, or unauthorized proprietary data are not included in consultation packets.
 
 ## 5. Disclaimer of Warranties

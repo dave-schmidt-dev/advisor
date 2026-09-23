@@ -6,7 +6,7 @@ the installed skill. Repository-root documentation is not part of the ZIP.
 ## Defaults and evidence
 
 `advisor.toml` has exactly `[standard]` and `[specialist]` sections, each with `model`
-and `effort`. Defaults are `gpt-5.6-terra` / `high` and `gpt-5.6-sol` / `high`.
+and `effort`. Defaults are `gpt-5.6-terra` / `high` and `gpt-6-sol` / `high`.
 Edit the installed file in place; changes apply to the next `--tier` consultation and
 are frozen with a SHA-256 content revision for retries. No local state, discovery,
 catalog registration, canary, or file copy is needed. Allowed efforts are `none`,
@@ -79,6 +79,6 @@ coverage can be partial.
 > does not operate a Zero Delta relay.
 
 The 1.4.4 deployment record says the then-live privacy page byte-matched its repository
-candidate. This 1.4.5 candidate updates that copy for the same local configuration/catalog
+candidate. This 1.4.6 candidate updates that copy for the same local configuration/catalog
 state, content-free journal, automatic Terra/Sol defaults, and separate explicit-only Astra
 role; it is not yet deployed.

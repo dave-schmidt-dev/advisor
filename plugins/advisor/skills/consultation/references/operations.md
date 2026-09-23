@@ -32,7 +32,7 @@ JSON-RPC messages, includes hidden models, and preserves existing catalog state 
 offline, protocol, or authorization failure. It never copies credentials, writes user
 Codex configuration, enables tools, or runs inference. New launcher calls use
 `--tier standard|specialist`; raw model/effort overrides are not accepted. Live
-defaults are Terra/high and Sol/high without state creation, discovery, or a canary.
+defaults are Terra/high and GPT-6 Sol/high without state creation, discovery, or a canary.
 That permission to attempt is not compatibility proof: each
 real child remains subject to the existing exact runtime identity, effort, read-only,
 zero-tool, and schema checks. Legacy role calls remain pinned.
@@ -111,7 +111,7 @@ For a consult, select the tier from decision risk:
 
 - Standard: `--tier standard`, defaulting to Terra / `high`. This covers ordinary
   bounded material architecture, interface, data-model, and generic advisor requests.
-- Specialist: `--tier specialist`, defaulting to Sol / `high`, only when targeted evidence still leaves unresolved a cross-module or system design, compatibility or concurrency boundary, competing diagnosis, an unresolved security or trust boundary,
+- Specialist: `--tier specialist`, defaulting to GPT-6 Sol / `high`, only when targeted evidence still leaves unresolved a cross-module or system design, compatibility or concurrency boundary, competing diagnosis, an unresolved security or trust boundary,
   recovery, an irreversible migration or data-loss decision, or a credible unresolved
   High-severity disagreement.
 
@@ -119,7 +119,7 @@ Security adjacency or project importance alone, or an ordinary architecture ques
 alone, does not qualify for Specialist. A borderline role choice uses Standard. The
 parent model is irrelevant.
 Legacy cached callers may still use `--role advisor-terra` or `--role advisor-sol`;
-those routes remain fixed to Terra/high and Sol/high, do not follow `advisor.toml`,
+those routes remain fixed to Terra/high and GPT-6 Sol/high, do not follow `advisor.toml`,
 and cannot be mixed with a tier or preset.
 An explicit caller may use `--role advisor-astra` for the fixed Astra/high opt-in;
 that route is not a tier default or fallback and cannot be mixed with a tier or preset.

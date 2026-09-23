@@ -1,0 +1,54 @@
+# Git hooks configuration:
+# - pre-commit asserts fast linting (ruff-check) and dead-code analysis (vulture).
+# - pre-push asserts the full verification suites (advisor-verify, upload-readiness-tests, site-playwright).
+
+default_install_hook_types: [pre-commit, pre-push]
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.7
+    hooks:
+      - id: ruff-check
+        stages: [pre-commit]
+
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: v2.16
+    hooks:
+      - id: vulture
+        language_version: python3.14
+        stages: [pre-commit]
+        args:
+          - plugins/advisor/scripts
+          - public-release
+          - vulture_whitelist.py
+          - --exclude
+          - "*/test_*.py"
+          - --min-confidence
+          - "60"
+
+  - repo: local
+    hooks:
+      - id: advisor-verify
+        name: advisor-verify
+        entry: sh plugins/advisor/scripts/verify.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        require_serial: true
+        stages: [pre-push]
+      - id: upload-readiness-tests
+        name: upload-readiness-tests
+        entry: python3 -m unittest public-release/test_upload_readiness.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        require_serial: true
+        stages: [pre-push]
+      - id: site-playwright
+        name: site-playwright
+        entry: npm --prefix web-tests test
+        language: system
+        pass_filenames: false
+        always_run: true
+        require_serial: true
+        stages: [pre-push]

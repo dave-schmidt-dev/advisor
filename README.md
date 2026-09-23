@@ -30,6 +30,13 @@ leaves factual, mechanical, and explicitly no-delegation work alone.
 sh plugins/advisor/scripts/verify.sh --static
 ```
 
+### Git hooks
+
+`pre-commit install` installs both stages (`pre-commit` and `pre-push`).
+- `pre-commit` runs Ruff linting (`ruff-check`) and Vulture dead-code detection (`vulture`).
+- `pre-push` runs the full verification suites: `advisor-verify` (`sh plugins/advisor/scripts/verify.sh`), `upload-readiness-tests` (`python3 -m unittest public-release/test_upload_readiness.py`), and `site-playwright` (`npm --prefix web-tests test`).
+- `web-tests` needs `npm --prefix web-tests ci` once.
+
 The implementation contract is in the [plugin skill](plugins/advisor/skills/consultation/SKILL.md),
 [SPEC.md](SPEC.md), and [INVARIANTS.md](INVARIANTS.md).
 

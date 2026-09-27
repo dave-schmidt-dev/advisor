@@ -30,6 +30,12 @@ leaves factual, mechanical, and explicitly no-delegation work alone.
 sh plugins/advisor/scripts/verify.sh --static
 ```
 
+### Important files
+
+- `plugins/advisor/scripts/advisor_config.py` is the CLI facade. Its siblings are `advisor_state.py`, `advisor_catalog.py`, `advisor_settings.py`, `advisor_journal.py`, `advisor_discovery.py`, `advisor_canary.py`, and `advisor_doctor.py`.
+- `plugins/advisor/scripts/advisor_process.py`, `run-advisor.sh`, and `advisor-config.sh` provide bounded process, consultation, and configuration transport.
+- `tests/verify/` contains the repository-level shell checks sourced by `plugins/advisor/scripts/verify.sh`; `scripts/check_file_size.py` enforces source and test file limits.
+
 ### Git hooks
 
 `pre-commit install` installs both stages (`pre-commit` and `pre-push`).

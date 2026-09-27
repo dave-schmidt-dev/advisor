@@ -392,6 +392,17 @@ plugins/advisor/
   scripts/inspect-parent-runtime.sh
   scripts/inspect-agent-runtime.sh
   scripts/evaluate-triggers.sh
+  scripts/run-advisor.sh
+  scripts/advisor-config.sh
+  scripts/advisor_config.py
+  scripts/advisor_process.py
+  scripts/advisor_state.py
+  scripts/advisor_catalog.py
+  scripts/advisor_settings.py
+  scripts/advisor_journal.py
+  scripts/advisor_discovery.py
+  scripts/advisor_canary.py
+  scripts/advisor_doctor.py
   scripts/verify.sh
   evals/trigger-cases.json
   skills/consultation/SKILL.md
@@ -399,6 +410,8 @@ plugins/advisor/
   skills/consultation/references/operations.md
 NOTICE.md
 ```
+
+`plugins/advisor/scripts/verify.sh` sources the repository-level `tests/verify/*.sh` checks.
 
 Remove the Luna and Terra implementation roles, the final-review role, selective
 route modes, and their documentation. Do not leave compatibility aliases that can

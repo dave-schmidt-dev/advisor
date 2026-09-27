@@ -88,7 +88,7 @@ threshold: 3
 rationale: A valid follow-up requires a processed recommendation or concrete research-first next step plus mandatory read-only, zero-tool runtime inspection; only then may the root route research or brainstorming to Luna or Terra outside consultation and optionally start a fresh separately receipted consultation. An unavailable result remains blocked and cannot be rescued.
 
 ### INV-14 — Live tier configuration and bounded discovery
-area: ["plugins/advisor/advisor.toml", "plugins/advisor/scripts/advisor_config.py", "plugins/advisor/scripts/advisor_process.py", "plugins/advisor/scripts/run-advisor.sh", "plugins/advisor/scripts/inspect-agent-runtime.sh"]
+area: ["plugins/advisor/advisor.toml", "plugins/advisor/scripts/advisor_config.py", "plugins/advisor/scripts/advisor_process.py", "plugins/advisor/scripts/advisor_state.py", "plugins/advisor/scripts/advisor_catalog.py", "plugins/advisor/scripts/advisor_settings.py", "plugins/advisor/scripts/advisor_journal.py", "plugins/advisor/scripts/advisor_discovery.py", "plugins/advisor/scripts/advisor_canary.py", "plugins/advisor/scripts/advisor_doctor.py", "plugins/advisor/scripts/run-advisor.sh", "plugins/advisor/scripts/inspect-agent-runtime.sh"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
 rationale: Normal tiers load only the installed regular, nonsymlinked, bounded

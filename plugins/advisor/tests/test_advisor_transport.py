@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import os
@@ -20,6 +21,7 @@ CONFIG_WRAPPER = ROOT / "scripts" / "advisor-config.sh"
 TRANSPORT = ROOT / "scripts" / "run-advisor.sh"
 PROCESS = ROOT / "scripts" / "advisor_process.py"
 CONFIG_MODULE = ROOT / "scripts" / "advisor_config.py"
+HELPERS = ("advisor_config.py", "advisor_process.py", "inspect-agent-runtime.sh")
 SPEC = importlib.util.spec_from_file_location("transport_advisor_config", CONFIG_MODULE)
 assert SPEC and SPEC.loader
 config = importlib.util.module_from_spec(SPEC)
@@ -204,6 +206,24 @@ class AdvisorTransportTests(unittest.TestCase):
             codex_version="codex-cli 0.153.2",
             paths=self.paths,
         )
+
+    def test_symlinked_helpers_are_rejected_before_codex_launch(self) -> None:
+        for helper in HELPERS:
+            with self.subTest(helper=helper):
+                helper_path = self.plugin_root / "scripts" / helper
+                backup = self.root / helper
+                shutil.copy2(helper_path, backup)
+                helper_path.unlink()
+                try:
+                    helper_path.symlink_to(backup)
+                    result = self.run_transport("--tier", "standard")
+                    self.assertEqual(result.returncode, 1, result.stderr)
+                    self.assertIn("installed Advisor helper is unsafe", result.stderr)
+                    self.assertEqual(self.rows(), [])
+                finally:
+                    helper_path.unlink(missing_ok=True)
+                    shutil.copy2(backup, helper_path)
+                    backup.unlink()
 
     def test_discovery_accepts_protocol_without_jsonrpc_and_ignores_optional_fields(
         self,
@@ -445,7 +465,7 @@ class AdvisorTransportTests(unittest.TestCase):
         self.assertIn("content-free transport canary", self.rows()[0]["prompt"])
 
     def test_retry_freezes_live_pair_and_digest_then_next_consult_reloads(self) -> None:
-        original_digest = config.hashlib.sha256(self.live_config_path.read_bytes()).hexdigest()
+        original_digest = hashlib.sha256(self.live_config_path.read_bytes()).hexdigest()
         result = self.run_transport("--tier", "standard", case="mutate-retry")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(

@@ -125,6 +125,110 @@ class AdvisorCliTests(unittest.TestCase):
         result = self.run_cli("--json", "models", "add", model)
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_cli_output_contract_for_both_rendering_modes(self) -> None:
+        user_home = self.root / "user-home"
+        user_home.mkdir()
+        env = {**self.env, "HOME": str(user_home)}
+        show_keys = "account_availability catalog_present deadline_seconds legacy_settings live_config message selection_revision selections status usage_journal_enabled"
+        error_keys = "error message status"
+        settings_keys = "message settings status"
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        journal_record = {
+            "schema_version": 1, "consultation_id": str(uuid.uuid4()),
+            "started_at": now, "finished_at": now,
+            "tier": "standard", "model": "manual/model", "effort": "high",
+            "outcome": "failed", "transport_contract_version": "1.4",
+            "total_duration_ms": 1,
+            "attempts": [{"number": 1, "duration_ms": 1, "outcome": "runtime_failed",
+                          "usage": {"input": None, "cached_input": None, "output": None, "reasoning": None}}],
+            "totals": {"input": None, "cached_input": None, "output": None, "reasoning": None},
+        }
+        rows = [
+            (("show",), 0, show_keys, "Advisor live configuration and local non-selection settings"),
+            (("status",), 0, show_keys, "Advisor live configuration and local non-selection settings"),
+            (("models", "list"), 0, "catalog message models shipped status", "Advisor shipped, manual, and discovered model evidence"),
+            (("models", "add", "manual/model"), 0, "catalog message status", "Manual candidate recorded; compatibility is unverified"),
+            (("models", "add", "bad model"), 2, error_keys, "unsafe model selector"),
+            (("resolve", "--tier", "standard"), 0, "launch message status", "Immutable Advisor launch record"),
+            (("deadline",), 0, "deadline_seconds message selection_revision status", "Advisor total deadline"),
+            (("deadline", "120"), 0, "deadline_seconds message selection_revision status", "Advisor total deadline saved"),
+            (("set", "--tier", "standard", "--model", "manual/model", "--effort", "high"), 2, error_keys, "set is legacy-only; edit the installed advisor.toml for --tier consultations"),
+            (("reset",), 2, error_keys, "reset is legacy-only; edit the installed advisor.toml for --tier consultations"),
+            (("restore",), 0, settings_keys, "Prior legacy settings restored; --tier continues to use advisor.toml"),
+            (("preset", "trial", "--model", "manual/model", "--effort", "high"), 2, error_keys, "preset model and effort are not currently compatible"),
+            (("journal", "status"), 0, "enabled message records status", "Content-free usage journal status"),
+            (("journal", "enable"), 0, settings_keys, "Usage journal enabled"),
+            (("journal", "status"), 0, "enabled message records status", "Content-free usage journal status"),
+            (("_journal-record", json.dumps(journal_record)), 0, "message status written", "Usage journal record processed"),
+            (("journal", "disable"), 0, settings_keys, "Usage journal disabled"),
+            (("journal", "status"), 0, "enabled message records status", "Content-free usage journal status"),
+            (("journal", "clear"), 0, "cleared message status", "Usage journal cleared"),
+            (("_journal-record", "{}"), 2, error_keys, "invalid usage journal record keys"),
+            (("_consume-canary", "bad"), 2, error_keys, "invalid canary authorization"),
+            (("_consume-canary",), 0, "launch message status", "Authorized synthetic canary"),
+            (("doctor",), 0, "account_availability catalog current_compatibility dependencies discovery_protocol errors last_content_free_failure launch_eligibility live_config message parent_runtime prior_settings_backup settings stale_selections status", "Local read-only Advisor diagnostics"),
+            (("unknown-command",), 2, "", ""),
+        ]
+        journal_enabled = False
+        for args, exit_code, keys, message in rows:
+            for as_json in (True, False):
+                with self.subTest(args=args, as_json=as_json):
+                    call_args = args
+                    if args[0] == "_consume-canary" and len(args) == 1:
+                        token = ("a" if as_json else "b") * 32
+                        canaries = self.home / "advisor" / "canaries"
+                        canaries.mkdir(mode=0o700, exist_ok=True)
+                        authorization = canaries / f"{token}.json"
+                        authorization.write_text(json.dumps({
+                            "model": "manual/model", "effort": "high",
+                            "codex_version": "codex-cli 0.153.2",
+                            "transport_contract_version": "1.4",
+                            "expires_at": int(time.time()) + 300,
+                        }))
+                        authorization.chmod(0o600)
+                        call_args = (*args, token)
+                    result = self.run_cli(*(('--json',) if as_json else ()), *call_args, env=env)
+                    self.assertEqual(result.returncode, exit_code, result.stderr)
+                    if args[0] == "unknown-command":
+                        self.assertEqual(result.stdout, "")
+                        self.assertTrue(result.stderr.startswith("usage: advisor-config.sh"))
+                        self.assertIn("invalid choice: 'unknown-command'", result.stderr)
+                        continue
+                    payload = json.loads(result.stdout)
+                    self.assertEqual(sorted(payload), sorted(keys.split()))
+                    self.assertEqual(payload["status"], "ok" if exit_code == 0 else "unavailable")
+                    self.assertEqual(payload["message"], message)
+                    if exit_code == 2:
+                        self.assertEqual(payload["error"], message)
+                    else:
+                        self.assertNotIn("error", payload)
+                    compact = as_json or (exit_code == 0 and args[0] in {
+                        "resolve", "_consume-canary", "_journal-record"
+                    })
+                    expected = json.dumps(payload, sort_keys=True,
+                                          separators=(",", ":") if compact else None,
+                                          indent=None if compact else 2) + "\n"
+                    self.assertEqual(result.stdout, expected)
+                    if args == ("journal", "enable"):
+                        journal_enabled = True
+                    elif args == ("journal", "disable"):
+                        journal_enabled = False
+                    if args[0] == "journal" and args[1] == "status":
+                        self.assertIs(payload["enabled"], journal_enabled)
+                    if args[0] == "_journal-record" and exit_code == 0:
+                        self.assertIs(payload["written"], True)
+                    if args[0] == "resolve":
+                        launch = payload["launch"]
+                        self.assertEqual(sorted(launch), sorted("config_path deadline_seconds effort model selection_revision selection_source source_revision tier transport_contract_version".split()))
+                        self.assertEqual((launch["model"], launch["effort"], launch["deadline_seconds"], launch["selection_source"]),
+                                         ("gpt-5.6-terra", "high", 300, "live-config"))
+                        self.assertEqual(launch["selection_revision"], launch["source_revision"])
+                    if args[0] == "_consume-canary" and exit_code == 0:
+                        launch = payload["launch"]
+                        self.assertEqual(sorted(launch), sorted("codex_version deadline_seconds effort model selection_revision selection_source tier transport_contract_version".split()))
+                        self.assertEqual((launch["model"], launch["effort"], launch["selection_source"]),
+                                         ("manual/model", "high", "authorized-synthetic-canary"))
+
     def test_help_json_cold_start_and_doctor_inspect_actual_parent(self) -> None:
         help_result = self.run_cli("--help")
         self.assertEqual(help_result.returncode, 0)

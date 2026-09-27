@@ -9,22 +9,63 @@ import os
 import signal
 import stat
 import subprocess
+import sys
 import tempfile
 import threading
 import time
 import unittest
 from contextlib import redirect_stderr
 from pathlib import Path
+from unittest import mock
 
 
 MODULE = Path(__file__).resolve().parents[1] / "scripts" / "advisor_config.py"
 SPEC = importlib.util.spec_from_file_location("advisor_config", MODULE)
 assert SPEC and SPEC.loader
 config = importlib.util.module_from_spec(SPEC)
-import sys
-
 sys.modules[SPEC.name] = config
 SPEC.loader.exec_module(config)
+
+CONFIG_FACADE_NAMES = (
+    "AppServerDiscovery",
+    "ConfigError",
+    "DiscoveryError",
+    "DiscoveryUnavailable",
+    "MAX_LIVE_CONFIG_BYTES",
+    "ProcessUnavailable",
+    "RevisionConflict",
+    "_atomic_write",
+    "_run_bounded_output",
+    "_run_compatibility_wrapper",
+    "add_manual_candidate",
+    "baseline_settings",
+    "clear_usage_journal",
+    "compatibility_is_current",
+    "live_config_path",
+    "load_catalog",
+    "load_live_config",
+    "load_settings",
+    "load_shipped_models",
+    "normalize_discovery_pages",
+    "read_json",
+    "record_compatibility",
+    "refresh_catalog",
+    "reset_selections",
+    "resolve_selection",
+    "restore_prior_settings",
+    "save_preset",
+    "save_settings",
+    "set_deadline",
+    "set_selection",
+    "set_usage_journal",
+    "shipped_default_launch_eligible",
+    "state_paths",
+    "validate_compatibility",
+    "validate_journal_record",
+    "validate_settings",
+    "validate_shipped_models",
+    "write_usage_journal",
+)
 
 
 class AdvisorConfigTests(unittest.TestCase):
@@ -36,6 +77,22 @@ class AdvisorConfigTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.tmp.cleanup()
+
+    def test_config_facade_exposes_plugin_test_namespace(self) -> None:
+        for name in CONFIG_FACADE_NAMES:
+            with self.subTest(name=name):
+                self.assertTrue(hasattr(config, name), name)
+
+    def test_plugin_file_anchors_remain_under_root(self) -> None:
+        root = MODULE.parents[1]
+        self.assertEqual(config.live_config_path(), root / "advisor.toml")
+        self.assertEqual(config.load_live_config()["path"], str(root / "advisor.toml"))
+        models = root / "models.json"
+        self.assertEqual(config.load_shipped_models(), json.loads(models.read_text()))
+        for name in ("run-advisor.sh", "inspect-parent-runtime.sh"):
+            with self.subTest(name=name):
+                self.assertEqual((MODULE.parent / name).resolve().parent, root / "scripts")
+                self.assertTrue((MODULE.parent / name).is_file())
 
     def test_defaults_are_read_only_and_do_not_initialize_state(self) -> None:
         self.assertEqual(
@@ -150,13 +207,23 @@ class AdvisorConfigTests(unittest.TestCase):
         )
 
     def test_pristine_defaults_resolve_without_cli_probe_or_state(self) -> None:
-        original = config.current_codex_version
-        config.current_codex_version = lambda: (_ for _ in ()).throw(AssertionError())
-        try:
+        fake_bin = Path(self.tmp.name) / "bin"
+        fake_bin.mkdir()
+        fake = fake_bin / "codex"
+        marker = Path(self.tmp.name) / "codex-probed"
+        fake.write_text(
+            '#!/bin/sh\nprintf called > "$CODEX_PROBE_MARKER"\n'
+            'printf "codex-cli 0.153.2\\n"\n'
+        )
+        fake.chmod(0o700)
+        with mock.patch.dict(
+            os.environ,
+            {"PATH": f"{fake_bin}:{os.environ['PATH']}", "CODEX_PROBE_MARKER": str(marker)},
+        ):
             standard = config.resolve_selection("standard", paths=self.paths)
+            self.assertFalse(marker.exists())
             specialist = config.resolve_selection("specialist", paths=self.paths)
-        finally:
-            config.current_codex_version = original
+            self.assertFalse(marker.exists())
         self.assertEqual(
             (standard["model"], standard["effort"]), ("gpt-5.6-terra", "high")
         )
@@ -164,6 +231,29 @@ class AdvisorConfigTests(unittest.TestCase):
             (specialist["model"], specialist["effort"]), ("gpt-6-sol", "high")
         )
         self.assertFalse(self.paths.root.exists())
+
+    def test_bounded_probe_caps_output_and_reaps_on_timeout(self) -> None:
+        probe = (
+            "import os, sys, time; "
+            "open(sys.argv[1], 'w').write(str(os.getpid())); "
+            "os.write(1, b'x' * 128) if sys.argv[2] == 'output' else None; "
+            "time.sleep(30)"
+        )
+        for case, limit, message in (
+            ("output", 16, "local process probe exceeded output limit"),
+            ("timeout", 16, "local process probe is unavailable"),
+        ):
+            with self.subTest(case=case):
+                marker = Path(self.tmp.name) / f"{case}-pid"
+                with self.assertRaisesRegex(config.ConfigError, message):
+                    config._run_bounded_output(
+                        [sys.executable, "-u", "-c", probe, str(marker), case],
+                        timeout_seconds=0.5,
+                        max_bytes=limit,
+                    )
+                pid = int(marker.read_text())
+                with self.assertRaises(ProcessLookupError):
+                    os.kill(pid, 0)
 
     def test_shipped_catalog_rejects_malformed_defaults_and_baselines(self) -> None:
         shipped = config.load_shipped_models()
@@ -201,10 +291,8 @@ class AdvisorConfigTests(unittest.TestCase):
             config.resolve_selection("standard", preset="future", paths=self.paths)
 
     def test_live_config_requires_exact_safe_toml_and_accepts_future_selector(self) -> None:
-        original = config.live_config_path
         candidate = Path(self.tmp.name) / "advisor.toml"
-        config.live_config_path = lambda: candidate
-        try:
+        with mock.patch.object(config, "live_config_path", return_value=candidate):
             candidate.write_text(
                 "[standard]\nmodel = \"future/provider-2049\"\neffort = \"max\"\n"
                 "[specialist]\nmodel = \"gpt-6-astra\"\neffort = \"high\"\n"
@@ -225,12 +313,9 @@ class AdvisorConfigTests(unittest.TestCase):
             candidate.symlink_to(Path(self.tmp.name) / "target")
             with self.assertRaisesRegex(config.ConfigError, "advisor.toml"):
                 config.load_live_config()
-        finally:
-            config.live_config_path = original
 
     def test_live_config_opens_nofollow_and_rejects_nonregular_files_without_blocking(self) -> None:
-        original_path = config.live_config_path
-        original_open = config.os.open
+        original_open = os.open
         candidate = Path(self.tmp.name) / "advisor.toml"
         target = Path(self.tmp.name) / "target.toml"
         target.write_text(
@@ -239,38 +324,30 @@ class AdvisorConfigTests(unittest.TestCase):
             encoding="utf-8",
         )
         candidate.write_bytes(target.read_bytes())
-        config.live_config_path = lambda: candidate
 
         def replace_before_open(path: Path, flags: int) -> int:
             candidate.unlink()
             candidate.symlink_to(target)
-            config.os.open = original_open
             return original_open(path, flags)
 
-        try:
-            config.os.open = replace_before_open
-            with self.assertRaisesRegex(config.ConfigError, "advisor.toml"):
-                config.load_live_config()
+        with mock.patch.object(config, "live_config_path", return_value=candidate):
+            with mock.patch.object(os, "open", side_effect=replace_before_open):
+                with self.assertRaisesRegex(config.ConfigError, "advisor.toml"):
+                    config.load_live_config()
             candidate.unlink()
             os.mkfifo(candidate)
             started = time.monotonic()
             with self.assertRaisesRegex(config.ConfigError, "regular file"):
                 config.load_live_config()
             self.assertLess(time.monotonic() - started, 1.0)
-        finally:
-            config.os.open = original_open
-            config.live_config_path = original_path
 
     def test_live_config_caps_a_file_that_grows_after_open(self) -> None:
-        original_path = config.live_config_path
-        original_read = config.os.read
         candidate = Path(self.tmp.name) / "advisor.toml"
         candidate.write_text(
             '[standard]\nmodel = "gpt-5.6-terra"\neffort = "high"\n'
             '[specialist]\nmodel = "gpt-6-sol"\neffort = "high"\n',
             encoding="utf-8",
         )
-        config.live_config_path = lambda: candidate
         delivered = 0
 
         def growing_read(descriptor: int, count: int) -> bytes:
@@ -280,14 +357,13 @@ class AdvisorConfigTests(unittest.TestCase):
             delivered += len(chunk)
             return chunk
 
-        try:
-            config.os.read = growing_read
+        with (
+            mock.patch.object(config, "live_config_path", return_value=candidate),
+            mock.patch.object(os, "read", side_effect=growing_read),
+        ):
             with self.assertRaisesRegex(config.ConfigError, "too large"):
                 config.load_live_config()
-            self.assertEqual(delivered, config.MAX_LIVE_CONFIG_BYTES + 1)
-        finally:
-            config.os.read = original_read
-            config.live_config_path = original_path
+        self.assertEqual(delivered, config.MAX_LIVE_CONFIG_BYTES + 1)
 
     def test_reset_only_restores_selections(self) -> None:
         settings = config.baseline_settings()
@@ -330,12 +406,9 @@ class AdvisorConfigTests(unittest.TestCase):
                 raise OSError("simulated write failure")
             original(path, value)
 
-        config._atomic_write = fail_settings
-        try:
+        with mock.patch.object(config, "_atomic_write", side_effect=fail_settings):
             with self.assertRaises(OSError):
                 config.set_deadline(120, paths=self.paths)
-        finally:
-            config._atomic_write = original
         self.assertEqual(self.paths.settings.read_bytes(), active_bytes)
         self.assertEqual(self.paths.prior_settings.read_bytes(), prior_bytes)
         self.assertFalse(list(self.paths.root.glob(".*.tmp")))

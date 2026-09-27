@@ -173,7 +173,7 @@ class UsageTests(unittest.TestCase):
         self.assertEqual(len(list(self.paths.journal.glob("*.json"))), 8)
         with (
             mock.patch.object(
-                config, "_atomic_write", side_effect=OSError("private content")
+                sys.modules["advisor_journal"], "_atomic_write", side_effect=OSError("private content")
             ),
             self.assertRaises(OSError),
         ):

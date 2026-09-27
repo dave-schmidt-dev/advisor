@@ -292,7 +292,7 @@ class AdvisorConfigTests(unittest.TestCase):
 
     def test_live_config_requires_exact_safe_toml_and_accepts_future_selector(self) -> None:
         candidate = Path(self.tmp.name) / "advisor.toml"
-        with mock.patch.object(config, "live_config_path", return_value=candidate):
+        with mock.patch.object(sys.modules["advisor_settings"], "live_config_path", return_value=candidate):
             candidate.write_text(
                 "[standard]\nmodel = \"future/provider-2049\"\neffort = \"max\"\n"
                 "[specialist]\nmodel = \"gpt-6-astra\"\neffort = \"high\"\n"
@@ -330,7 +330,7 @@ class AdvisorConfigTests(unittest.TestCase):
             candidate.symlink_to(target)
             return original_open(path, flags)
 
-        with mock.patch.object(config, "live_config_path", return_value=candidate):
+        with mock.patch.object(sys.modules["advisor_settings"], "live_config_path", return_value=candidate):
             with mock.patch.object(os, "open", side_effect=replace_before_open):
                 with self.assertRaisesRegex(config.ConfigError, "advisor.toml"):
                     config.load_live_config()
@@ -358,7 +358,7 @@ class AdvisorConfigTests(unittest.TestCase):
             return chunk
 
         with (
-            mock.patch.object(config, "live_config_path", return_value=candidate),
+            mock.patch.object(sys.modules["advisor_settings"], "live_config_path", return_value=candidate),
             mock.patch.object(os, "read", side_effect=growing_read),
         ):
             with self.assertRaisesRegex(config.ConfigError, "too large"):
@@ -399,14 +399,14 @@ class AdvisorConfigTests(unittest.TestCase):
         active_bytes = self.paths.settings.read_bytes()
         prior_bytes = self.paths.prior_settings.read_bytes()
         self.assertNotEqual(active_bytes, prior_bytes)
-        original = config._atomic_write
+        original = sys.modules["advisor_settings"]._atomic_write
 
         def fail_settings(path: Path, value: object) -> None:
             if path == self.paths.settings:
                 raise OSError("simulated write failure")
             original(path, value)
 
-        with mock.patch.object(config, "_atomic_write", side_effect=fail_settings):
+        with mock.patch.object(sys.modules["advisor_settings"], "_atomic_write", side_effect=fail_settings):
             with self.assertRaises(OSError):
                 config.set_deadline(120, paths=self.paths)
         self.assertEqual(self.paths.settings.read_bytes(), active_bytes)

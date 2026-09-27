@@ -21,7 +21,7 @@ CONFIG_WRAPPER = ROOT / "scripts" / "advisor-config.sh"
 TRANSPORT = ROOT / "scripts" / "run-advisor.sh"
 PROCESS = ROOT / "scripts" / "advisor_process.py"
 CONFIG_MODULE = ROOT / "scripts" / "advisor_config.py"
-HELPERS = ("advisor_config.py", "advisor_state.py", "advisor_catalog.py", "advisor_settings.py", "advisor_journal.py", "advisor_discovery.py", "advisor_canary.py", "advisor_process.py", "inspect-agent-runtime.sh")
+HELPERS = ("advisor_config.py", "advisor_state.py", "advisor_catalog.py", "advisor_settings.py", "advisor_journal.py", "advisor_discovery.py", "advisor_canary.py", "advisor_doctor.py", "advisor_process.py", "inspect-agent-runtime.sh")
 SPEC = importlib.util.spec_from_file_location("transport_advisor_config", CONFIG_MODULE)
 assert SPEC and SPEC.loader
 config = importlib.util.module_from_spec(SPEC)

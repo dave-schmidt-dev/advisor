@@ -62,7 +62,7 @@ threshold: 3
 rationale: Overnight work stops at a validated local checkpoint without live installation, push, marketplace mutation, or publication.
 
 ### INV-10 — Visible consultation lifecycle
-area: ["plugins/advisor/skills/consultation/**", "plugins/advisor/scripts/verify.sh", "README.md", "SPEC.md"]
+area: ["plugins/advisor/skills/consultation/**", "plugins/advisor/scripts/verify.sh", "tests/verify/**", "README.md", "SPEC.md"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
 rationale: Every consult emits a visible running `ADVISOR CALL` receipt and a completed or unavailable `ADVISOR RESULT` receipt; unavailable evidence records `decision: blocked` and remains fail-closed, receipts do not replace runtime proof, the distinct Codex consultation thread remains inspectable, and skips emit neither receipt nor transport invocation. A nonempty shell-tool `session_id` is nonterminal: the caller drains that exact handle, preserves all tool output, requires terminal exit, emits exactly one schema-v3 envelope, and only then renders a receipt; an outer wait or heartbeat is never result evidence.
@@ -76,7 +76,7 @@ rationale: The root completes repository and web research before consultation an
 The root may assign bounded evidence gathering to separate research workers before assembling the decision packet; the consulted advisor still uses zero tools and never delegates.
 
 ### INV-12 — Redacted deferred audit
-area: ["plugins/advisor/scripts/advisor-audit.sh", "plugins/advisor/scripts/verify.sh", "plugins/advisor/skills/consultation/references/operations.md", "README.md", "SPEC.md"]
+area: ["plugins/advisor/scripts/advisor-audit.sh", "plugins/advisor/scripts/verify.sh", "tests/verify/**", "plugins/advisor/skills/consultation/references/operations.md", "README.md", "SPEC.md"]
 gate_test: plugins/advisor/scripts/verify.sh
 threshold: 3
 rationale: Audit schema v2 is read-only, progress-visible, window-bounded, and aggregate-only; it resolves exact current child identity from full-file metadata before windowing activity, keeps exact top-level decision counts, child sessions, completed role-bearing parent spawns, request coverage, and role-free child-correlated activity separate, never infers completion or selected role from corroboration, reports unavailable completion evidence explicitly, and never emits session content, identifiers, filenames, paths, contact data, secret-shaped values, or costs.

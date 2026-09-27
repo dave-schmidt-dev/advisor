@@ -4,4 +4,3 @@
 # over 800 lines when this rule was adopted: split them when next substantially changed,
 # then delete the entry. Entries record a reason, never a line cap.
 plugins/advisor/scripts/advisor_config.py legacy 2026-09-27: over 800 lines when the rule was adopted; removed by the refactor plan
-plugins/advisor/scripts/verify.sh legacy 2026-09-27: over 800 lines when the rule was adopted; removed by the refactor plan

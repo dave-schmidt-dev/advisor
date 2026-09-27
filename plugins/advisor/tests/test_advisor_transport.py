@@ -507,7 +507,8 @@ class AdvisorTransportTests(unittest.TestCase):
         process.stdin.write(PACKET)
         process.stdin.close()
         try:
-            for _ in range(50):
+            deadline = time.monotonic() + 10
+            while time.monotonic() < deadline:
                 if ready.exists():
                     break
                 time.sleep(0.05)

@@ -33,8 +33,9 @@ sh plugins/advisor/scripts/verify.sh --static
 ### Git hooks
 
 `pre-commit install` installs both stages (`pre-commit` and `pre-push`).
-- `pre-commit` runs Ruff linting (`ruff-check`) and Vulture dead-code detection (`vulture`).
-- `pre-push` runs the full verification suites: `advisor-verify` (`sh plugins/advisor/scripts/verify.sh`), `upload-readiness-tests` (`python3 -m unittest public-release/test_upload_readiness.py`), and `site-playwright` (`npm --prefix web-tests test`).
+- `pre-commit` runs Ruff linting (`ruff-check`), Vulture dead-code detection (`vulture`), and `file-size` (`python3 scripts/check_file_size.py --staged`).
+- `pre-push` runs `file-size-all` (`python3 scripts/check_file_size.py --all`), `repo-tests` (`python3 -m unittest discover -s tests -p 'test_*.py'`), and the full verification suites: `advisor-verify` (`sh plugins/advisor/scripts/verify.sh`), `upload-readiness-tests` (`python3 -m unittest public-release/test_upload_readiness.py`), and `site-playwright` (`npm --prefix web-tests test`).
+- `.file-size-exceptions` records a reason for each existing file over the 800-line limit; files above 500 lines receive a warning.
 - `web-tests` needs `npm --prefix web-tests ci` once.
 
 The implementation contract is in the [plugin skill](plugins/advisor/skills/consultation/SKILL.md),

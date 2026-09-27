@@ -1,6 +1,7 @@
 # Git hooks configuration:
-# - pre-commit asserts fast linting (ruff-check) and dead-code analysis (vulture).
-# - pre-push asserts the full verification suites (advisor-verify, upload-readiness-tests, site-playwright).
+# - pre-commit asserts fast linting (ruff-check), dead-code analysis (vulture), and file size.
+# - pre-push asserts file size and the full verification suites (repo-tests,
+#   advisor-verify, upload-readiness-tests, site-playwright).
 
 default_install_hook_types: [pre-commit, pre-push]
 
@@ -20,6 +21,7 @@ repos:
         args:
           - plugins/advisor/scripts
           - public-release
+          - scripts
           - vulture_whitelist.py
           - --exclude
           - "*/test_*.py"
@@ -28,6 +30,27 @@ repos:
 
   - repo: local
     hooks:
+      - id: file-size
+        name: file-size
+        entry: python3 scripts/check_file_size.py --staged
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+      - id: file-size-all
+        name: file-size-all
+        entry: python3 scripts/check_file_size.py --all
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+      - id: repo-tests
+        name: repo-tests
+        entry: python3 -m unittest discover -s tests -p 'test_*.py'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
       - id: advisor-verify
         name: advisor-verify
         entry: sh plugins/advisor/scripts/verify.sh

@@ -33,7 +33,7 @@ script_dir=$(CDPATH= cd "$(dirname "$0")" && pwd) || fail "script directory unav
 command -v python3 >/dev/null 2>&1 || fail "python3 is unavailable"
 command -v codex >/dev/null 2>&1 || fail "codex CLI is unavailable"
 command -v jq >/dev/null 2>&1 || fail "jq is unavailable"
-for helper in advisor_config.py advisor_process.py inspect-agent-runtime.sh; do
+for helper in advisor_config.py advisor_state.py advisor_process.py inspect-agent-runtime.sh; do
   [ -f "$script_dir/$helper" ] && [ ! -L "$script_dir/$helper" ] || fail "installed Advisor helper is unsafe"
 done
 if [ -n "$canary_token" ]; then

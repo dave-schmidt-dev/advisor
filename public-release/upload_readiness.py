@@ -251,7 +251,10 @@ def verify_upload_ready(repo: Path, archive: Path, fetch: Callable[[str], FetchR
     """Produce current evidence that a precise local archive is safe to upload."""
     repo = repo.resolve()
     progress("checking Git-bound plugin inventory and archive")
-    inventory = collect_inventory(repo)
+    try:
+        inventory = collect_inventory(repo)
+    except CandidateError as error:
+        raise ReadinessError("candidate inventory is not upload ready") from error
     _safe_regular(archive, "candidate archive")
     try:
         validate_archive(inventory, archive)

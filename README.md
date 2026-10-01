@@ -1,13 +1,18 @@
 # Codex Advisor
 
 Codex Advisor automatically adds a fresh, read-only second opinion when Codex
-identifies a material technical decision. It cannot change files, run commands,
-browse the web, implement work, deploy, or make the final decision.
+identifies a material technical decision. The consultation child is launched in
+a read-only sandbox and instructed to use zero tools; after execution the
+launcher inspects the recorded runtime and rejects the result if it observes
+any tool call. This is a post-execution acceptance check, not preventive tool
+isolation. Rejection cannot undo information already processed through a
+prohibited tool call. Advisor does not implement, deploy, or make the final decision.
 
 ## Install
 
 Install [**Codex Advisor** from the official Plugins Directory](https://chatgpt.com/plugins/plugins_6a984f37e9c88191a2a777998f7b0521). It requires
-**Codex CLI** or **Codex desktop**; generic ChatGPT is not a supported runtime.
+**Codex CLI** or **Codex desktop** and `python3` 3.11 or newer (the launcher
+uses the standard-library `tomllib` module); generic ChatGPT is not a supported runtime.
 
 Advisor uses Standard (Terra/high) for ordinary bounded material architecture,
 interface, data-model, and generic-advisor decisions. It uses Specialist (GPT-6.1 Sol/high)
@@ -54,6 +59,12 @@ exact marketplace ZIP, verify its tag/source and downloaded asset SHA-256 separa
 then run `public-release/verify-upload-ready.sh` immediately before the owner uploads.
 Completion requires the website, descriptions, GitHub release, and owner-confirmed
 marketplace publication; a ZIP alone is only a candidate.
+
+The candidate inventory gate requires byte-exact plugin copies of the root
+`LICENSE` and `NOTICE.md` at `plugins/advisor/LICENSE` and
+`plugins/advisor/NOTICE.md`, so the tracked plugin archive always ships the
+upstream copyright and permission notice; a missing or tampered plugin notice
+copy fails the gate.
 
 ## Selection and discovery
 

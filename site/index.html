@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <title>Codex Advisor — Read-only second opinions</title>
 <meta name="description" content="Codex Advisor adds read-only advice for material Codex decisions, plus an explicit-only Astra role for the most complex uses.">
-<meta name="advisor-release" content="1.4.8">
+<meta name="advisor-release" content="1.4.9">
 <meta property="og:title" content="Codex Advisor">
 <meta property="og:description" content="Read-only second opinions for material Codex decisions.">
 <meta property="og:type" content="website">
@@ -28,7 +28,7 @@
 </header>
 <div class="hero">
     <div class="wrap">
-        <span class="status-pill">Open source &middot; Candidate documentation v1.4.8</span>
+        <span class="status-pill">Open source &middot; Candidate documentation v1.4.9</span>
         <h1>Codex Advisor</h1>
         <p class="subhead">Automatic read-only advice for material Codex decisions, with smart defaults and optional models. It advises; your main agent decides.</p>
         <div class="cta-row">
@@ -42,10 +42,10 @@
     <h2 id="what">What it does</h2>
     <ol class="steps">
         <li><strong>Finds the decision.</strong><span>Ordinary architecture and interfaces, or evidence-unresolved system boundaries, recovery, trust, and competing diagnoses.</span></li>
-        <li><strong>Challenges it read-only.</strong><span>The advisor gets a bounded packet, no tools, and no write access.</span></li>
+        <li><strong>Challenges it read-only.</strong><span>The advisor gets a bounded packet in a read-only sandbox and is instructed to use zero tools.</span></li>
         <li><strong>Returns the call.</strong><span>Your main agent accepts, changes, or rejects the recommendation.</span></li>
     </ol>
-    <div class="callout"><p>The consultation child is verified read-only and tool-free. Direct invocation of installed advisor profiles is unsupported.</p></div>
+    <div class="callout"><p>The consultation child runs read-only with post-execution runtime validation: the launcher inspects the recorded runtime after execution and rejects the result on any observed tool call. Direct invocation of installed advisor profiles is unsupported.</p></div>
 </section>
 <section aria-labelledby="models">
     <h2 id="models">Choose your models</h2>

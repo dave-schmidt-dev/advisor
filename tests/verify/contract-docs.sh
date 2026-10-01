@@ -24,7 +24,7 @@ ui=Path(sys.argv[7]).read_text()
 models=json.loads(Path(sys.argv[8]).read_text())
 live=tomllib.loads(Path(sys.argv[9]).read_text())
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or version!="1.4.8": raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or version!="1.4.9": raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if author_name!="David Schmidt / Zero Delta LLC": raise SystemExit("plugin developer identity")
@@ -33,7 +33,8 @@ interface=manifest.get("interface",{})
 if {key: interface.get(key) for key in ("websiteURL","supportURL","privacyPolicyURL","termsOfServiceURL")} != {"websiteURL":"https://zerodelta.dev/advisor/","supportURL":"https://zerodelta.dev/advisor/support/","privacyPolicyURL":"https://zerodelta.dev/advisor/privacy/","termsOfServiceURL":"https://zerodelta.dev/advisor/terms/"}: raise SystemExit("manifest URL fields")
 if interface.get("category")!="Developer Tools": raise SystemExit("manifest category")
 if interface.get("shortDescription")!="Architecture and code advice.": raise SystemExit("manifest short description")
-if "Zero Delta receives no packets" not in interface.get("longDescription",""): raise SystemExit("manifest relay disclosure")
+if "does not automatically receive consultation packets or responses" not in interface.get("longDescription",""): raise SystemExit("manifest automatic-relay disclosure")
+if "covered by the privacy policy" not in interface.get("longDescription",""): raise SystemExit("manifest support-receipt privacy disclosure")
 if models.get("transport_contract_version")!="1.4" or models.get("tested_codex_cli")!="codex-cli 0.153.2": raise SystemExit("model transport provenance")
 if models.get("defaults")!={"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-6.1-sol","effort":"high"}}: raise SystemExit("model defaults")
 if live != {"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-6.1-sol","effort":"high"}}: raise SystemExit("live config defaults")
@@ -61,6 +62,12 @@ if "allow_implicit_invocation: true" not in ui or "interface:" not in ui or "pol
 print("structured files valid")
 PY
 pass "manifest, marketplace, live TOML, YAML, and 6/4/4 evaluator fixtures"
+
+[ -f "$plugin_dir/LICENSE" ] || fail "missing plugin license copy: $plugin_dir/LICENSE"
+[ -f "$plugin_dir/NOTICE.md" ] || fail "missing plugin notice copy: $plugin_dir/NOTICE.md"
+cmp -s "$license" "$plugin_dir/LICENSE" || fail "plugin LICENSE does not byte-match the root LICENSE"
+cmp -s "$notice" "$plugin_dir/NOTICE.md" || fail "plugin NOTICE does not byte-match the root NOTICE.md"
+pass "plugin ships byte-exact root LICENSE and NOTICE.md copies"
 
 for phrase in \
   'ordinary bounded material architecture' 'interface' 'data-model' 'compatibility' \

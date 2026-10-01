@@ -1,6 +1,6 @@
 {
   "name": "advisor",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "description": "One fresh, read-only consultation for material technical decisions in Codex CLI and Codex desktop.",
   "author": {
     "name": "David Schmidt / Zero Delta LLC"
@@ -18,7 +18,7 @@
   "interface": {
     "displayName": "Codex Advisor",
     "shortDescription": "Architecture and code advice.",
-    "longDescription": "Codex Advisor helps software developers review architecture, API interfaces, data models, and migration plans in Codex CLI and Codex desktop. Each consultation returns one recommendation with tradeoffs, risks, and acceptance checks.\n\nAdvisor sends bounded technical context to OpenAI for inference through your authenticated account and allowance; Zero Delta receives no packets and runs no relay or telemetry backend. The consultation child is read-only and tool-free; the local launcher writes temporary files and Codex session records. The root agent owns implementation and final decisions; Advisor does not implement, deploy, or perform final review.\n\nRequires a local Codex host, jq, a supported POSIX shell, and a persisted session. Standard uses Terra/high, Specialist uses GPT-6.1 Sol/high, and explicit-only Astra/high is available for the most complex uses.",
+    "longDescription": "Codex Advisor helps software developers review architecture, API interfaces, data models, and migration plans in Codex CLI and Codex desktop. Each consultation returns one recommendation with tradeoffs, risks, and acceptance checks.\n\nAdvisor sends bounded technical context to OpenAI for inference through your authenticated account and allowance; Zero Delta runs no relay or telemetry backend and does not automatically receive consultation packets or responses. Redacted receipts you voluntarily share through support channels are covered by the privacy policy. The consultation child is launched in a read-only sandbox and instructed to use zero tools; after execution the launcher inspects the recorded runtime and rejects the result if it observes any tool call, which is a post-execution acceptance check, not preventive tool-free isolation. The local launcher writes temporary files and Codex session records. The root agent owns implementation and final decisions; Advisor does not implement, deploy, or perform final review.\n\nRequires Python 3.11+, a local Codex host, jq, a supported POSIX shell, and a persisted session. Standard uses Terra/high, Specialist uses GPT-6.1 Sol/high, and explicit-only Astra/high is available for the most complex uses.",
     "developerName": "David Schmidt / Zero Delta LLC",
     "websiteURL": "https://zerodelta.dev/advisor/",
     "supportURL": "https://zerodelta.dev/advisor/support/",

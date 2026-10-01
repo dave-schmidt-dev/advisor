@@ -20,6 +20,12 @@ from typing import Iterable
 PLUGIN_PREFIX = "plugins/advisor/"
 ARCHIVE_PREFIX = "advisor/"
 MANIFEST_PATH = "plugins/advisor/.codex-plugin/plugin.json"
+ROOT_LICENSE = "LICENSE"
+ROOT_NOTICE = "NOTICE.md"
+NOTICE_COPIES = (
+    (ROOT_LICENSE, PLUGIN_PREFIX + ROOT_LICENSE, "license"),
+    (ROOT_NOTICE, PLUGIN_PREFIX + ROOT_NOTICE, "notice"),
+)
 ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 ZIP_REGULAR_MODE = 0o100644
 ZIP_EXECUTABLE_MODE = 0o100755
@@ -198,6 +204,42 @@ def _manifest_version(repo: Path, source_paths: set[str]) -> str:
     return version
 
 
+def _root_notice_bytes(repo: Path, root_relative: str) -> bytes | None:
+    """Return the immutable root notice bytes, or ``None`` without the root file."""
+    root_path = repo / root_relative
+    try:
+        mode = root_path.lstat().st_mode
+    except FileNotFoundError:
+        return None
+    except OSError as error:
+        raise CandidateError(f"could not inspect the root {root_relative}") from error
+    if stat.S_ISLNK(mode) or not stat.S_ISREG(mode):
+        raise CandidateError(f"root {root_relative} must be a regular file")
+    try:
+        return root_path.read_bytes()
+    except OSError as error:
+        raise CandidateError(f"could not read the root {root_relative}") from error
+
+
+def _assert_notice_parity(repo: Path, source_paths: set[str]) -> None:
+    """Require byte-exact plugin copies of the shipped root notices.
+
+    The Advisor repository ships its root license and notice, so its tracked
+    plugin inventory must carry identical copies and the packaged archive
+    automatically includes them. Synthetic fixture repositories without the
+    root notices are unaffected.
+    """
+    progress("checking root/plugin license and notice parity")
+    for root_relative, plugin_relative, label in NOTICE_COPIES:
+        expected = _root_notice_bytes(repo, root_relative)
+        if expected is None:
+            continue
+        if plugin_relative not in source_paths:
+            raise CandidateError(f"plugin {label} copy of the root {root_relative} is missing from the tracked candidate")
+        if _assert_regular_file(repo, plugin_relative).read_bytes() != expected:
+            raise CandidateError(f"plugin {label} copy does not byte-match the root {root_relative}")
+
+
 def collect_inventory(repo: Path) -> CandidateInventory:
     """Collect every safe, tracked, shippable plugin file from ``repo``."""
     repo = repo.resolve()
@@ -206,6 +248,7 @@ def collect_inventory(repo: Path) -> CandidateInventory:
     tracked = _tracked_plugin_paths(repo)
     source_paths = {path for path, _mode in tracked}
     version = _manifest_version(repo, source_paths)
+    _assert_notice_parity(repo, source_paths)
     progress("hashing candidate files")
     items: list[InventoryItem] = []
     for source_relative, git_mode in tracked:

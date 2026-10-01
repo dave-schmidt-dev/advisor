@@ -31,6 +31,10 @@ done
 [ -n "$role" ] || [ -n "$tier" ] || [ -n "$canary_token" ] || fail "--role or --tier is required"
 script_dir=$(CDPATH= cd "$(dirname "$0")" && pwd) || fail "script directory unavailable"
 command -v python3 >/dev/null 2>&1 || fail "python3 is unavailable"
+python3 - <<'PY' || fail "python3 must be Python 3.11+ (tomllib requirement)"
+import sys
+raise SystemExit(0 if sys.version_info >= (3, 11) else 1)
+PY
 command -v codex >/dev/null 2>&1 || fail "codex CLI is unavailable"
 command -v jq >/dev/null 2>&1 || fail "jq is unavailable"
 for helper in advisor_config.py advisor_state.py advisor_catalog.py advisor_settings.py advisor_journal.py advisor_discovery.py advisor_canary.py advisor_doctor.py advisor_process.py inspect-agent-runtime.sh; do

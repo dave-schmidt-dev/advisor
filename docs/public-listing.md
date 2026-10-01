@@ -10,7 +10,7 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | --- | --- |
 | **Plugin Name** | `advisor` |
 | **Display Name** | Codex Advisor |
-| **Version** | `1.4.8` |
+| **Version** | `1.4.9` |
 | **Category** | Developer Tools |
 | **Capabilities** | Interactive, Read |
 | **Author / Maintainer** | David Schmidt / Zero Delta LLC |
@@ -24,18 +24,37 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | **Geographic Availability** | United States |
 | **Pricing Model** | Free / Open Source (MIT); requires user's own Codex model access |
 
-**Candidate status:** Version 1.4.8 identifies the current local source candidate.
-It corrects the portal metadata findings: the manifest and marketplace listing
-now use the Developer Tools category, the manifest adds
-`interface.supportURL` at `https://zerodelta.dev/advisor/support/`, and the short
-and long descriptions are simplified and synchronized with this listing. The
-published privacy page now discloses data categories, purposes, recipients,
-retention, and controls explicitly, and the support page adds a private-support
-and privacy contact section. Model pins, runtime behavior, and the transport
-contract are unchanged. The exact candidate archive, its hash, the docs
-deployment, and the marketplace upload are finalized by the release owner; the
-upload-readiness gate verifies exact bytes before handoff. Marketplace upload
-remains owner-controlled.
+**Candidate status:** Version 1.4.9 identifies the current local source candidate.
+It is a license-distribution, support/privacy disclosure, and review-remediation
+correction with no model-pin change. The plugin ships byte-exact copies of
+the root `LICENSE` and `NOTICE.md` at `plugins/advisor/LICENSE` and
+`plugins/advisor/NOTICE.md`, so the tracked plugin inventory automatically
+includes the required upstream copyright and permission notice, and the
+candidate inventory gate enforces exact root/plugin notice parity. The
+published privacy page distinguishes no automatic transmission of consultation
+packets or responses to Zero Delta from voluntary user sharing of redacted
+receipts, and adds the public GitHub issue support disclosure. The manifest and
+this listing replace the blanket "Zero Delta receives no packets" claim with
+the accurate no-automatic-relay/telemetry wording; optional user-shared support
+receipts are covered by the privacy policy. The Developer Tools category, the
+`interface.supportURL` at `https://zerodelta.dev/advisor/support/`, and the
+short and long descriptions remain synchronized with this listing. This round
+also corrects every preventive no-tools/tool-free claim in the manifest, this
+listing, the README, and the website to the actual contract: the consultation
+child is launched in a read-only sandbox and instructed to use zero tools, and
+the launcher validates the recorded runtime after execution and rejects the
+result on any observed tool call, which is a post-execution acceptance check
+rather than preventive tool isolation. The privacy page states that a
+prohibited tool call may read additional locally accessible data before
+rejection and that rejection cannot undo information already processed by
+OpenAI. Python 3.11 or newer (the standard-library `tomllib` dependency) is
+declared in the long description and the prerequisites above, and the
+consultation launcher now runs an explicit Python version preflight before
+helper imports, packet capture, or any provider launch. Model pins and
+consultation runtime behavior are otherwise unchanged. The exact
+candidate archive, its hash, the docs deployment, and the marketplace upload
+are finalized by the release owner; the upload-readiness gate verifies exact
+bytes before handoff. Marketplace upload remains owner-controlled.
 
 **Historical website deployment status (1.4.7 snapshot):** The landing, support,
 privacy, and terms pages were deployed on 1 October 2026 for Advisor 1.4.7, and
@@ -68,9 +87,9 @@ Architecture and code advice.
 ### Long Description
 Codex Advisor helps software developers review architecture, API interfaces, data models, and migration plans in Codex CLI and Codex desktop. Each consultation returns one recommendation with tradeoffs, risks, and acceptance checks.
 
-Advisor sends bounded technical context to OpenAI for inference through your authenticated account and allowance; Zero Delta receives no packets and runs no relay or telemetry backend. The consultation child is read-only and tool-free; the local launcher writes temporary files and Codex session records. The root agent owns implementation and final decisions; Advisor does not implement, deploy, or perform final review.
+Advisor sends bounded technical context to OpenAI for inference through your authenticated account and allowance; Zero Delta runs no relay or telemetry backend and does not automatically receive consultation packets or responses. Redacted receipts you voluntarily share through support channels are covered by the privacy policy. The consultation child is launched in a read-only sandbox and instructed to use zero tools; after execution the launcher inspects the recorded runtime and rejects the result if it observes any tool call, which is a post-execution acceptance check, not preventive tool-free isolation. The local launcher writes temporary files and Codex session records. The root agent owns implementation and final decisions; Advisor does not implement, deploy, or perform final review.
 
-Requires a local Codex host, jq, a supported POSIX shell, and a persisted session. Standard uses Terra/high, Specialist uses GPT-6.1 Sol/high, and explicit-only Astra/high is available for the most complex uses.
+Requires Python 3.11+, a local Codex host, jq, a supported POSIX shell, and a persisted session. Standard uses Terra/high, Specialist uses GPT-6.1 Sol/high, and explicit-only Astra/high is available for the most complex uses.
 
 ## Surface and Host Compatibility
 
@@ -93,6 +112,7 @@ The plugin requires specific local host prerequisites to execute consultations:
 | Prerequisite | Description | Missing-State Recovery |
 | --- | --- | --- |
 | Supported Host | Codex CLI or Codex desktop | Return `route: unavailable`; no consultation transport runs. |
+| Python Runtime | `python3` 3.11 or newer (standard-library `tomllib` dependency) | The launcher reports `ADVISOR TRANSPORT: unavailable` citing Python 3.11+; no provider launch or packet capture runs. |
 | CLI Tools | `jq` command-line JSON processor installed in `$PATH` | Return `route: unavailable`; no consultation transport runs. |
 | Shell Environment | Standard POSIX shell (`sh`) | Return `route: unavailable`; no consultation transport runs. |
 | Persisted Rollout | Active persisted Codex session rollout | Return `route: unavailable`; no consultation transport runs. |
@@ -125,8 +145,9 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 2. **Mechanical Implementation:** "Rename variable `old_path` to `source_path` across all helper functions in `utils.py`." (Skips consultation; deterministic mechanical edit).
 3. **Diff Review / No Delegation:** "Review the committed git diff for typos and formatting errors, and do not delegate to an advisor." (Skips consultation; owned by review workflow and explicit no-delegation).
 
-## Candidate Notes (v1.4.8)
+## Candidate Notes (v1.4.9)
 
+- The plugin ships byte-exact copies of the root `LICENSE` and `NOTICE.md`; the candidate inventory gate rejects a missing or tampered plugin notice copy.
 - Automatic read-only advice uses configurable Standard and Specialist sections in the live bundled `advisor.toml` file.
 - Terra/high and GPT-6.1 Sol/high remain the automatic defaults.
 - Standard covers ordinary bounded material architecture, interface, data-model, and generic-advisor decisions.
@@ -141,4 +162,4 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 - The optional content-free usage journal is off by default, stores operational metadata and aggregate counters only, prunes entries older than 30 days during later writes, and enforces a bounded count without a background deletion service.
 
 The 1.4.4 publication record above remains historical and is not replaced by this
-1.4.8 candidate.
+1.4.9 candidate.

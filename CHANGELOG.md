@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.9] - 2026-10-01
+
+### Changed
+- The plugin now ships byte-exact copies of the root `LICENSE` and `NOTICE.md`
+  at `plugins/advisor/LICENSE` and `plugins/advisor/NOTICE.md`, so the tracked
+  plugin inventory automatically includes the required upstream copyright and
+  permission notice.
+- The manifest and public listing long descriptions replace the blanket
+  "Zero Delta receives no packets" claim with the accurate no-automatic-relay
+  and no-telemetry wording; voluntarily shared support receipts are covered by
+  the privacy policy.
+- The published privacy page distinguishes no automatic transmission of
+  consultation packets or responses to Zero Delta from voluntary user sharing
+  of redacted receipts, and adds the public GitHub issue support disclosure
+  (identity, content, purpose, recipients, retention, and deletion). The
+  support page keeps minimal redacted diagnostics user-initiated only. The
+  terms effective date is unchanged.
+- The manifest, public listing, README, and website no longer claim preventive
+  tool-free isolation. They now state the actual contract: the consultation
+  child is launched in a read-only sandbox and instructed to use zero tools,
+  and the launcher validates the recorded runtime after execution and rejects
+  the result on any observed tool call, which is a post-execution acceptance
+  check. The privacy page states that a prohibited tool call may read
+  additional locally accessible data before rejection and that rejection
+  cannot undo information already processed by OpenAI.
+- Python 3.11 or newer (the standard-library `tomllib` requirement) is now
+  declared in the manifest long description, the public listing prerequisites,
+  the README, and the support and terms pages.
+
+### Added
+- The candidate inventory gate now enforces exact root/plugin notice parity,
+  with candidate tests covering a missing or tampered plugin notice copy, and
+  repository verification requires the same byte-exact parity.
+- The consultation launcher now runs an explicit Python version preflight
+  immediately after the `python3` presence check and before helper imports,
+  packet capture, or any provider launch. An older Python returns the existing
+  `ADVISOR TRANSPORT: unavailable` diagnostic mentioning Python 3.11+ with no
+  traceback, and black-box regression coverage uses a synthetic old-version
+  Python to assert the failure, the diagnostic, and the absence of any
+  provider launch or packet capture.
+
 ## [1.4.8] - 2026-10-01
 
 ### Changed
@@ -44,3 +85,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.4.7]: https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.7
 
 [1.4.8]: https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.8
+
+[1.4.9]: https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.9

@@ -1,5 +1,52 @@
 # Release record
 
+## Advisor 1.4.9 package record
+
+Version `1.4.9` is a license-distribution, support/privacy disclosure, and
+review-remediation candidate with no model-pin change. The plugin now ships
+byte-exact copies of the root `LICENSE` and `NOTICE.md` at
+`plugins/advisor/LICENSE` and `plugins/advisor/NOTICE.md`, so the tracked
+plugin inventory automatically includes the required upstream copyright and
+permission notice; the candidate inventory gate enforces exact root/plugin
+notice parity, and the repository verification requires the same byte-exact
+parity. The published privacy page distinguishes no automatic transmission of
+consultation packets or responses to Zero Delta from voluntary user sharing of
+redacted receipts, and adds the public GitHub issue support disclosure with
+its data categories, purpose, recipients, retention, and deletion handling.
+The manifest and public listing long descriptions replace the blanket "Zero
+Delta receives no packets" claim with the accurate no-automatic-relay and
+no-telemetry wording, with optional user-shared support receipts covered by
+the privacy policy. The support page keeps minimal redacted diagnostics
+user-initiated only. The terms effective date and the privacy effective date
+of 1 October 2026 are unchanged.
+
+This round also remediates two independently accepted review findings. First,
+every preventive no-tools/tool-free claim in the manifest, the public
+listing, the README, and the website is corrected to the actual contract: the
+consultation child is launched in a read-only sandbox and instructed to use
+zero tools, the launcher validates the recorded runtime after execution and
+rejects the result on any observed tool call, and this is a post-execution
+acceptance check rather than preventive tool isolation. The privacy page
+states that a prohibited tool call may read additional locally accessible
+data before rejection and that rejection cannot undo information already
+processed by OpenAI. Second, Python 3.11 or newer (the standard-library
+`tomllib` dependency) is declared in the manifest long description, the
+public listing prerequisites, the README, and the support and terms pages, and
+the consultation launcher now runs an explicit Python version preflight
+immediately after the `python3` presence check and before helper imports,
+packet capture, or any provider launch; an older Python returns the existing
+`ADVISOR TRANSPORT: unavailable` diagnostic mentioning Python 3.11+ with no
+traceback, with black-box regression coverage using a synthetic old-version
+Python. Consultation runtime behavior and model pins are otherwise
+unchanged.
+
+Candidate content digest: `7746f7836ce105ce459602fa64f3e2fe1f854b4e9facc7f6cf5a7d88719c92bf`.
+
+Package: `Codex-Advisor-1.4.9.zip` (37 files), SHA-256
+`b2a740d9c8bd1abf4d0f787c73a504ce32b194f2112f79f04575b316badf2fee`. Deployment and
+GitHub publication are separate release steps; marketplace submission remains
+owner-controlled. No cleared platform checks are claimed here.
+
 ## Advisor 1.4.8 package record
 
 Version `1.4.8` is a portal-metadata, privacy, and documentation candidate with
@@ -15,7 +62,7 @@ The upload-readiness gate now requires the real manifest interface to carry
 the public support URL, the Developer Tools category, and short/long
 description parity with the public listing.
 
-Candidate content digest: `4e2e2d0bd39973cfc9596325829cc237dff2c12fb71a1a47b0e194e11c2b7a7f`.
+Historical 1.4.8 package digest: `4e2e2d0bd39973cfc9596325829cc237dff2c12fb71a1a47b0e194e11c2b7a7f`.
 
 Package: `Codex-Advisor-1.4.8.zip` (35 files), SHA-256
 `fcec34853068667e5cfbe2d19b2819f7193f9db0b3c6994a6bbfa75a54287f4f`.
@@ -180,8 +227,8 @@ The deterministic handoff archive is `Codex-Advisor-1.4.3.zip` with SHA-256
 ## Candidate contents
 
 The candidate ZIP packages only `plugins/advisor`: its single consultation skill, local
-runtime references and scripts, configuration helper, schemas, catalog, assets, and
-the three read-only advisor profiles. Repository-root documentation is not in the ZIP.
+runtime references and scripts, configuration helper, schemas, catalog, assets, byte-exact
+copies of the root license and notice, and the three read-only advisor profiles. Repository-root documentation is not in the ZIP.
 It adds no networked service component.
 
 ## Candidate preparation

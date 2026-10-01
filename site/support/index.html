@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <title>Support &amp; Troubleshooting — Codex Advisor</title>
 <meta name="description" content="Support channels, prerequisites checklist, and troubleshooting guide for the Codex Advisor plugin.">
-<meta name="advisor-release" content="1.4.8">
+<meta name="advisor-release" content="1.4.9">
 <link rel="canonical" href="https://zerodelta.dev/advisor/support/">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/style.css">
@@ -78,6 +78,7 @@
     <ol>
         <li>Codex CLI or Codex desktop is installed and operational.</li>
         <li><code>jq</code> is installed and on your <code>$PATH</code> — check with <code>which jq</code>.</li>
+        <li><code>python3</code> is Python 3.11 or newer — the launcher uses the standard-library <code>tomllib</code> module and reports <code>ADVISOR TRANSPORT: unavailable</code> on older versions.</li>
         <li>You have a <code>/bin/sh</code>-compliant POSIX shell.</li>
         <li>An active persisted Codex session rollout exists in your Codex home directory.</li>
         <li><code>CODEX_THREAD_ID</code> is set in the active parent execution context.</li>
@@ -133,7 +134,7 @@ route: unavailable</code></pre>
 
 <section aria-labelledby="private">
     <h2 id="private">9. Private support and privacy contact</h2>
-    <p>GitHub issues remain the public channel and stay searchable for everyone. For anything you would rather not file publicly — including privacy requests — email <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a>.</p>
+    <p>GitHub issues remain the public channel and stay searchable for everyone. For anything you would rather not file publicly — including privacy requests — email <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a>. Both channels are voluntary and user-initiated; how public GitHub issues and private email are handled — what they share, their recipients, retention, and deletion — is described in the <a href="../privacy/">privacy policy</a>.</p>
     <p>Include only minimal redacted diagnostics: the relevant <code>ADVISOR DECISION</code>, <code>ADVISOR CALL</code>, or <code>ADVISOR RESULT</code> receipt with secrets, credentials, and proprietary context removed. Do not send secrets or raw session logs. Advisor never contacts support automatically and sends nothing on its own; contacting Zero Delta is always your choice.</p>
 </section>
 

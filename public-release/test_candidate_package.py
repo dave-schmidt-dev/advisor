@@ -91,6 +91,17 @@ class CandidatePackageTests(unittest.TestCase):
     def _package(self, name: str) -> subprocess.CompletedProcess[str]:
         return self._run("sh", "public-release/package-candidate.sh", "--json", name)
 
+    def _add_root_notice_copies(self, plugin_copies: tuple[str, ...] = ("LICENSE", "NOTICE.md")) -> None:
+        staged = ["LICENSE", "NOTICE.md"]
+        for name in ("LICENSE", "NOTICE.md"):
+            root = self.repo / name
+            root.write_text(f"Advisor {name} fixture notice.\n", encoding="utf-8")
+            if name in plugin_copies:
+                plugin = self.repo / "plugins/advisor" / name
+                plugin.write_bytes(root.read_bytes())
+                staged.append(f"plugins/advisor/{name}")
+        self._git("add", *staged)
+
     def test_archive_is_deterministic_and_exactly_matches_inventory(self) -> None:
         inventory = self._inventory()
         first = self._package("first.zip")
@@ -122,6 +133,35 @@ class CandidatePackageTests(unittest.TestCase):
             changed = self._inventory()["digest"]
             self.assertNotEqual(changed, original)
             original = changed
+
+    def test_archive_ships_byte_exact_root_notice_copies(self) -> None:
+        self._add_root_notice_copies()
+        inventory = self._inventory()
+        names = [item["name"] for item in inventory["files"]]
+        self.assertIn("advisor/LICENSE", names)
+        self.assertIn("advisor/NOTICE.md", names)
+        self._package("notices.zip")
+        with zipfile.ZipFile(self.repo / "notices.zip") as archive:
+            self.assertEqual(archive.read("advisor/LICENSE"), (self.repo / "LICENSE").read_bytes())
+            self.assertEqual(archive.read("advisor/NOTICE.md"), (self.repo / "NOTICE.md").read_bytes())
+
+    def test_tampered_plugin_notice_copy_is_rejected(self) -> None:
+        self._add_root_notice_copies()
+        for relative in ("plugins/advisor/NOTICE.md", "plugins/advisor/LICENSE"):
+            with self.subTest(copy=relative):
+                target = self.repo / relative
+                original = target.read_bytes()
+                target.write_bytes(original + b"tampered\n")
+                result = self._run("python3", "public-release/candidate_inventory.py", "inventory", "--repo", str(self.repo), "--digest", check=False)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("byte-match", result.stderr)
+                target.write_bytes(original)
+
+    def test_missing_plugin_notice_copy_is_rejected(self) -> None:
+        self._add_root_notice_copies(("NOTICE.md",))
+        result = self._run("python3", "public-release/candidate_inventory.py", "inventory", "--repo", str(self.repo), "--digest", check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("missing", result.stderr)
 
     def test_embedded_manifest_identity_and_version_are_checked(self) -> None:
         self._package("candidate.zip")

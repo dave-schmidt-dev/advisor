@@ -79,6 +79,14 @@ Detailed, publishable information for users.
         self._git("init")
         self._git("add", ".")
 
+    def _add_notice_copies(self) -> None:
+        for name in ("LICENSE", "NOTICE.md"):
+            root = self.repo / name
+            root.write_text(f"Advisor {name} fixture notice.\n", encoding="utf-8")
+            plugin = self.repo / "plugins/advisor" / name
+            plugin.write_bytes(root.read_bytes())
+        self._git("add", "LICENSE", "NOTICE.md", "plugins/advisor/LICENSE", "plugins/advisor/NOTICE.md")
+
     def _fetch(self, url: str) -> upload_readiness.FetchResponse:
         return upload_readiness.FetchResponse(url, 200, self.live[url])
 
@@ -191,6 +199,18 @@ Detailed, publishable information for users.
                 self._assert_not_ready()
                 manifest.write_text(original, encoding="utf-8")
                 self._rebuild_archive()
+
+    def test_plugin_notice_copy_absence_or_mismatch_is_not_ready(self) -> None:
+        self._add_notice_copies()
+        self._rebuild_archive()
+        self._verify()
+        notice = self.repo / "plugins/advisor/NOTICE.md"
+        original = notice.read_bytes()
+        notice.write_bytes(original + b"tampered\n")
+        self._assert_not_ready()
+        notice.write_bytes(original)
+        (self.repo / "plugins/advisor/LICENSE").unlink()
+        self._assert_not_ready()
 
     def test_changed_archive_or_site_bytes_are_not_ready(self) -> None:
         original = self.archive.read_bytes()

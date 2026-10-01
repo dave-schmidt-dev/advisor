@@ -6,8 +6,8 @@ import hashlib
 import importlib.util
 import json
 import os
-import signal
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -126,6 +126,37 @@ if case == "mutate-retry" and attempt == 1:
 output.write_text(json.dumps(response))
 """
 
+FAKE_OLD_PYTHON = r"""#!{interpreter}
+import builtins
+import json
+import os
+import runpy
+import sys
+
+sys.version_info = (3, 9, 18, "final", 0)
+_real_import = builtins.__import__
+def _old_python_import(name, *args, **kwargs):
+    if name == "tomllib":
+        raise ImportError("No module named 'tomllib' (Python 3.11+ required)")
+    return _real_import(name, *args, **kwargs)
+builtins.__import__ = _old_python_import
+
+argv = sys.argv[1:]
+log = os.environ.get("FAKE_PYTHON_INVOCATIONS")
+if log:
+    with open(log, "a") as handle:
+        handle.write(json.dumps(argv) + "\n")
+if argv and argv[0] == "-c":
+    sys.argv = argv
+    exec(argv[1], {"__name__": "__main__", "__file__": "<string>"})
+elif argv and argv[0] == "-":
+    sys.argv = argv
+    exec(sys.stdin.read(), {"__name__": "__main__", "__file__": "<stdin>"})
+elif argv:
+    sys.argv = argv
+    runpy.run_path(argv[0], run_name="__main__")
+"""
+
 
 class AdvisorTransportTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -224,6 +255,32 @@ class AdvisorTransportTests(unittest.TestCase):
                     helper_path.unlink(missing_ok=True)
                     shutil.copy2(backup, helper_path)
                     backup.unlink()
+
+    def test_old_python_is_rejected_before_helpers_capture_or_launch(self) -> None:
+        fake_python = self.bin / "python3"
+        fake_python.write_text(
+            FAKE_OLD_PYTHON.replace("{interpreter}", sys.executable),
+            encoding="utf-8",
+        )
+        fake_python.chmod(0o700)
+        python_invocations = self.root / "python-invocations.jsonl"
+        result = self.run_transport(
+            "--tier",
+            "standard",
+            env={"FAKE_PYTHON_INVOCATIONS": str(python_invocations)},
+        )
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("ADVISOR TRANSPORT: unavailable", result.stderr)
+        self.assertIn("Python 3.11+", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertEqual(self.rows(), [])
+        self.assertFalse((self.home / ".tmp" / "advisor-transport").exists())
+        calls = [
+            json.loads(line) for line in python_invocations.read_text().splitlines()
+        ]
+        self.assertEqual(
+            len(calls), 1, "the version preflight must be the only python3 call"
+        )
 
     def test_discovery_accepts_protocol_without_jsonrpc_and_ignores_optional_fields(
         self,

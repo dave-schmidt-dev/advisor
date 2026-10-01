@@ -57,6 +57,8 @@ if case == "partial" and attempt == 2: usage={"output_tokens":attempt*3}
 print(json.dumps({"type":"thread.started","thread_id":child}), flush=True)
 print(json.dumps({"type":"turn.completed","usage":usage}), flush=True)
 if case == "hang":
+    ready=os.environ.get("FAKE_USAGE_READY")
+    if ready: Path(ready).write_text("ready")
     while True: time.sleep(1)
 if case == "journal-failure":
     journal=Path(os.environ["CODEX_HOME"])/"advisor"/"usage-journal"
@@ -336,6 +338,7 @@ class UsageTests(unittest.TestCase):
             "CODEX_HOME": str(self.home),
             "FAKE_COUNT": str(self.base / "count"),
             "FAKE_CASE": "hang",
+            "FAKE_USAGE_READY": str(self.base / "usage-ready"),
         }
         child = subprocess.Popen(
             [
@@ -358,9 +361,10 @@ class UsageTests(unittest.TestCase):
         child.stdin.write(PACKET)
         child.stdin.close()
         deadline = time.monotonic() + 3
-        while not (self.base / "count").exists() and time.monotonic() < deadline:
+        ready = self.base / "usage-ready"
+        while not ready.exists() and time.monotonic() < deadline:
             time.sleep(0.02)
-        self.assertTrue((self.base / "count").exists())
+        self.assertTrue(ready.exists())
         child.terminate()
         self.assertEqual(child.wait(timeout=5), 130)
         envelope = json.loads(child.stdout.read())

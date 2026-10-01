@@ -10,8 +10,8 @@ and preserves its exact bytes at `.retired-v1.4.6`; edited and conflicting roles
 still fail closed.
 
 Package: `Codex-Advisor-1.4.7.zip` (35 files), SHA-256
-`2f4b144a709f6832abca31cd92b9c65999432bb5a47461c38d1842775d7ca994`.
-Candidate content digest: `9d90155222b691cf0dbad1b1c4242500349f4c5b731585c885e23d2c40240a21`.
+`adb052dc8548f54e0f81aeaf5b10fd7f62582b5f0926fbec6d13aa2a6243f3bc`.
+Candidate content digest: `2106cda09b692cb5dbaab5b0e717a8db1e425cf8693bfe5ff179f29d6bfa34db`.
 
 On 1 October 2026, the installed `--tier specialist` smoke returned an accepted
 schema-v3 response; persisted runtime inspection confirmed `gpt-6.1-sol` / high,

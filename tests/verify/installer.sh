@@ -40,7 +40,7 @@ for source,(new,old) in replacements.items():
     prior=text.replace(new,old).replace(zero_tool_block,"").replace(follow_up_output,"")
     prior=prior.replace("Do not spawn or route another agent", "Do not spawn another agent")
     if source==sol:
-        current_pin='model = "gpt-6-sol"'
+        current_pin='model = "gpt-6.1-sol"'
         if prior.count(current_pin)!=1: raise SystemExit("current Sol model fixture mismatch")
         prior=prior.replace(current_pin,'model = "gpt-5.6-sol"')
     target.joinpath(source.name).write_text(prior,encoding="utf-8")
@@ -102,7 +102,7 @@ for source in map(Path,sys.argv[1:3]):
     prior=text.replace(current_block,prior_block).replace(follow_up_output,"")
     prior=prior.replace("Do not spawn or route another agent", "Do not spawn another agent")
     if source.name=="advisor-sol.toml":
-        current_pin='model = "gpt-6-sol"'
+        current_pin='model = "gpt-6.1-sol"'
         if prior.count(current_pin)!=1: raise SystemExit("current Sol model fixture mismatch")
         prior=prior.replace(current_pin,'model = "gpt-5.6-sol"')
     Path(sys.argv[3],source.name).write_text(prior,encoding="utf-8")
@@ -159,7 +159,7 @@ from pathlib import Path
 import sys
 source,target=map(Path,sys.argv[1:])
 text=source.read_text(encoding="utf-8")
-current='model = "gpt-6-sol"'
+current='model = "gpt-6.1-sol"'
 if text.count(current)!=1: raise SystemExit("current Sol model fixture mismatch")
 target.write_text(text.replace(current,'model = "gpt-5.6-sol"'),encoding="utf-8")
 PY
@@ -196,6 +196,46 @@ for kind in v145-edited v145-collision; do
   after=$(snapshot "$target"); [ "$before" = "$after" ] || fail "$kind refusal mutated target"
 done
 pass "exact Advisor 1.4.5 Sol upgrade, retirement recovery, idempotency, and edited/collision refusal"
+
+# Upgrade the exact v1.4.6 Sol role, preserving it at a versioned recovery path.
+# Reconstruct its bytes from the migrated role and compare with the original
+# committed 1.4.6 digest so the fixture cannot define its own expected identity.
+v146=$tmp/advisor-v146; mkdir "$v146"
+sed 's/^model = "gpt-6\.1-sol"$/model = "gpt-6-sol"/' "$sol_role" >"$v146/advisor-sol.toml"
+v146_digest=517f670937b2174dcd6467e39381b55d3ba133bd97c697c988bf77082dd1531d
+actual=$(shasum -a 256 "$v146/advisor-sol.toml" | awk '{print $1}')
+[ "$actual" = "$v146_digest" ] || fail "Advisor 1.4.6 Sol fixture digest mismatch: $actual"
+before=$(snapshot "$v146")
+if sh "$installer" --target-dir "$v146" --check >/dev/null 2>&1; then fail "check accepted active Advisor 1.4.6 Sol role"; fi
+after=$(snapshot "$v146"); [ "$before" = "$after" ] || fail "check mutated active Advisor 1.4.6 Sol role"
+sh "$installer" --target-dir "$v146" >/dev/null
+cmp -s "$sol_role" "$v146/advisor-sol.toml" || fail "Advisor 1.4.6 Sol upgrade did not install current role exactly"
+actual=$(shasum -a 256 "$v146/advisor-sol.toml.retired-v1.4.6" | awk '{print $1}')
+[ "$actual" = "$v146_digest" ] || fail "Advisor 1.4.6 Sol retirement digest mismatch: $actual"
+sh "$installer" --target-dir "$v146" --check >/dev/null
+before=$(snapshot "$v146"); sh "$installer" --target-dir "$v146" >/dev/null; after=$(snapshot "$v146")
+[ "$before" = "$after" ] || fail "Advisor 1.4.6 Sol upgrade is not idempotent"
+
+v146_interrupted=$tmp/advisor-v146-interrupted; mkdir "$v146_interrupted"
+cp "$v146/advisor-sol.toml.retired-v1.4.6" "$v146_interrupted/advisor-sol.toml.retired-v1.4.6"
+sh "$installer" --target-dir "$v146_interrupted" >/dev/null
+cmp -s "$sol_role" "$v146_interrupted/advisor-sol.toml" || fail "retired-only Advisor 1.4.6 upgrade did not resume"
+sh "$installer" --target-dir "$v146_interrupted" --check >/dev/null
+before=$(snapshot "$v146_interrupted"); sh "$installer" --target-dir "$v146_interrupted" >/dev/null; after=$(snapshot "$v146_interrupted")
+[ "$before" = "$after" ] || fail "retired-only Advisor 1.4.6 state is not idempotent"
+
+for kind in v146-edited v146-collision; do
+  target=$tmp/refuse-$kind; mkdir "$target"
+  cp "$v146/advisor-sol.toml.retired-v1.4.6" "$target/advisor-sol.toml"
+  case "$kind" in
+    v146-edited) printf '\n# owner edit\n' >>"$target/advisor-sol.toml" ;;
+    v146-collision) printf 'unknown retirement collision\n' >"$target/advisor-sol.toml.retired-v1.4.6" ;;
+  esac
+  before=$(snapshot "$target")
+  if sh "$installer" --target-dir "$target" >/dev/null 2>&1; then fail "installer accepted $kind Sol state"; fi
+  after=$(snapshot "$target"); [ "$before" = "$after" ] || fail "$kind refusal mutated target"
+done
+pass "exact Advisor 1.4.6 Sol upgrade, retirement recovery, idempotency, and edited/collision refusal"
 
 # Exercise all three v0.6.0 historical role types using their original exact bytes.
 historical=$tmp/historical; mkdir "$historical"

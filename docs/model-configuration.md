@@ -6,7 +6,7 @@ the installed skill. Repository-root documentation is not part of the ZIP.
 ## Defaults and evidence
 
 `advisor.toml` has exactly `[standard]` and `[specialist]` sections, each with `model`
-and `effort`. Defaults are `gpt-5.6-terra` / `high` and `gpt-6-sol` / `high`.
+and `effort`. Defaults are `gpt-5.6-terra` / `high` and `gpt-6.1-sol` / `high`.
 Edit the installed file in place; changes apply to the next `--tier` consultation and
 are frozen with a SHA-256 content revision for retries. No local state, discovery,
 catalog registration, canary, or file copy is needed. Allowed efforts are `none`,
@@ -17,7 +17,10 @@ reinstall can replace the edited file.
 
 This grants only permission to attempt the real consultation: the child must still
 pass exact runtime model, effort, read-only, zero-tool, and response-schema checks.
-Catalog presence is documentation, not an entitlement.
+Catalog presence is documentation, not an entitlement. For the 1.4.7 local candidate,
+no fresh live inference using `gpt-6.1-sol` has been validated. The catalog's
+`tested_codex_cli` value (`codex-cli 0.153.2`) records historical transport provenance;
+it is not evidence of model-specific inference validation.
 
 ```sh
 sh scripts/advisor-config.sh show
@@ -79,6 +82,6 @@ coverage can be partial.
 > does not operate a Zero Delta relay.
 
 The 1.4.4 deployment record says the then-live privacy page byte-matched its repository
-candidate. This 1.4.6 candidate updates that copy for the same local configuration/catalog
-state, content-free journal, automatic Terra/Sol defaults, and separate explicit-only Astra
-role; it is not yet deployed.
+candidate. This 1.4.7 local candidate updates that copy for the same local
+configuration/catalog state, content-free journal, automatic Terra/Sol defaults,
+and separate explicit-only Astra role; it is not yet deployed.

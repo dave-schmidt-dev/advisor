@@ -115,8 +115,10 @@ captured allowlisted runtime receipt identified `advisor-terra` with `gpt-5.6-te
 `advisor-sol` with the then-current GPT-5.6 Sol model, `codex-exec` transport, high effort,
 a read-only sandbox, and a managed permission profile. The receipt is historical
 runtime evidence only: it intentionally does not preserve conversation content or
-session identifiers. For the 1.4.6 candidate, the expected `advisor-sol` runtime
-model is `gpt-6-sol`; a fresh live 1.4.6 consultation is not claimed here.
+session identifiers. For the 1.4.7 local candidate, the expected `advisor-sol`
+runtime model is `gpt-6.1-sol`; a fresh live consultation with this model is not
+claimed here. The `tested_codex_cli` value records historical transport provenance,
+not model-specific inference validation.
 
 ### Structured-response acceptance
 

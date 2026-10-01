@@ -1,5 +1,30 @@
 # Release record
 
+## Advisor 1.4.7 package record
+
+Version `1.4.7` changes the automatic Specialist default and fixed legacy
+`--role advisor-sol` alias to GPT-6.1 Sol / high. Standard remains GPT-5.6
+Terra / high, and explicit-only `advisor-astra` remains GPT-6 Astra / high. The
+installer recognizes the shipped 1.4.6 GPT-6 Sol role by its committed digest
+and preserves its exact bytes at `.retired-v1.4.6`; edited and conflicting roles
+still fail closed.
+
+Package: `Codex-Advisor-1.4.7.zip` (35 files), SHA-256
+`2f4b144a709f6832abca31cd92b9c65999432bb5a47461c38d1842775d7ca994`.
+Candidate content digest: `9d90155222b691cf0dbad1b1c4242500349f4c5b731585c885e23d2c40240a21`.
+
+On 1 October 2026, the installed `--tier specialist` smoke returned an accepted
+schema-v3 response; persisted runtime inspection confirmed `gpt-6.1-sol` / high,
+read-only mode, and zero tools (evidence `74221708-6523-4e78-91d2-fc656a820064`).
+The fixed `--role advisor-sol` smoke was also accepted; persisted inspection
+confirmed the `advisor-sol` role, `gpt-6.1-sol` / high, read-only mode, and zero
+tools (evidence `e1cea8c6-ab1e-4e6f-b040-db4bc4b51015`). The existing Playwright
+suite passed all 52 tests for the candidate.
+
+The 1.4.7 website was deployed on 1 October 2026. Upload-readiness verification
+confirmed that all seven live site files byte-match the current source. Marketplace
+publication is not claimed.
+
 ## Advisor 1.4.6 candidate
 
 Version `1.4.6` changes the automatic Specialist default and fixed legacy
@@ -20,7 +45,7 @@ closed.
 This is a local packaged candidate only. `Codex-Advisor-1.4.6.zip` contains 28
 files and has SHA-256
 `c262ed96736216e225fdbe63db211fe1651f0b4c3900bee50bf3201b3a7a33bd`.
-Candidate content digest: `085170475891ee207f50a9ae3c624d0dac0ab01de6bbccae0385cf0fd231c1f6`.
+Historical 1.4.6 package digest: `085170475891ee207f50a9ae3c624d0dac0ab01de6bbccae0385cf0fd231c1f6`.
 The site update was authorized after the dated walkthrough was provided. This
 site-deployment record does not establish a later 1.4.6 commit, GitHub release,
 or marketplace publication; each requires separate evidence. Marketplace upload

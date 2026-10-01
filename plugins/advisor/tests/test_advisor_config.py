@@ -228,7 +228,7 @@ class AdvisorConfigTests(unittest.TestCase):
             (standard["model"], standard["effort"]), ("gpt-5.6-terra", "high")
         )
         self.assertEqual(
-            (specialist["model"], specialist["effort"]), ("gpt-6-sol", "high")
+            (specialist["model"], specialist["effort"]), ("gpt-6.1-sol", "high")
         )
         self.assertFalse(self.paths.root.exists())
 
@@ -320,7 +320,7 @@ class AdvisorConfigTests(unittest.TestCase):
         target = Path(self.tmp.name) / "target.toml"
         target.write_text(
             '[standard]\nmodel = "gpt-5.6-terra"\neffort = "high"\n'
-            '[specialist]\nmodel = "gpt-6-sol"\neffort = "high"\n',
+            '[specialist]\nmodel = "gpt-6.1-sol"\neffort = "high"\n',
             encoding="utf-8",
         )
         candidate.write_bytes(target.read_bytes())
@@ -345,7 +345,7 @@ class AdvisorConfigTests(unittest.TestCase):
         candidate = Path(self.tmp.name) / "advisor.toml"
         candidate.write_text(
             '[standard]\nmodel = "gpt-5.6-terra"\neffort = "high"\n'
-            '[specialist]\nmodel = "gpt-6-sol"\neffort = "high"\n',
+            '[specialist]\nmodel = "gpt-6.1-sol"\neffort = "high"\n',
             encoding="utf-8",
         )
         delivered = 0

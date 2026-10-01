@@ -79,4 +79,4 @@ pass "Advisor behavior tests and 17 candidate packaging tests"
 sh -n "$script_dir"/*.sh
 [ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"
 pass "all shell syntax and stderr-progress contract"
-printf '%s\n' "VERIFY PASSED: Advisor 1.4.6 consultation-only static contract"
+printf '%s\n' "VERIFY PASSED: Advisor 1.4.7 consultation-only static contract"

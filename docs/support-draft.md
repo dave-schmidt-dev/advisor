@@ -42,7 +42,7 @@ Before opening a support ticket, ensure that Codex CLI or desktop is installed a
 operational, `jq` is on `$PATH`, a POSIX shell is available, an active persisted
 Codex session rollout exists, `CODEX_THREAD_ID` is set in the active parent
 context, the installed plugin can use its declared `require_escalated` launcher
-permission, and the account has access to `gpt-5.6-terra` and `gpt-6-sol`.
+permission, and the account has access to `gpt-5.6-terra` and `gpt-6.1-sol`.
 
 ## 5. Common Troubleshooting Scenarios
 
@@ -55,7 +55,7 @@ and start a new Codex thread.
 ### Model availability or authorization failure
 
 Verify that the authenticated OpenAI account and subscription provide
-`gpt-5.6-terra` and `gpt-6-sol` at the required reasoning effort, then verify
+`gpt-5.6-terra` and `gpt-6.1-sol` at the required reasoning effort, then verify
 Codex authentication with the standard CLI commands.
 
 ### Response classification retry

@@ -24,7 +24,7 @@ ui=Path(sys.argv[7]).read_text()
 models=json.loads(Path(sys.argv[8]).read_text())
 live=tomllib.loads(Path(sys.argv[9]).read_text())
 version=manifest.get("version","")
-if manifest.get("name")!="advisor" or version!="1.4.6": raise SystemExit("manifest identity/version")
+if manifest.get("name")!="advisor" or version!="1.4.7": raise SystemExit("manifest identity/version")
 if "homepage" in manifest or "repository" in manifest: raise SystemExit("unowned upstream metadata remains")
 author_name=manifest.get("author",{}).get("name","")
 if author_name!="David Schmidt / Zero Delta LLC": raise SystemExit("plugin developer identity")
@@ -34,15 +34,15 @@ if {key: interface.get(key) for key in ("websiteURL","privacyPolicyURL","termsOf
 if "Project importance, security adjacency, or an ordinary architecture question alone stays Standard." not in interface.get("longDescription",""): raise SystemExit("manifest routing caveat")
 if "supportURL" in interface: raise SystemExit("unsupported support URL field")
 if models.get("transport_contract_version")!="1.4" or models.get("tested_codex_cli")!="codex-cli 0.153.2": raise SystemExit("model transport provenance")
-if models.get("defaults")!={"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-6-sol","effort":"high"}}: raise SystemExit("model defaults")
-if live != {"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-6-sol","effort":"high"}}: raise SystemExit("live config defaults")
+if models.get("defaults")!={"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-6.1-sol","effort":"high"}}: raise SystemExit("model defaults")
+if live != {"standard":{"model":"gpt-5.6-terra","effort":"high"},"specialist":{"model":"gpt-6.1-sol","effort":"high"}}: raise SystemExit("live config defaults")
 if any("codex_cli_version_pattern" in (item.get("compatibility_baseline") or {}) for item in models.get("models", [])): raise SystemExit("CLI version eligibility pin")
-if {item.get("model") for item in models.get("models",[])} != {"gpt-5.6-terra","gpt-6-sol","gpt-6-astra"}: raise SystemExit("model catalog inventory")
+if {item.get("model") for item in models.get("models",[])} != {"gpt-5.6-terra","gpt-6.1-sol","gpt-6-astra"}: raise SystemExit("model catalog inventory")
 entry=market.get("plugins",[])
 if market.get("name")!="advisor" or market.get("interface",{}).get("displayName")!="Codex Advisor": raise SystemExit("marketplace identity")
 if len(entry)!=1 or entry[0].get("name")!="advisor" or entry[0].get("source")!={"source":"local","path":"./plugins/advisor"}: raise SystemExit("marketplace source")
 if entry[0].get("policy")!={"installation":"AVAILABLE","authentication":"ON_INSTALL"} or not entry[0].get("category"): raise SystemExit("marketplace policy")
-pairs=((terra,{"name":"advisor-terra","description":"Standard fresh, read-only advisor for material technical decisions and generic advisor requests.","model":"gpt-5.6-terra","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(sol,{"name":"advisor-sol","description":"Specialist fresh, read-only advisor for narrowly qualified unresolved critical decisions.","model":"gpt-6-sol","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(astra,{"name":"advisor-astra","description":"Explicit opt-in, fresh, read-only advisor for higher-usage technical consultations.","model":"gpt-6-astra","model_reasoning_effort":"high","sandbox_mode":"read-only"}))
+pairs=((terra,{"name":"advisor-terra","description":"Standard fresh, read-only advisor for material technical decisions and generic advisor requests.","model":"gpt-5.6-terra","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(sol,{"name":"advisor-sol","description":"Specialist fresh, read-only advisor for narrowly qualified unresolved critical decisions.","model":"gpt-6.1-sol","model_reasoning_effort":"high","sandbox_mode":"read-only"}),(astra,{"name":"advisor-astra","description":"Explicit opt-in, fresh, read-only advisor for higher-usage technical consultations.","model":"gpt-6-astra","model_reasoning_effort":"high","sandbox_mode":"read-only"}))
 for role,pins in pairs:
     if any(role.get(k)!=v for k,v in pins.items()): raise SystemExit("role pins")
     if not all(isinstance(role.get(k),str) and role[k].strip() for k in ("description","developer_instructions")): raise SystemExit("role text")
@@ -313,7 +313,10 @@ for digest in \
  4ad79cb613cc9865cb3d1db02f2e98b3b117524153c075a2de3d6bd249798c5e \
  4c29a9fec188e7c9c1618dacbcf0e26e40781f1ba783f425ece24c5919a16ad4 \
  e939a9c7e96d2a74dde015838802d6a481d36520616464a192daff0412dccaba \
- 294b5fe76799200b0ff814decc575a82ddbf4d426a4a680750113608de6516cd; do
+ 294b5fe76799200b0ff814decc575a82ddbf4d426a4a680750113608de6516cd \
+  517f670937b2174dcd6467e39381b55d3ba133bd97c697c988bf77082dd1531d; do
   grep -Fq "$digest" "$installer" || fail "missing historical digest: $digest"
 done
-pass "all historical and Advisor 1.1.0 upgrade fingerprints retained"
+grep -Fq 'sol_v146_retired=$sol_current.retired-v1.4.6' "$installer" || fail "installer omits the Advisor 1.4.6 Sol retired path"
+grep -Fq 'active-known-v146' "$installer" || fail "installer omits the Advisor 1.4.6 Sol upgrade state"
+pass "all historical and Advisor 1.1.0 through 1.4.6 upgrade fingerprints retained"

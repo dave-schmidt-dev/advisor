@@ -17,8 +17,9 @@ reinstall can replace the edited file.
 
 This grants only permission to attempt the real consultation: the child must still
 pass exact runtime model, effort, read-only, zero-tool, and response-schema checks.
-Catalog presence is documentation, not an entitlement. For the 1.4.7 local candidate,
-no fresh live inference using `gpt-6.1-sol` has been validated. The catalog's
+Catalog presence is documentation, not an entitlement. For the 1.4.8 local candidate,
+no fresh live inference has been validated; the 1.4.7 package record preserves its
+own historical smoke evidence. The catalog's
 `tested_codex_cli` value (`codex-cli 0.153.2`) records historical transport provenance;
 it is not evidence of model-specific inference validation.
 
@@ -82,6 +83,7 @@ coverage can be partial.
 > does not operate a Zero Delta relay.
 
 The 1.4.4 deployment record says the then-live privacy page byte-matched its repository
-candidate. This 1.4.7 local candidate updates that copy for the same local
+candidate. This 1.4.8 local candidate updates that copy to disclose data categories,
+purposes, recipients, retention, and controls explicitly, for the same local
 configuration/catalog state, content-free journal, automatic Terra/Sol defaults,
 and separate explicit-only Astra role; it is not yet deployed.

@@ -10,8 +10,8 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | --- | --- |
 | **Plugin Name** | `advisor` |
 | **Display Name** | Codex Advisor |
-| **Version** | `1.4.7` |
-| **Category** | Productivity |
+| **Version** | `1.4.8` |
+| **Category** | Developer Tools |
 | **Capabilities** | Interactive, Read |
 | **Author / Maintainer** | David Schmidt / Zero Delta LLC |
 | **Developer / Publisher Entity** | Zero Delta LLC (Commonwealth of Virginia, United States) |
@@ -24,13 +24,24 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | **Geographic Availability** | United States |
 | **Pricing Model** | Free / Open Source (MIT); requires user's own Codex model access |
 
-**Candidate status:** Version 1.4.7 identifies the current local source candidate.
-It updates the automatic Specialist default and fixed legacy `advisor-sol` alias
-to GPT-6.1 Sol / high. The exact 35-file `Codex-Advisor-1.4.7.zip` is packaged
-and installed locally. Both installed Specialist routes passed fresh read-only,
-zero-tool GPT-6.1 Sol / high consultations on 1 October 2026. The public site was
-deployed that day; the upload-readiness gate verifies its exact bytes before
-handoff. Marketplace upload remains owner-controlled.
+**Candidate status:** Version 1.4.8 identifies the current local source candidate.
+It corrects the portal metadata findings: the manifest and marketplace listing
+now use the Developer Tools category, the manifest adds
+`interface.supportURL` at `https://zerodelta.dev/advisor/support/`, and the short
+and long descriptions are simplified and synchronized with this listing. The
+published privacy page now discloses data categories, purposes, recipients,
+retention, and controls explicitly, and the support page adds a private-support
+and privacy contact section. Model pins, runtime behavior, and the transport
+contract are unchanged. The exact candidate archive, its hash, the docs
+deployment, and the marketplace upload are finalized by the release owner; the
+upload-readiness gate verifies exact bytes before handoff. Marketplace upload
+remains owner-controlled.
+
+**Historical website deployment status (1.4.7 snapshot):** The landing, support,
+privacy, and terms pages were deployed on 1 October 2026 for Advisor 1.4.7, and
+upload-readiness verification confirmed that all seven live site files
+byte-matched the 1.4.7 source. That record applies to the 1.4.7 source snapshot
+and does not verify 1.4.8.
 
 **Historical website deployment status (1.4.6 snapshot):** The landing, support,
 privacy, and terms pages were deployed on 22 September 2026. The then-current
@@ -52,10 +63,14 @@ inspection is not claimed here.
 ## Descriptions
 
 ### Short Description
-Automatic second opinions with your choice of models
+Architecture and code advice.
 
 ### Long Description
-Codex Advisor automatically adds a fresh, read-only second opinion for important technical decisions in Codex CLI and Codex desktop. Standard uses Terra/high for ordinary bounded architecture, interface, data-model, and generic-advisor decisions. Specialist uses GPT-6.1 Sol/high only when targeted evidence still leaves a cross-module/system design, compatibility or concurrency boundary, competing diagnosis, security/trust boundary, recovery, irreversible migration, or data-loss decision unresolved. Project importance, security adjacency, or an ordinary architecture question alone does not select Specialist. Version 1.4.4's deferred result-delivery repair remains in place: callers drain nonterminal shell sessions, require terminal exit, and validate exactly one schema-v3 envelope. `advisor-astra` remains a separate explicit-only Astra/high role and is never selected automatically. Each consultation is tool-free, and your main agent retains control of implementation and final decisions. Consultations use your own authenticated Codex/OpenAI account; Zero Delta operates no relay or hosted backend.
+Codex Advisor helps software developers review architecture, API interfaces, data models, and migration plans in Codex CLI and Codex desktop. Each consultation returns one recommendation with tradeoffs, risks, and acceptance checks.
+
+Advisor sends bounded technical context to OpenAI for inference through your authenticated account and allowance; Zero Delta receives no packets and runs no relay or telemetry backend. The consultation child is read-only and tool-free; the local launcher writes temporary files and Codex session records. The root agent owns implementation and final decisions; Advisor does not implement, deploy, or perform final review.
+
+Requires a local Codex host, jq, a supported POSIX shell, and a persisted session. Standard uses Terra/high, Specialist uses GPT-6.1 Sol/high, and explicit-only Astra/high is available for the most complex uses.
 
 ## Surface and Host Compatibility
 
@@ -110,7 +125,7 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 2. **Mechanical Implementation:** "Rename variable `old_path` to `source_path` across all helper functions in `utils.py`." (Skips consultation; deterministic mechanical edit).
 3. **Diff Review / No Delegation:** "Review the committed git diff for typos and formatting errors, and do not delegate to an advisor." (Skips consultation; owned by review workflow and explicit no-delegation).
 
-## Candidate Notes (v1.4.7)
+## Candidate Notes (v1.4.8)
 
 - Automatic read-only advice uses configurable Standard and Specialist sections in the live bundled `advisor.toml` file.
 - Terra/high and GPT-6.1 Sol/high remain the automatic defaults.
@@ -126,4 +141,4 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 - The optional content-free usage journal is off by default, stores operational metadata and aggregate counters only, prunes entries older than 30 days during later writes, and enforces a bounded count without a background deletion service.
 
 The 1.4.4 publication record above remains historical and is not replaced by this
-1.4.7 candidate.
+1.4.8 candidate.

@@ -1,6 +1,6 @@
 {
   "name": "advisor",
-  "version": "1.4.7",
+  "version": "1.4.8",
   "description": "One fresh, read-only consultation for material technical decisions in Codex CLI and Codex desktop.",
   "author": {
     "name": "David Schmidt / Zero Delta LLC"
@@ -17,15 +17,16 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Codex Advisor",
-    "shortDescription": "Read-only technical advice",
-    "longDescription": "Codex Advisor automatically adds a fresh, read-only second opinion when Codex identifies a material technical decision.\n\nStandard remains Terra/high for ordinary bounded architecture, interface, data-model, and generic-advisor decisions. Specialist remains GPT-6.1 Sol/high only when targeted evidence still leaves a cross-system design, compatibility or concurrency boundary, competing diagnosis, security or trust boundary, recovery, irreversible migration, or data-loss decision unresolved. Project importance, security adjacency, or an ordinary architecture question alone stays Standard. A separate advisor-astra role offers explicit-only Astra/high consultation for the most complex uses; it is never selected automatically, uses more Codex allowance, and remains subject to account and runtime availability.\n\nEvery consultation runs in a separate read-only, tool-free process. It cannot change your files, run commands, browse the web, or make decisions for you. You remain in control: Advisor does not implement, deploy, or perform final review.",
+    "shortDescription": "Architecture and code advice.",
+    "longDescription": "Codex Advisor helps software developers review architecture, API interfaces, data models, and migration plans in Codex CLI and Codex desktop. Each consultation returns one recommendation with tradeoffs, risks, and acceptance checks.\n\nAdvisor sends bounded technical context to OpenAI for inference through your authenticated account and allowance; Zero Delta receives no packets and runs no relay or telemetry backend. The consultation child is read-only and tool-free; the local launcher writes temporary files and Codex session records. The root agent owns implementation and final decisions; Advisor does not implement, deploy, or perform final review.\n\nRequires a local Codex host, jq, a supported POSIX shell, and a persisted session. Standard uses Terra/high, Specialist uses GPT-6.1 Sol/high, and explicit-only Astra/high is available for the most complex uses.",
     "developerName": "David Schmidt / Zero Delta LLC",
     "websiteURL": "https://zerodelta.dev/advisor/",
+    "supportURL": "https://zerodelta.dev/advisor/support/",
     "privacyPolicyURL": "https://zerodelta.dev/advisor/privacy/",
     "termsOfServiceURL": "https://zerodelta.dev/advisor/terms/",
     "logo": "./assets/advisor-logo.png",
     "composerIcon": "./assets/advisor-composer-icon.png",
-    "category": "Productivity",
+    "category": "Developer Tools",
     "capabilities": [
       "Interactive",
       "Read"

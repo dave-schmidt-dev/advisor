@@ -8,7 +8,7 @@ technical decisions; it never implements, routes implementation, or performs
 final verification.
 
 The distributable plugin identity is `advisor`. Its single skill is `consultation`, and
-the current local candidate version is `1.4.7`. Release archives use that exact version
+the current local candidate version is `1.4.8`. Release archives use that exact version
 only after an owner-approved candidate freeze and packaging step. A built ZIP is only a
 local candidate: it may be described as upload-ready or uploaded only after the current
 public release evidence gate passes against that exact ZIP immediately before upload.
@@ -374,7 +374,7 @@ it never implies that a technical choice was accepted when no technical choice w
   `06c318e5e93f37452635906394e6ea69fb6a65ba9e6ad7172d37b444e0dc871d`,
   used by the intermediate v0.3.0/v0.4.0/pre-revert v0.5.0 history. Unknown blobs
   still fail closed.
-- Plugin installation identity is `advisor`. Set version `1.4.7` and make
+- Plugin installation identity is `advisor`. Set version `1.4.8` and make
   the manifest author identify David Schmidt / Zero Delta LLC. Preserve Daniel
   McAteer's MIT copyright in `LICENSE` and keep upstream provenance in root
   `NOTICE.md`; do not add upstream attribution to the marketplace listing,

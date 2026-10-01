@@ -1,5 +1,29 @@
 # Release record
 
+## Advisor 1.4.8 package record
+
+Version `1.4.8` is a portal-metadata, privacy, and documentation candidate with
+no runtime, model-pin, or transport change. The plugin manifest and marketplace
+listing move to the Developer Tools category, the manifest adds
+`interface.supportURL` at `https://zerodelta.dev/advisor/support/`, and the
+short and long descriptions are simplified and synchronized exactly with
+`docs/public-listing.md`. The published privacy page (`site/privacy/index.html`
+only; the superseded draft is untouched) explicitly discloses data categories,
+purposes, recipients, retention, and controls, effective 1 October 2026, and
+the support page adds a concise private-support and privacy contact section.
+The upload-readiness gate now requires the real manifest interface to carry
+the public support URL, the Developer Tools category, and short/long
+description parity with the public listing.
+
+Candidate content digest: `4e2e2d0bd39973cfc9596325829cc237dff2c12fb71a1a47b0e194e11c2b7a7f`.
+
+Package: `Codex-Advisor-1.4.8.zip` (35 files), SHA-256
+`fcec34853068667e5cfbe2d19b2819f7193f9db0b3c6994a6bbfa75a54287f4f`.
+The candidate inventory is frozen with the digest above. Deployment and GitHub
+publication are separate release steps; marketplace submission remains
+owner-controlled. The portal findings must be checked again after uploading
+this corrected package; no cleared platform checks are claimed here.
+
 ## Advisor 1.4.7 package record
 
 Version `1.4.7` changes the automatic Specialist default and fixed legacy
@@ -11,7 +35,7 @@ still fail closed.
 
 Package: `Codex-Advisor-1.4.7.zip` (35 files), SHA-256
 `adb052dc8548f54e0f81aeaf5b10fd7f62582b5f0926fbec6d13aa2a6243f3bc`.
-Candidate content digest: `2106cda09b692cb5dbaab5b0e717a8db1e425cf8693bfe5ff179f29d6bfa34db`.
+Historical 1.4.7 package digest: `2106cda09b692cb5dbaab5b0e717a8db1e425cf8693bfe5ff179f29d6bfa34db`.
 
 On 1 October 2026, the installed `--tier specialist` smoke returned an accepted
 schema-v3 response; persisted runtime inspection confirmed `gpt-6.1-sol` / high,

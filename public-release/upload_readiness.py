@@ -18,7 +18,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-from candidate_inventory import CandidateError, collect_inventory, validate_archive
+from candidate_inventory import MANIFEST_PATH, CandidateError, collect_inventory, validate_archive
 
 
 PUBLIC_BASE = "https://zerodelta.dev/advisor/"
@@ -140,6 +140,30 @@ def _listing_evidence(repo: Path, version: str) -> tuple[bytes, bytes, bytes]:
     return raw, bodies["Short Description"], bodies["Long Description"]
 
 
+def _manifest_interface_evidence(repo: Path, short: bytes, long: bytes) -> None:
+    """Require the real manifest interface to agree with the support page and listing."""
+    progress("checking plugin manifest interface metadata")
+    manifest = repo / MANIFEST_PATH
+    _safe_regular(manifest, "plugin manifest")
+    try:
+        document = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ReadinessError("plugin manifest cannot be read as UTF-8 JSON") from error
+    interface = document.get("interface") if isinstance(document, dict) else None
+    if not isinstance(interface, dict):
+        raise ReadinessError("plugin manifest interface is missing")
+    if interface.get("supportURL") != _expected_url("support/"):
+        raise ReadinessError("manifest supportURL must match the public support page")
+    if interface.get("category") != "Developer Tools":
+        raise ReadinessError("manifest category must be Developer Tools")
+    short_description = interface.get("shortDescription")
+    if not isinstance(short_description, str) or short_description.encode("utf-8") != short:
+        raise ReadinessError("manifest short description does not match the public listing")
+    long_description = interface.get("longDescription")
+    if not isinstance(long_description, str) or long_description.encode("utf-8") != long:
+        raise ReadinessError("manifest long description does not match the public listing")
+
+
 class _ReleaseMarkerParser(HTMLParser):
     """Collect structurally valid Advisor release markers from actual meta tags."""
 
@@ -236,6 +260,7 @@ def verify_upload_ready(repo: Path, archive: Path, fetch: Callable[[str], FetchR
         raise ReadinessError("candidate archive does not exactly match the current Git-bound plugin inventory") from error
     _assert_archive_has_no_trailing_bytes(archive_bytes)
     listing, short, long = _listing_evidence(repo, inventory.version)
+    _manifest_interface_evidence(repo, short, long)
     site = _validate_site_tree(repo)
     _site_version_evidence(site, inventory.version)
     site_hashes: dict[str, str] = {}

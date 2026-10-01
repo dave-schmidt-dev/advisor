@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
 <title>Privacy Policy — Codex Advisor</title>
-<meta name="description" content="Privacy policy for Codex Advisor, including authenticated OpenAI transmission, live configuration, and optional content-free usage data.">
-<meta name="advisor-release" content="1.4.7">
+<meta name="description" content="Privacy policy for Codex Advisor: data categories, purposes, recipients, retention, and controls for consultations, local state, support email, and this website.">
+<meta name="advisor-release" content="1.4.8">
 <link rel="canonical" href="https://zerodelta.dev/advisor/privacy/">
 <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/style.css">
@@ -29,7 +29,7 @@
         <span class="eyebrow">Legal</span>
         <h1>Privacy Policy</h1>
         <div class="doc-meta">
-            <div>Effective date: 10 September 2026</div>
+            <div>Effective date: 1 October 2026</div>
             <div>Publisher and controller: Zero Delta LLC (Commonwealth of Virginia, United States)</div>
             <div>Contact: <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a></div>
             <div>Website: <a href="https://zerodelta.dev">zerodelta.dev</a></div>
@@ -51,29 +51,24 @@
     </ul>
 </section>
 
-<section aria-labelledby="handled">
-    <h2 id="handled">2. Information handled by the plugin</h2>
-
-    <h3>Local consultation context</h3>
-    <p>When the root agent invokes a consultation, it compiles a bounded five-section packet containing the technical decision question, and the relevant code context, architectural options, and repository boundaries that the root agent chose to supply. The packet is not intended to carry credentials, secrets, personal data, or unrelated conversation history.</p>
-    <p>That packet is processed locally by your authenticated Codex runtime through your existing OpenAI subscription. Communication with OpenAI is governed by your own OpenAI account agreement and OpenAI's privacy policy. Codex Advisor interposes no proxy, no intermediate server, and no hosted service.</p>
-
-    <h3>Local session data</h3>
+<section aria-labelledby="categories">
+    <h2 id="categories">2. Data categories, purposes, and recipients</h2>
+    <p>Advisor handles a small, explicit set of data. This section names each category, its purpose, and who receives it.</p>
     <ul>
-        <li>Consultation activity, receipts (<code>ADVISOR CALL</code> and <code>ADVISOR RESULT</code>), and decisions are recorded locally within your persisted Codex session logs.</li>
-        <li>Those logs remain on your own storage under your configured Codex home directory, for example <code>~/.codex/sessions</code>.</li>
-        <li>The plugin never uploads, copies, or shares persisted Codex session logs.</li>
+        <li><strong>Consultation packet and response, sent to OpenAI.</strong> When the root agent invokes a consultation, it compiles a bounded technical packet containing the decision question and the code context, architectural options, and repository boundaries it chose to supply. The packet is transmitted to OpenAI for inference through your authenticated account and allowance; OpenAI returns the response to your local Codex runtime. Consultations are locally launched, not locally inferred: inference is performed by OpenAI, not on your machine. The packet is not intended to carry credentials, secrets, personal data, or unrelated conversation history.</li>
+        <li><strong>Zero Delta receives no packets.</strong> Advisor has no relay, proxy, or telemetry backend. Zero Delta never receives consultation packets or responses.</li>
+        <li><strong>OpenAI retention and controls.</strong> How long OpenAI retains consultation packets and responses is governed by your OpenAI account agreements and the account controls OpenAI provides, described in <a href="https://openai.com/policies/privacy-policy/">OpenAI's privacy policy</a>. Advisor does not invent or enforce a separate retention period on OpenAI's behalf.</li>
     </ul>
 </section>
 
 <section aria-labelledby="local-state">
-    <h2 id="local-state">3. Configuration and optional usage data</h2>
-    <p>The live <code>advisor.toml</code> file is bundled with the installed plugin and controls the configured Standard and Specialist models and effort. Advanced settings and model-catalog data may be stored under your Codex home directory. These local files are separate from the consultation packet sent through your authenticated account.</p>
+    <h2 id="local-state">3. Local data and retention</h2>
     <ul>
-        <li>The optional content-free usage journal is disabled by default.</li>
-        <li>If enabled, it stores operational metadata and aggregate usage counters only. It stores no consultation packets and no response content.</li>
-        <li>Later journal writes prune entries older than 30 days and enforce a bounded count. There is no background deletion service.</li>
-        <li>Automatic Standard remains Terra/high for ordinary bounded architecture, interface, data-model, and generic-advisor decisions. Automatic Specialist remains GPT-6.1 Sol/high only when targeted evidence still leaves an eligible cross-system, compatibility/concurrency, competing-diagnosis, security/trust, recovery, irreversible-migration, or data-loss decision unresolved. The separate <code>advisor-astra</code> role is explicit-only, uses Astra/high, and is never selected automatically.</li>
+        <li><strong>Codex session logs.</strong> Consultation activity, receipts (<code>ADVISOR CALL</code> and <code>ADVISOR RESULT</code>), and decisions are recorded locally within your persisted Codex session logs, for example <code>~/.codex/sessions</code>. They remain until you delete them or your host's own retention removes them. The plugin never uploads, copies, or shares persisted Codex session logs.</li>
+        <li><strong>Configuration and catalog.</strong> The live <code>advisor.toml</code> bundled with the installed plugin controls the configured Standard and Specialist models and effort. Advanced settings and model-catalog data may be stored under your Codex home directory. These local files persist until you delete them.</li>
+        <li><strong>Optional usage journal.</strong> The optional content-free usage journal is disabled by default. If enabled, it stores operational metadata and aggregate usage counters only — model identifiers, timestamps, and counters — and stores no consultation packets and no response content. Later journal writes prune entries older than 30 days and enforce a bounded count; there is no background deletion service.</li>
+        <li><strong>Private consultation captures.</strong> Per-consultation captures are removed by the launcher's unconditional cleanup on normal exit; an abnormal stop may leave temporary files behind under your Codex home directory, and you can delete them yourself.</li>
+        <li><strong>Model routing.</strong> Automatic Standard remains Terra/high for ordinary bounded architecture, interface, data-model, and generic-advisor decisions. Automatic Specialist remains GPT-6.1 Sol/high only when targeted evidence still leaves an eligible cross-system, compatibility/concurrency, competing-diagnosis, security/trust, recovery, irreversible-migration, or data-loss decision unresolved. The separate <code>advisor-astra</code> role is explicit-only, uses Astra/high, and is never selected automatically.</li>
     </ul>
 </section>
 
@@ -82,22 +77,19 @@
     <p>Codex Advisor relies exclusively on your existing local Codex host authentication. The plugin does not request, collect, store, transmit, or handle OpenAI API keys or login credentials, and it does not read or duplicate credential files from your environment.</p>
 </section>
 
-<section aria-labelledby="third-party">
-    <h2 id="third-party">5. Third-party services and surfaces</h2>
-    <ul>
-        <li><strong>OpenAI Codex.</strong> Consultation requests execute via your local Codex installation. Standard remains Terra/high, Specialist remains GPT-6.1 Sol/high for unresolved eligible decisions after targeted evidence, and the separate explicit-only <code>advisor-astra</code> role uses Astra/high subject to account and runtime availability. Data handling by OpenAI is governed by OpenAI's terms.</li>
-        <li><strong>No MCP or hosted service.</strong> Codex Advisor provides no MCP server, no hosted service, and no background cloud service.</li>
-    </ul>
+<section aria-labelledby="website">
+    <h2 id="website">5. This website</h2>
+    <p>This site is a set of static pages served from Zero Delta LLC's own hosting. It sets no cookies, loads no third-party scripts or fonts, and runs no analytics or tracking. The hosting provider Opalstack keeps standard web server access logs — the IP address, timestamp, requested path, and user agent of each request — which are processed by Opalstack and Zero Delta for security and operational purposes. The provider's standard log rotation retains these logs for about seven days, as documented for applications at <a href="https://docs.opalstack.com/user-guide/applications/">docs.opalstack.com/user-guide/applications/</a> and for staff usage at <a href="https://community.opalstack.com/d/92-usage-check">community.opalstack.com/d/92-usage-check</a>. Provider backup retention is separate and controlled by the provider.</p>
+</section>
+
+<section aria-labelledby="support-email">
+    <h2 id="support-email">6. Voluntary support email</h2>
+    <p>If you email <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a>, Zero Delta and its email provider receive your name, email address, message, and any redacted diagnostics you choose to include, for the purpose of providing support. This correspondence is retained while your request is being handled and for any necessary follow-up or legal obligation. Advisor itself never sends email; contacting Zero Delta is always your choice. To request access to or deletion of your support correspondence, contact <a href="mailto:advisor@zerodelta.dev">advisor@zerodelta.dev</a>.</p>
 </section>
 
 <section aria-labelledby="control">
-    <h2 id="control">6. User control and data deletion</h2>
-    <p>Consultation receipts and decisions may remain in your local persisted Codex session logs, while live plugin configuration and optional journal or catalog state are managed separately under the installed plugin and your Codex home directory. You may inspect, modify, archive, or delete that user state using standard operating system tools. Uninstalling the plugin may leave user state and session logs behind; those are managed separately and can be removed by you.</p>
-</section>
-
-<section aria-labelledby="website">
-    <h2 id="website">7. This website</h2>
-    <p>This site is a set of static pages served from Zero Delta LLC's own hosting. It sets no cookies, loads no third-party scripts or fonts, and runs no analytics or tracking. The hosting provider keeps standard web server access logs, which contain the IP address, timestamp, requested path, and user agent of each request, for operational and security purposes.</p>
+    <h2 id="control">7. User control and data deletion</h2>
+    <p>You can inspect, modify, archive, or delete local user state with standard operating system tools: Codex session logs, configuration and catalog files, and the optional journal (via <code>journal clear</code> and <code>journal disable</code>). For data held by OpenAI, use the controls of your OpenAI account. Uninstalling the plugin may leave user state and session logs behind; those are managed separately and can be removed by you.</p>
 </section>
 
 <section aria-labelledby="changes">

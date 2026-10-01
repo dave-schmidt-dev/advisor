@@ -49,7 +49,16 @@ class CandidatePackageTests(unittest.TestCase):
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(tool, destination)
         files = {
-            "plugins/advisor/.codex-plugin/plugin.json": json.dumps({"name": "advisor", "version": "9.9.9"}),
+            "plugins/advisor/.codex-plugin/plugin.json": json.dumps({
+                "name": "advisor",
+                "version": "9.9.9",
+                "interface": {
+                    "supportURL": "https://zerodelta.dev/advisor/support/",
+                    "category": "Developer Tools",
+                    "shortDescription": "Useful read-only advice.",
+                    "longDescription": "Detailed, publishable information for users.",
+                },
+            }),
             "plugins/advisor/advisor-response.schema.json": '{"type":"object"}\n',
             "plugins/advisor/models.json": '{"models":[]}\n',
             "plugins/advisor/settings.schema.json": '{"type":"object"}\n',
@@ -118,7 +127,16 @@ class CandidatePackageTests(unittest.TestCase):
         self._package("candidate.zip")
         with zipfile.ZipFile(self.repo / "candidate.zip") as archive:
             manifest = json.loads(archive.read("advisor/.codex-plugin/plugin.json"))
-        self.assertEqual(manifest, {"name": "advisor", "version": "9.9.9"})
+        self.assertEqual(manifest, {
+            "name": "advisor",
+            "version": "9.9.9",
+            "interface": {
+                "supportURL": "https://zerodelta.dev/advisor/support/",
+                "category": "Developer Tools",
+                "shortDescription": "Useful read-only advice.",
+                "longDescription": "Detailed, publishable information for users.",
+            },
+        })
         manifest["name"] = "not-advisor"
         (self.repo / "plugins/advisor/.codex-plugin/plugin.json").write_text(json.dumps(manifest), encoding="utf-8")
         result = self._run("python3", "public-release/candidate_inventory.py", "inventory", "--repo", str(self.repo), "--digest", check=False)

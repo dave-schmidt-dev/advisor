@@ -191,7 +191,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
   await page.goto('/');
   const body = (await bodyText(page)).toLowerCase();
 
-  expect(body).toContain('candidate documentation v1.4.7');
+  expect(body).toContain('candidate documentation v1.4.8');
   expect(body).toContain('automatic read-only advice');
   expect(body).toContain('smart defaults');
   expect(body).toContain('optional models');
@@ -221,7 +221,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
 test('each route carries the candidate release metadata', async ({ page }) => {
   for (const { path } of PAGES) {
     await page.goto(path);
-    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.7');
+    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.8');
   }
 });
 
@@ -260,6 +260,18 @@ test('support page uses published directory recovery guidance', async ({ page })
   expect(support).not.toContain('sh plugins/advisor/');
 });
 
+test('support page links a private support and privacy contact channel', async ({ page }) => {
+  await page.goto('/support/');
+  const support = await bodyText(page);
+
+  await expect(page.locator('section[aria-labelledby="private"] a[href="mailto:advisor@zerodelta.dev"]')).toHaveCount(1);
+  expect(support).toContain('Private support and privacy contact');
+  expect(support).toContain('GitHub issues remain the public channel');
+  expect(support).toContain('minimal redacted diagnostics');
+  expect(support).toContain('Do not send secrets or raw session logs');
+  expect(support).toContain('never contacts support automatically');
+});
+
 test('terms identify the current developer and maintainer', async ({ page }) => {
   await page.goto('/terms/');
   const terms = await bodyText(page);
@@ -293,7 +305,7 @@ test('public boundary and installation language are exact and the cursor is remo
   expect(privacy).not.toContain('local execution.');
   expect(privacy).not.toContain('zero-tool sandboxing.');
   expect(privacy).toContain('no zero delta relay. consultation packets are sent directly through your authenticated codex/openai account. zero delta receives no packets, runs no proxy, and collects no telemetry.');
-  expect(privacy).toContain('effective date: 10 september 2026');
+  expect(privacy).toContain('effective date: 1 october 2026');
   expect(privacy).toContain('live');
   expect(privacy).toContain('advisor.toml');
   expect(privacy).toContain('advanced settings and model-catalog data');
@@ -309,6 +321,30 @@ test('public boundary and installation language are exact and the cursor is remo
   expect(privacy).not.toContain('offline inference');
   expect(privacy).not.toContain('all consultation data resides solely');
   expect(privacy).not.toContain('no third-party transmission');
+});
+
+test('privacy policy names recipients, retention, and controls', async ({ page }) => {
+  // The privacy page must disclose who receives data, how long it is kept, and
+  // what the user controls — without inventing retention periods.
+  await page.goto('/privacy/');
+  const privacy = (await bodyText(page)).toLowerCase();
+
+  // Recipients.
+  expect(privacy).toContain('transmitted to openai for inference through your authenticated account and allowance');
+  expect(privacy).toContain('zero delta and its email provider receive your name, email address, message');
+  expect(privacy).toContain('processed by opalstack and zero delta for security and operational purposes');
+  // Retention.
+  expect(privacy).toContain('governed by your openai account agreements and the account controls openai provides');
+  expect(privacy).toContain('remain until you delete them');
+  expect(privacy).toContain('prune entries older than 30 days');
+  expect(privacy).toContain('retains these logs for about seven days');
+  expect(privacy).toContain('provider backup retention is separate and controlled by the provider');
+  expect(privacy).toContain('retained while your request is being handled and for any necessary follow-up or legal obligation');
+  // Controls.
+  expect(privacy).toContain('journal clear');
+  expect(privacy).toContain('use the controls of your openai account');
+  expect(privacy).toContain('request access to or deletion of your support correspondence');
+  await expect(page.locator('a[href="https://openai.com/policies/privacy-policy/"]')).toHaveCount(1);
 });
 
 test('terms describe configured model responsibility and preserve legal terms', async ({ page }) => {

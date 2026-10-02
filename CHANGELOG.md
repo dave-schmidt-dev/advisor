@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reject missing or symlinked installed configuration helpers before running configuration commands.
 - Honor custom exception files in staged file-size checks, using their staged contents.
 - Remove stale test counts from the verification summary and an extra trailing blank line from the diagnostics module.
+- Fix early startup cancellation cleanup without deleting preexisting directories; cancellation waits for local directory setup to finish.
 
 ## [1.4.9] - 2026-10-01
 

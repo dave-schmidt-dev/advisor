@@ -113,7 +113,14 @@ response-validation failure exposes only a redacted failure class and field and 
 one fresh corrective retry, with at most two children. Runtime, identity,
 isolation, provenance, or tool failures are terminal. Rejected content remains private
 to the mode-0700 consultation directory, is never emitted or copied into a retry
-prompt, and is removed by unconditional cleanup.
+prompt, and is removed by cleanup on handled exits.
+
+During local directory creation and permission setup, cancellation is recorded and
+handled after those filesystem operations return, so ownership is established before
+cleanup removes anything. Setup failures keep their failure result; a cancellation
+after successful setup returns the cancellation result. A stalled filesystem can delay
+this startup cancellation, and an uncatchable kill or abrupt shutdown can leave an
+empty directory before ownership is recorded. Cleanup preserves preexisting directories.
 
 When the Codex shell tool returns a nonempty `session_id`, that is nonterminal
 progress, not an Advisor result. The caller drains that exact handle with

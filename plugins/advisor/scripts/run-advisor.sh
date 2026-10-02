@@ -168,8 +168,10 @@ if [ ! -e "$transport_root" ]; then
   mkdir -p "$transport_root" || fail "private transport root creation failed"
 fi
 [ -d "$transport_root" ] && [ ! -L "$transport_root" ] || fail "private transport root is unsafe"
-transport_dir=$(mktemp -d "$transport_root/run.XXXXXX") || fail "temporary directory creation failed"
-chmod 700 "$transport_dir" || fail "temporary directory protection failed"
+transport_dir=$transport_root/run.$consultation_id
+owned=false
+startup=true
+cancel_requested=false
 supervisor_pid=''
 cleanup() {
   if [ -n "$supervisor_pid" ]; then
@@ -177,9 +179,15 @@ cleanup() {
     wait "$supervisor_pid" 2>/dev/null || :
     supervisor_pid=''
   fi
-  case "$transport_dir" in "$transport_root"/run.*) rm -rf -- "$transport_dir" ;; esac
+  if [ "$owned" = true ]; then
+    case "$transport_dir" in "$transport_root"/run.*) rm -rf -- "$transport_dir" ;; esac
+  fi
 }
 cancelled() {
+  if [ "$startup" = true ]; then
+    cancel_requested=true
+    return 0
+  fi
   if [ -n "$supervisor_pid" ]; then
     kill -TERM "$supervisor_pid" 2>/dev/null || :
     wait "$supervisor_pid" 2>/dev/null || :
@@ -190,6 +198,17 @@ cancelled() {
 }
 trap cleanup 0
 trap cancelled HUP INT TERM
+
+(
+  trap '' HUP INT TERM
+  mkdir "$transport_dir"
+) || fail "temporary directory creation failed"
+owned=true
+chmod 700 "$transport_dir" || fail "temporary directory protection failed"
+startup=false
+if [ "$cancel_requested" = true ]; then
+  cancelled
+fi
 
 packet=$transport_dir/packet.txt
 base_prompt=$transport_dir/prompt.1.txt

@@ -74,13 +74,15 @@ def index_blob(path: str) -> tuple[bytes | None, str | None]:
     return run_git(["cat-file", "blob", f":{path}"])
 
 
-def indexed_paths() -> tuple[list[str], set[str], list[str]]:
+def indexed_paths(
+    exceptions_path: str = DEFAULT_EXCEPTIONS_PATH,
+) -> tuple[list[str], set[str], list[str]]:
     """Return checked paths and the changed paths eligible for legacy notices."""
     changed_paths, error = run_git(["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"])
     if error:
         return [], set(), [error]
     staged_paths = {os.fsdecode(path) for path in changed_paths.split(b"\0") if path}
-    changed, error = run_git(["diff", "--cached", "--name-only", "--", DEFAULT_EXCEPTIONS_PATH])
+    changed, error = run_git(["diff", "--cached", "--name-only", "--", exceptions_path])
     if error:
         return [], set(), [error]
     if not changed:
@@ -110,12 +112,14 @@ def working_exceptions(path: str) -> tuple[dict[str, str], list[str]]:
         return {}, [f"{path}: {error}"]
 
 
-def staged_exceptions() -> tuple[dict[str, str], list[str]]:
+def staged_exceptions(
+    exceptions_path: str = DEFAULT_EXCEPTIONS_PATH,
+) -> tuple[dict[str, str], list[str]]:
     """Load exceptions from the index, treating an absent blob as no entries."""
-    contents, error = index_blob(DEFAULT_EXCEPTIONS_PATH)
+    contents, error = index_blob(exceptions_path)
     if error:
         return {}, []
-    return parse_exceptions(contents, DEFAULT_EXCEPTIONS_PATH)
+    return parse_exceptions(contents, exceptions_path)
 
 
 def check_files(
@@ -203,8 +207,8 @@ def main(arguments: list[str] | None = None) -> int:
         errors.append("--max-lines must be a positive integer")
 
     if options.staged:
-        paths, legacy_notice_paths, path_errors = indexed_paths()
-        exceptions, exception_errors = staged_exceptions()
+        paths, legacy_notice_paths, path_errors = indexed_paths(options.exceptions)
+        exceptions, exception_errors = staged_exceptions(options.exceptions)
         errors.extend(path_errors)
         errors.extend(exception_errors)
         errors.extend(
@@ -213,7 +217,7 @@ def main(arguments: list[str] | None = None) -> int:
                 exceptions,
                 options.target,
                 options.max_lines,
-                DEFAULT_EXCEPTIONS_PATH,
+                options.exceptions,
                 True,
                 legacy_notice_paths,
             )

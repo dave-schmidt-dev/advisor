@@ -74,7 +74,7 @@ snapshot() { find "$1" -mindepth 1 -maxdepth 1 -print | LC_ALL=C sort | while IF
 
 python3 -m unittest discover -s "$plugin_dir/tests" -p 'test_advisor_*.py'
 python3 -m unittest "$package_test"
-pass "Advisor behavior tests and 20 candidate packaging tests"
+pass "Advisor behavior tests and candidate packaging tests"
 
 sh -n "$script_dir"/*.sh
 [ "$(stat -f '%Lp' "$parent_inspector" 2>/dev/null || stat -c '%a' "$parent_inspector")" = 644 ] || fail "parent inspector must remain mode 100644"

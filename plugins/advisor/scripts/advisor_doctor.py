@@ -252,4 +252,3 @@ def doctor_report(
         "account_availability": "unobserved",
         "errors": errors,
     }
-

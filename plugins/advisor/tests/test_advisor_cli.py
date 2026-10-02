@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -454,6 +455,60 @@ class AdvisorCliTests(unittest.TestCase):
                 process.stderr.close()
             unrelated.terminate()
             unrelated.wait(timeout=3)
+
+    def test_missing_or_symlinked_sibling_fails_without_execution(self) -> None:
+        helpers = (
+            "advisor_config.py", "advisor_state.py", "advisor_catalog.py",
+            "advisor_settings.py", "advisor_journal.py", "advisor_discovery.py",
+            "advisor_canary.py", "advisor_doctor.py", "advisor_process.py",
+        )
+        sandbox_plugin = self.root / "sandbox_plugin"
+        sandbox_plugin.mkdir()
+        shutil.copy2(ROOT / "advisor.toml", sandbox_plugin / "advisor.toml")
+        sandbox_scripts = sandbox_plugin / "scripts"
+        shutil.copytree(ROOT / "scripts", sandbox_scripts)
+        wrapper = sandbox_scripts / "advisor-config.sh"
+        res = subprocess.run(
+            [str(wrapper), "--json", "status"],
+            capture_output=True,
+            text=True,
+            env=self.env,
+            check=False,
+        )
+        self.assertEqual(res.returncode, 0, res.stderr)
+
+        for helper in helpers:
+            target = sandbox_scripts / helper
+            backup = self.root / f"{helper}.bak"
+            shutil.copy2(target, backup)
+
+            target.unlink()
+            res_missing = subprocess.run(
+                [str(wrapper), "--json", "status"],
+                capture_output=True,
+                text=True,
+                env=self.env,
+                check=False,
+            )
+            self.assertEqual(res_missing.returncode, 2)
+            self.assertIn("ADVISOR CONFIG:", res_missing.stderr)
+            self.assertEqual(res_missing.stdout, "")
+
+            target.symlink_to(backup)
+            res_sym = subprocess.run(
+                [str(wrapper), "--json", "status"],
+                capture_output=True,
+                text=True,
+                env=self.env,
+                check=False,
+            )
+            self.assertEqual(res_sym.returncode, 2)
+            self.assertIn("ADVISOR CONFIG:", res_sym.stderr)
+            self.assertEqual(res_sym.stdout, "")
+
+            target.unlink()
+            shutil.copy2(backup, target)
+            backup.unlink()
 
 
 if __name__ == "__main__":

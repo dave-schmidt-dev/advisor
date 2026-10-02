@@ -103,6 +103,53 @@ class FileSizeCheckerTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("remove its exception from .file-size-exceptions", result.stdout)
 
+    def test_staged_honors_alternate_exceptions_and_ignores_working_tree_only_edits(self) -> None:
+        self.write("large.py", b"pass\n" * 801)
+        subprocess.run(["git", "add", "large.py"], cwd=self.repo, check=True)
+
+        self.write(".file-size-exceptions", "large.py default allowed\n")
+        subprocess.run(["git", "add", ".file-size-exceptions"], cwd=self.repo, check=True)
+
+        default_res = subprocess.run(
+            [sys.executable, str(CHECKER), "--staged"],
+            cwd=self.repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(default_res.returncode, 0, default_res.stderr)
+
+        self.write("alt-exceptions", "large.py alternate allowed\n")
+        res = subprocess.run(
+            [sys.executable, str(CHECKER), "--staged", "--exceptions", "alt-exceptions"],
+            cwd=self.repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("add a reasoned entry to alt-exceptions", res.stderr)
+
+        subprocess.run(["git", "add", "alt-exceptions"], cwd=self.repo, check=True)
+        res = subprocess.run(
+            [sys.executable, str(CHECKER), "--staged", "--exceptions", "alt-exceptions"],
+            cwd=self.repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(res.returncode, 0, res.stderr)
+
+        self.write("alt-exceptions", "")
+        res = subprocess.run(
+            [sys.executable, str(CHECKER), "--staged", "--exceptions", "alt-exceptions"],
+            cwd=self.repo,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(res.returncode, 0, res.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

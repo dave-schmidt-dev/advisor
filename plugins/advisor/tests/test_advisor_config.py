@@ -50,13 +50,11 @@ CONFIG_FACADE_NAMES = (
     "read_json",
     "record_compatibility",
     "refresh_catalog",
-    "reset_selections",
     "resolve_selection",
     "restore_prior_settings",
     "save_preset",
     "save_settings",
     "set_deadline",
-    "set_selection",
     "set_usage_journal",
     "shipped_default_launch_eligible",
     "state_paths",
@@ -276,7 +274,9 @@ class AdvisorConfigTests(unittest.TestCase):
         config.record_compatibility(
             pair, codex_version="codex-cli 0.153.2", paths=self.paths
         )
-        config.set_selection("standard", pair, paths=self.paths)
+        stale = config.baseline_settings()
+        stale["selections"]["standard"] = pair
+        config.save_settings(stale, expected_revision=0, paths=self.paths)
         config.save_preset("future", pair, paths=self.paths)
         catalog = config.load_catalog(self.paths)
         catalog["compatibility"][0]["transport_contract_version"] = "1.3"
@@ -364,17 +364,6 @@ class AdvisorConfigTests(unittest.TestCase):
             with self.assertRaisesRegex(config.ConfigError, "too large"):
                 config.load_live_config()
         self.assertEqual(delivered, config.MAX_LIVE_CONFIG_BYTES + 1)
-
-    def test_reset_only_restores_selections(self) -> None:
-        settings = config.baseline_settings()
-        settings["selections"]["standard"] = {"model": "custom/future", "effort": "max"}
-        settings["presets"] = {"one": {"model": "custom/future", "effort": "max"}}
-        settings["deadline_seconds"] = 120
-        config.save_settings(settings, expected_revision=0, paths=self.paths)
-        reset = config.reset_selections(paths=self.paths)
-        self.assertEqual(reset["selections"], config.baseline_settings()["selections"])
-        self.assertEqual(reset["presets"]["one"]["model"], "custom/future")
-        self.assertEqual(reset["deadline_seconds"], 120)
 
     def test_settings_mutations_keep_one_explicit_prior_revision(self) -> None:
         initial = config.save_settings(

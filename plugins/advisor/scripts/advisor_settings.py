@@ -15,7 +15,6 @@ from advisor_catalog import (
     _pair_is_compatible,
     load_catalog,
     load_shipped_models,
-    shipped_default_launch_eligible,
 )
 from advisor_state import (
     DEFAULT_DEADLINE_SECONDS,
@@ -227,16 +226,6 @@ def _write_settings_revision(
         raise
 
 
-def reset_selections(*, paths: StatePaths | None = None) -> dict[str, Any]:
-    paths = paths or state_paths()
-    with state_lock(paths):
-        current = load_settings(paths)
-        current["selections"] = baseline_settings()["selections"]
-        current["revision"] += 1
-        _write_settings_revision(paths, current=load_settings(paths), replacement=current)
-        return current
-
-
 def restore_prior_settings(*, paths: StatePaths | None = None) -> dict[str, Any]:
     """Explicitly restore the retained prior settings revision.
 
@@ -301,32 +290,6 @@ def set_deadline(seconds: int, *, paths: StatePaths | None = None) -> dict[str, 
         updated = validate_settings(updated)
         _write_settings_revision(paths, current=current, replacement=updated)
         return updated
-
-
-def set_selection(
-    tier: str,
-    pair: Mapping[str, str],
-    *,
-    paths: StatePaths | None = None,
-) -> dict[str, Any]:
-    if tier not in TIERS:
-        raise ConfigError("unsupported tier")
-    pair = validate_pair(pair)
-    paths = paths or state_paths()
-    with state_lock(paths):
-        settings, catalog = load_settings(paths), load_catalog(paths)
-        current = copy.deepcopy(settings)
-        settings = copy.deepcopy(settings)
-        if not (
-            shipped_default_launch_eligible(tier=tier, **pair)
-            or _pair_is_compatible(pair, catalog)
-        ):
-            raise ConfigError("selected model and effort are not currently compatible")
-        settings["selections"][tier] = pair
-        settings["revision"] += 1
-        settings = validate_settings(settings)
-        _write_settings_revision(paths, current=current, replacement=settings)
-        return settings
 
 
 def save_preset(

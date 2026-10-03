@@ -2,8 +2,8 @@
 
 Candidate source: `site/` for `https://zerodelta.dev/advisor/`. This is the
 current post-deployment review record for the 1.4.7 version and model-copy change.
-The previous [1.4.6 walkthrough](site-walkthrough-1.4.6.md) retains the detailed
-shared navigation and desktop/mobile presentation review.
+The previous 1.4.6 walkthrough (removed from the tree; `git show a8680c3:docs/site-walkthrough-1.4.6.md`)
+retains the detailed shared navigation and desktop/mobile presentation review.
 
 ## Copy and version reviewed
 

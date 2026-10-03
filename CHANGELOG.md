@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unused `save_catalog` writer and `MAX_EVENTS` constant, plus their `advisor_config` facade exports and Vulture whitelist lines. No caller existed in the plugin, tests, or other projects.
 - Unenforced `plugins/advisor/settings.schema.json` (nothing loaded it; `validate_settings` is the contract). The next package contains one fewer file.
 - 46 unreferenced re-exports from the `advisor_config.py` facade (constants, validators, and internal helpers with no consumer); the config CLI and every name used by tests are unchanged.
+- Four superseded drafts (`docs/{privacy-policy,support,terms,website}-draft.md`) and the 1.4.4, 1.4.5 and 1.4.6 site walkthroughs; git history is the record, and the 1.4.7 walkthrough now points to `a8680c3` for the 1.4.6 detail.
 - Unreachable `set_selection` and `reset_selections` saved-selection writers, their facade exports and Vulture whitelist lines, and `test_reset_only_restores_selections`. The `set` and `reset` CLI commands still reject as legacy-only, and existing `settings.json` files with `selections` still load. `shipped_default_launch_eligible` and `models.json` `defaults` stay: the `models list` view still reads them.
 
 ## [1.4.9] - 2026-10-01

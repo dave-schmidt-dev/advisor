@@ -13,70 +13,34 @@ from typing import Any
 _SCRIPT_DIR = str(Path(__file__).resolve().parent)
 if _SCRIPT_DIR not in sys.path:
     sys.path.insert(0, _SCRIPT_DIR)
-from advisor_process import JsonRpcProcess, ProcessUnavailable, terminate_owned
+from advisor_process import JsonRpcProcess, ProcessUnavailable
 from advisor_state import (
-    ATTEMPT_OUTCOMES,
-    CANARY_CLEANUP_GRACE_SECONDS,
     DEFAULT_DEADLINE_SECONDS,
-    EFFORTS,
-    JOURNAL_OUTCOMES,
-    JOURNAL_RETENTION_SECONDS,
-    JOURNAL_TIERS,
-    LOCK_DEADLINE_SECONDS,
-    MAX_JOURNAL_RECORDS,
-    MAX_JSON_BYTES,
     MAX_LIVE_CONFIG_BYTES,
-    MAX_MODELS,
-    MAX_PAGES,
-    MAX_DEADLINE_SECONDS,
-    MIN_DEADLINE_SECONDS,
-    PRESET_RE,
-    SCHEMA_VERSION,
-    SELECTOR_RE,
-    TOKEN_RE,
-    TRANSPORT_CONTRACT_VERSION,
-    TIERS,
     ConfigError,
     DiscoveryError,
     DiscoveryUnavailable,
     RevisionConflict,
-    StatePaths,
-    _MISSING,
-    _NO_DEFAULT,
     _atomic_write,
-    _atomic_write_bytes,
     _duplicate_key,
-    _read_safe_bytes,
-    _require_keys,
     _run_bounded_output,
     _safe_directory,
-    _validate_effort,
-    _validate_selector,
-    current_codex_version,
     read_json,
-    state_lock,
     state_paths,
-    validate_pair,
 )
 
 from advisor_catalog import (
-    _empty_catalog,
-    _pair_is_compatible,
-    _pair_is_listed,
-    _validate_candidate,
     add_manual_candidate,
     compatibility_is_current,
     load_catalog,
     load_shipped_models,
     record_compatibility,
     shipped_default_launch_eligible,
-    validate_catalog,
     validate_compatibility,
     validate_shipped_models,
 )
 
 from advisor_settings import (
-    _write_settings_revision,
     baseline_settings,
     live_config_path,
     load_live_config,
@@ -93,9 +57,6 @@ from advisor_settings import (
 )
 
 from advisor_journal import (
-    _last_journal_failure,
-    _prune_usage_journal,
-    _validate_usage_count,
     clear_usage_journal,
     validate_journal_record,
     write_usage_journal,
@@ -108,54 +69,32 @@ from advisor_discovery import (
 )
 
 from advisor_canary import (
-    _CanaryCancelled,
     _run_compatibility_wrapper,
-    _stop_canary_wrapper,
-    authorize_canary,
     consume_canary,
     test_compatibility,
 )
 
 from advisor_doctor import (
     _catalog_view,
-    _compatibility_view,
-    _doctor_probe,
-    _parent_runtime_report,
     doctor_report,
 )
 
 __all__ = [
-    "SCHEMA_VERSION", "TRANSPORT_CONTRACT_VERSION", "MAX_JSON_BYTES",
-    "MAX_LIVE_CONFIG_BYTES", "MAX_JOURNAL_RECORDS", "JOURNAL_RETENTION_SECONDS",
-    "JOURNAL_OUTCOMES", "ATTEMPT_OUTCOMES", "MAX_PAGES",
-    "MAX_MODELS", "DEFAULT_DEADLINE_SECONDS", "MIN_DEADLINE_SECONDS",
-    "MAX_DEADLINE_SECONDS", "LOCK_DEADLINE_SECONDS", "CANARY_CLEANUP_GRACE_SECONDS",
-    "EFFORTS", "TIERS", "JOURNAL_TIERS", "SELECTOR_RE", "PRESET_RE",
-    "TOKEN_RE", "_MISSING", "_NO_DEFAULT", "ConfigError",
+    "MAX_LIVE_CONFIG_BYTES", "DEFAULT_DEADLINE_SECONDS", "ConfigError",
     "RevisionConflict", "DiscoveryUnavailable", "DiscoveryError",
     "_run_bounded_output", "_duplicate_key", "_safe_directory", "read_json",
-    "_require_keys", "_validate_selector", "_validate_effort", "validate_pair",
-    "StatePaths", "state_paths", "state_lock", "_read_safe_bytes",
-    "_atomic_write_bytes", "_atomic_write", "current_codex_version",
-    "_validate_candidate", "_empty_catalog", "validate_compatibility",
-    "validate_catalog", "compatibility_is_current", "shipped_default_launch_eligible",
-    "load_catalog", "load_shipped_models", "validate_shipped_models",
-    "add_manual_candidate", "_pair_is_compatible", "_pair_is_listed",
-    "record_compatibility",
-    "live_config_path", "load_live_config", "baseline_settings",
-    "validate_settings", "load_settings", "set_usage_journal",
-    "save_settings", "_write_settings_revision", "reset_selections",
-    "restore_prior_settings", "set_deadline", "set_selection",
-    "save_preset", "resolve_selection",
-    "_validate_usage_count", "validate_journal_record",
-    "_prune_usage_journal", "write_usage_journal", "clear_usage_journal",
-    "_last_journal_failure",
-    "normalize_discovery_pages", "AppServerDiscovery", "refresh_catalog",
-    "authorize_canary", "consume_canary", "_CanaryCancelled",
-    "_stop_canary_wrapper", "_run_compatibility_wrapper", "test_compatibility",
-    "_compatibility_view", "_catalog_view", "_doctor_probe",
-    "_parent_runtime_report", "doctor_report",
-    "JsonRpcProcess", "ProcessUnavailable", "terminate_owned",
+    "state_paths", "_atomic_write", "validate_compatibility",
+    "compatibility_is_current", "shipped_default_launch_eligible", "load_catalog",
+    "load_shipped_models", "validate_shipped_models", "add_manual_candidate",
+    "record_compatibility", "live_config_path", "load_live_config",
+    "baseline_settings", "validate_settings", "load_settings",
+    "set_usage_journal", "save_settings", "reset_selections",
+    "restore_prior_settings", "set_deadline", "set_selection", "save_preset",
+    "resolve_selection", "validate_journal_record", "write_usage_journal",
+    "clear_usage_journal", "normalize_discovery_pages", "AppServerDiscovery",
+    "refresh_catalog", "consume_canary", "_run_compatibility_wrapper",
+    "test_compatibility", "_catalog_view", "doctor_report", "JsonRpcProcess",
+    "ProcessUnavailable",
 ]
 
 

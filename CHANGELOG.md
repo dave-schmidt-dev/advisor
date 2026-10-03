@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Unused `save_catalog` writer and `MAX_EVENTS` constant, plus their `advisor_config` facade exports and Vulture whitelist lines. No caller existed in the plugin, tests, or other projects.
 - Unenforced `plugins/advisor/settings.schema.json` (nothing loaded it; `validate_settings` is the contract). The next package contains one fewer file.
+- 46 unreferenced re-exports from the `advisor_config.py` facade (constants, validators, and internal helpers with no consumer); the config CLI and every name used by tests are unchanged.
 
 ## [1.4.9] - 2026-10-01
 

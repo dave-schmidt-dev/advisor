@@ -18,7 +18,6 @@ from advisor_state import (
     TIERS,
     TRANSPORT_CONTRACT_VERSION,
     ConfigError,
-    RevisionConflict,
     StatePaths,
     _MISSING,
     _atomic_write,
@@ -325,19 +324,6 @@ def validate_shipped_models(value: Any) -> dict[str, Any]:
         "defaults": {tier: defaults[tier] for tier in sorted(TIERS)},
         "models": models,
     }
-
-
-def save_catalog(
-    value: Mapping[str, Any], *, expected_revision: int, paths: StatePaths | None = None
-) -> dict[str, Any]:
-    paths = paths or state_paths()
-    clean = validate_catalog(dict(value))
-    with state_lock(paths):
-        if load_catalog(paths)["revision"] != expected_revision:
-            raise RevisionConflict("catalog revision changed")
-        clean["revision"] = expected_revision + 1
-        _atomic_write(paths.catalog, clean)
-        return clean
 
 
 def add_manual_candidate(

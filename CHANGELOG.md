@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove stale test counts from the verification summary and an extra trailing blank line from the diagnostics module.
 - Fix early startup cancellation cleanup without deleting preexisting directories; cancellation waits for local directory setup to finish.
 
+### Removed
+- Unused `save_catalog` writer and `MAX_EVENTS` constant, plus their `advisor_config` facade exports and Vulture whitelist lines. No caller existed in the plugin, tests, or other projects.
+
 ## [1.4.9] - 2026-10-01
 
 ### Changed

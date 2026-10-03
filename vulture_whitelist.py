@@ -1,16 +1,17 @@
-# 2026-09-23 baseline for dead-code detection with Vulture.
-# This whitelist records current findings rather than reviewing them.
+# Vulture whitelist: every entry names its dynamic caller or the test that is its only caller.
 # Any new entries added to this whitelist need a one-line justification.
 
-MAX_EVENTS  # unused variable (plugins/advisor/scripts/advisor_state.py:42)
-save_settings  # unused function (plugins/advisor/scripts/advisor_settings.py:194)
-save_catalog  # unused function (plugins/advisor/scripts/advisor_catalog.py:330)
-reset_selections  # unused function (plugins/advisor/scripts/advisor_settings.py:230)
-set_selection  # unused function (plugins/advisor/scripts/advisor_settings.py:306)
-_.create_system  # unused attribute (public-release/candidate_inventory.py:245)
-_.compress_type  # unused attribute (public-release/candidate_inventory.py:247)
-_.handle_starttag  # unused method (public-release/upload_readiness.py:151)
-_.redirect_request  # unused method (public-release/upload_readiness.py:180)
-fp  # unused variable (public-release/upload_readiness.py:180)
-msg  # unused variable (public-release/upload_readiness.py:180)
-newurl  # unused variable (public-release/upload_readiness.py:180)
+# Legacy saved-state stack: no production caller, exercised by plugins/advisor/tests/test_advisor_config.py.
+# Retirement is a pending product decision (see TASKS.md / audit F5), so the API stays until then.
+save_settings  # advisor_settings.py: test_advisor_config.py (revision-conflict and reset tests)
+reset_selections  # advisor_settings.py: test_advisor_config.py (saved-selection reset)
+set_selection  # advisor_settings.py: test_advisor_config.py (saved-selection write)
+
+# Standard-library attribute writes and subclass hooks in public-release tooling.
+_.create_system  # candidate_inventory.py: zipfile.ZipInfo attribute assignment for reproducible ZIPs
+_.compress_type  # candidate_inventory.py: zipfile.ZipInfo attribute assignment
+_.handle_starttag  # upload_readiness.py: html.parser.HTMLParser hook invoked by feed()
+_.redirect_request  # upload_readiness.py: urllib.request.HTTPRedirectHandler hook
+fp  # redirect_request parameter required by the urllib signature
+msg  # redirect_request parameter required by the urllib signature
+newurl  # redirect_request parameter required by the urllib signature

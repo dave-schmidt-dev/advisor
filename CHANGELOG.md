@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `run-advisor.sh` defines the monotonic-clock and UTC-timestamp helpers once instead of nine inline Python heredocs; the timestamp now comes from `date -u`, in the same format. `run-advisor.sh` drops to 473 lines.
+- The three remaining settings mutators (`set_usage_journal`, `set_deadline`, `save_preset`) share one `_update_settings` lock/load/bump/validate/write helper; the revision and prior-backup sequence is unchanged.
 
 ### Removed
 - Unused `save_catalog` writer and `MAX_EVENTS` constant, plus their `advisor_config` facade exports and Vulture whitelist lines. No caller existed in the plugin, tests, or other projects.

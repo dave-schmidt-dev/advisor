@@ -7,7 +7,7 @@ import hashlib
 import os
 import stat
 import tomllib
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -175,19 +175,32 @@ def load_settings(paths: StatePaths | None = None) -> dict[str, Any]:
     return validate_settings(stored)
 
 
-def set_usage_journal(
-    enabled: bool, *, paths: StatePaths | None = None
+def _update_settings(
+    paths: StatePaths, mutate: Callable[[dict[str, Any]], None]
 ) -> dict[str, Any]:
-    """Toggle the optional content-free local usage journal."""
-    paths = paths or state_paths()
+    """Apply one locked, revision-bumping change and retain the prior revision.
+
+    `mutate` edits a deep copy of the current settings in place and may raise
+    to abort. The result is validated before `_write_settings_revision`.
+    """
     with state_lock(paths):
         current = load_settings(paths)
-        settings = dict(current)
-        settings["usage_journal_enabled"] = enabled
+        settings = copy.deepcopy(current)
+        mutate(settings)
         settings["revision"] += 1
         settings = validate_settings(settings)
         _write_settings_revision(paths, current=current, replacement=settings)
         return settings
+
+
+def set_usage_journal(
+    enabled: bool, *, paths: StatePaths | None = None
+) -> dict[str, Any]:
+    """Toggle the optional content-free local usage journal."""
+    return _update_settings(
+        paths or state_paths(),
+        lambda settings: settings.update(usage_journal_enabled=enabled),
+    )
 
 
 def save_settings(
@@ -281,15 +294,10 @@ def set_deadline(seconds: int, *, paths: StatePaths | None = None) -> dict[str, 
     """Persist the total Advisor deadline without changing selections."""
     if isinstance(seconds, bool) or not isinstance(seconds, int):
         raise ConfigError("invalid deadline")
-    paths = paths or state_paths()
-    with state_lock(paths):
-        current = load_settings(paths)
-        updated = dict(current)
-        updated["deadline_seconds"] = seconds
-        updated["revision"] += 1
-        updated = validate_settings(updated)
-        _write_settings_revision(paths, current=current, replacement=updated)
-        return updated
+    return _update_settings(
+        paths or state_paths(),
+        lambda settings: settings.update(deadline_seconds=seconds),
+    )
 
 
 def save_preset(
@@ -302,17 +310,13 @@ def save_preset(
         raise ConfigError("unsafe preset name")
     pair = validate_pair(pair)
     paths = paths or state_paths()
-    with state_lock(paths):
-        settings, catalog = load_settings(paths), load_catalog(paths)
-        current = copy.deepcopy(settings)
-        settings = copy.deepcopy(settings)
-        if not _pair_is_compatible(pair, catalog):
+
+    def mutate(settings: dict[str, Any]) -> None:
+        if not _pair_is_compatible(pair, load_catalog(paths)):
             raise ConfigError("preset model and effort are not currently compatible")
         settings["presets"][name] = pair
-        settings["revision"] += 1
-        settings = validate_settings(settings)
-        _write_settings_revision(paths, current=current, replacement=settings)
-        return settings
+
+    return _update_settings(paths, mutate)
 
 
 def resolve_selection(

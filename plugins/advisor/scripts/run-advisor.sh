@@ -10,6 +10,8 @@ fail() {
 }
 
 progress() { printf '%s\n' "ADVISOR TRANSPORT: $*" >&2; }
+now_ms() { python3 -c 'import time; print(time.monotonic_ns() // 1_000_000)'; }
+utc_now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
 role='' tier='' preset='' canary_token='' parent_thread_id='' sessions_dir=''
 selection_source='' selection_revision=null source_revision=null
@@ -88,17 +90,9 @@ import uuid
 print(uuid.uuid4())
 PY
 ) || fail "consultation identifier generation failed"
-consultation_started=$(python3 - <<'PY'
-import datetime as dt
-print(dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"))
-PY
-) || fail "consultation timestamp initialization failed"
+consultation_started=$(utc_now) || fail "consultation timestamp initialization failed"
 attempt_records='[]'
-consultation_started_ms=$(python3 - <<'PY'
-import time
-print(time.monotonic_ns() // 1_000_000)
-PY
-) || fail "consultation timing initialization failed"
+consultation_started_ms=$(now_ms) || fail "consultation timing initialization failed"
 attempt_open=false
 terminal_emitted=false
 
@@ -125,26 +119,14 @@ terminal_failure() {
     *) consultation_outcome=failed; attempt_outcome=launch_failed ;;
   esac
   if [ "$attempt_open" = true ]; then
-    failure_finished_ms=$(python3 - <<'PY'
-import time
-print(time.monotonic_ns() // 1_000_000)
-PY
-    ) || return 0
+    failure_finished_ms=$(now_ms) || return 0
     failure_duration_ms=$((failure_finished_ms - attempt_started_ms))
     failure_usage=$(python3 "$script_dir/advisor_process.py" usage --events "$events" --duration-ms "$failure_duration_ms" 2>/dev/null || printf '{"duration_ms":%s,"usage":{"input":null,"cached_input":null,"output":null,"reasoning":null},"availability":{"input":"unavailable","cached_input":"unavailable","output":"unavailable","reasoning":"unavailable"}}' "$failure_duration_ms")
     attempt_records=$(jq -cn --argjson prior "$attempt_records" --argjson usage "$failure_usage" --argjson number "$attempt" --arg outcome "$attempt_outcome" '$prior + [{number:$number,outcome:$outcome,duration_ms:$usage.duration_ms,usage:$usage.usage,availability:$usage.availability}]') || return 0
     attempt_open=false
   fi
-  consultation_finished=$(python3 - <<'PY'
-import datetime as dt
-print(dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"))
-PY
-  ) || return 0
-  finish_ms=$(python3 - <<'PY'
-import time
-print(time.monotonic_ns() // 1_000_000)
-PY
-  ) || return 0
+  consultation_finished=$(utc_now) || return 0
+  finish_ms=$(now_ms) || return 0
   total_duration_ms=$((finish_ms - consultation_started_ms))
   metric_rows=$(usage_totals) || return 0
   totals=$(printf '%s' "$metric_rows" | jq -c '{input:.input.value,cached_input:.cached_input.value,output:.output.value,reasoning:.reasoning.value}') || return 0
@@ -404,11 +386,7 @@ while [ "$attempt" -le 2 ]; do
   workdir=$transport_dir/workdir.$attempt
   mkdir "$workdir" || fail "isolated work directory creation failed"
 
-  attempt_started_ms=$(python3 - <<'PY'
-import time
-print(time.monotonic_ns() // 1_000_000)
-PY
-) || fail "attempt timing initialization failed"
+  attempt_started_ms=$(now_ms) || fail "attempt timing initialization failed"
   attempt_open=true
   progress "launching $role ($model, $effort, read-only) deadline ${deadline_seconds}s, attempt $attempt of 2"
   # Legacy calls serialize model_reasoning_effort="high"; saved tiers serialize the validated effort.
@@ -425,11 +403,7 @@ PY
   fi
   deadline_ok || fail "consultation deadline exceeded"
   [ -f "$events" ] && [ "$(wc -c <"$events" | tr -d ' ')" -le 1000000 ] || fail "transport events exceeded byte limit"
-  attempt_finished_ms=$(python3 - <<'PY'
-import time
-print(time.monotonic_ns() // 1_000_000)
-PY
-) || fail "attempt timing failed"
+  attempt_finished_ms=$(now_ms) || fail "attempt timing failed"
   attempt_duration_ms=$((attempt_finished_ms - attempt_started_ms))
   attempt_usage=$(python3 "$script_dir/advisor_process.py" usage --events "$events" --duration-ms "$attempt_duration_ms" 2>/dev/null || printf '{"duration_ms":%s,"usage":{"input":null,"cached_input":null,"output":null,"reasoning":null},"availability":{"input":"unavailable","cached_input":"unavailable","output":"unavailable","reasoning":"unavailable"}}' "$attempt_duration_ms")
 
@@ -479,16 +453,8 @@ done
 deadline_ok || fail "consultation deadline exceeded"
 
 progress "consultation verified"
-consultation_finished=$(python3 - <<'PY'
-import datetime as dt
-print(dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"))
-PY
-) || fail "consultation timestamp failed"
-consultation_finished_ms=$(python3 - <<'PY'
-import time
-print(time.monotonic_ns() // 1_000_000)
-PY
-) || fail "consultation timing failed"
+consultation_finished=$(utc_now) || fail "consultation timestamp failed"
+consultation_finished_ms=$(now_ms) || fail "consultation timing failed"
 total_duration_ms=$((consultation_finished_ms - consultation_started_ms))
 metric_rows=$(usage_totals) || fail "usage total construction failed"
 totals=$(printf '%s' "$metric_rows" | jq -c '{input:.input.value,cached_input:.cached_input.value,output:.output.value,reasoning:.reasoning.value}') || fail "usage total construction failed"

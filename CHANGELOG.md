@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove stale test counts from the verification summary and an extra trailing blank line from the diagnostics module.
 - Fix early startup cancellation cleanup without deleting preexisting directories; cancellation waits for local directory setup to finish.
 
+### Changed
+- `run-advisor.sh` defines the monotonic-clock and UTC-timestamp helpers once instead of nine inline Python heredocs; the timestamp now comes from `date -u`, in the same format. `run-advisor.sh` drops to 473 lines.
+
 ### Removed
 - Unused `save_catalog` writer and `MAX_EVENTS` constant, plus their `advisor_config` facade exports and Vulture whitelist lines. No caller existed in the plugin, tests, or other projects.
 - Unenforced `plugins/advisor/settings.schema.json` (nothing loaded it; `validate_settings` is the contract). The next package contains one fewer file.

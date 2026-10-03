@@ -457,11 +457,7 @@ class AdvisorCliTests(unittest.TestCase):
             unrelated.wait(timeout=3)
 
     def test_missing_or_symlinked_sibling_fails_without_execution(self) -> None:
-        helpers = (
-            "advisor_config.py", "advisor_state.py", "advisor_catalog.py",
-            "advisor_settings.py", "advisor_journal.py", "advisor_discovery.py",
-            "advisor_canary.py", "advisor_doctor.py", "advisor_process.py",
-        )
+        helpers = sorted(path.name for path in (ROOT / "scripts").glob("advisor_*.py"))
         sandbox_plugin = self.root / "sandbox_plugin"
         sandbox_plugin.mkdir()
         shutil.copy2(ROOT / "advisor.toml", sandbox_plugin / "advisor.toml")

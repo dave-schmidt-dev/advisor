@@ -18,16 +18,9 @@ CONFIG_WRAPPER = ROOT / "scripts" / "advisor-config.sh"
 TRANSPORT = ROOT / "scripts" / "run-advisor.sh"
 PROCESS = ROOT / "scripts" / "advisor_process.py"
 CONFIG_MODULE = ROOT / "scripts" / "advisor_config.py"
+# Every sibling module is checked, so a module the shell helper list forgets fails these tests.
 HELPERS = (
-    "advisor_config.py",
-    "advisor_state.py",
-    "advisor_catalog.py",
-    "advisor_settings.py",
-    "advisor_journal.py",
-    "advisor_discovery.py",
-    "advisor_canary.py",
-    "advisor_doctor.py",
-    "advisor_process.py",
+    *sorted(path.name for path in CONFIG_MODULE.parent.glob("advisor_*.py")),
     "inspect-agent-runtime.sh",
 )
 SPEC = importlib.util.spec_from_file_location("transport_advisor_config", CONFIG_MODULE)

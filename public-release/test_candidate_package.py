@@ -61,7 +61,6 @@ class CandidatePackageTests(unittest.TestCase):
             }),
             "plugins/advisor/advisor-response.schema.json": '{"type":"object"}\n',
             "plugins/advisor/models.json": '{"models":[]}\n',
-            "plugins/advisor/settings.schema.json": '{"type":"object"}\n',
             "plugins/advisor/agents/advisor.toml": "name = 'advisor'\n",
             "plugins/advisor/assets/icon.png": "not-a-real-image\n",
             "plugins/advisor/evals/cases.json": "[]\n",
@@ -127,7 +126,7 @@ class CandidatePackageTests(unittest.TestCase):
 
     def test_full_tree_digest_changes_for_root_models_schema_and_assets(self) -> None:
         original = self._inventory()["digest"]
-        for relative in ("models.json", "settings.schema.json", "assets/icon.png"):
+        for relative in ("models.json", "advisor-response.schema.json", "assets/icon.png"):
             target = self.repo / "plugins/advisor" / relative
             target.write_text(target.read_text(encoding="utf-8") + "changed\n", encoding="utf-8")
             changed = self._inventory()["digest"]

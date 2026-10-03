@@ -34,7 +34,6 @@ config_helper=$script_dir/advisor_config.py
 config_wrapper=$script_dir/advisor-config.sh
 live_config=$plugin_dir/advisor.toml
 models=$plugin_dir/models.json
-settings_schema=$plugin_dir/settings.schema.json
 readme=$repo_dir/README.md
 notice=$repo_dir/NOTICE.md
 license=$repo_dir/LICENSE
@@ -45,7 +44,7 @@ release_notes=$repo_dir/docs/release-notes-draft.md
 package_test=$repo_dir/public-release/test_candidate_package.py
 verify_dir=$repo_dir/tests/verify
 
-for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$astra_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$transport" "$response_schema" "$audit" "$evaluator" "$config_test" "$transport_test" "$usage_test" "$cli_test" "$process_helper" "$config_helper" "$script_dir/advisor_state.py" "$script_dir/advisor_catalog.py" "$script_dir/advisor_settings.py" "$script_dir/advisor_journal.py" "$script_dir/advisor_discovery.py" "$script_dir/advisor_canary.py" "$script_dir/advisor_doctor.py" "$config_wrapper" "$live_config" "$models" "$settings_schema" "$model_doc" "$walkthrough" "$release_notes" "$package_test" "$readme" "$notice" "$license" "$plugin_dir/LICENSE" "$plugin_dir/NOTICE.md" "$verify_dir/contract-docs.sh" "$verify_dir/installer.sh" "$verify_dir/inspectors.sh" "$verify_dir/transport.sh" "$verify_dir/audit.sh" "$verify_dir/evaluator.sh" "$verify_dir/release-docs.sh"; do
+for file in "$manifest" "$marketplace" "$terra_role" "$sol_role" "$astra_role" "$skill" "$ui" "$operations" "$fixtures" "$installer" "$inspector" "$parent_inspector" "$transport" "$response_schema" "$audit" "$evaluator" "$config_test" "$transport_test" "$usage_test" "$cli_test" "$process_helper" "$config_helper" "$script_dir/advisor_state.py" "$script_dir/advisor_catalog.py" "$script_dir/advisor_settings.py" "$script_dir/advisor_journal.py" "$script_dir/advisor_discovery.py" "$script_dir/advisor_canary.py" "$script_dir/advisor_doctor.py" "$config_wrapper" "$live_config" "$models" "$model_doc" "$walkthrough" "$release_notes" "$package_test" "$readme" "$notice" "$license" "$plugin_dir/LICENSE" "$plugin_dir/NOTICE.md" "$verify_dir/contract-docs.sh" "$verify_dir/installer.sh" "$verify_dir/inspectors.sh" "$verify_dir/transport.sh" "$verify_dir/audit.sh" "$verify_dir/evaluator.sh" "$verify_dir/release-docs.sh"; do
   [ -f "$file" ] || fail "missing required file: $file"
 done
 [ "$(find "$plugin_dir/agents" -maxdepth 1 -type f -name '*.toml' | wc -l | tr -d ' ')" -eq 3 ] || fail "expected exactly three active roles"

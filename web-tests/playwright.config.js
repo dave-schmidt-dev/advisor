@@ -8,6 +8,9 @@ const PORT = 4317;
 module.exports = defineConfig({
   testDir: './tests',
   fullyParallel: true,
+  // python3 -m http.server listens with a backlog of 5; more parallel workers
+  // overflow it and Playwright sees ERR_CONNECTION_RESET.
+  workers: 4,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'line' : 'list',

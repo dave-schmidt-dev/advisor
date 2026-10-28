@@ -31,8 +31,10 @@ It moves the automatic Standard default and the fixed `advisor-terra` alias from
 high. The role installer retires the exact 1.4.9 Terra role to
 `advisor-terra.toml.retired-v1.4.9` before installing the new one; edited or
 conflicting role files fail closed without mutation. The 1.4.9 license, notice,
-privacy, and post-execution tool-check corrections are unchanged. Consultation
-transport and runtime validation are otherwise unchanged. The exact candidate
+privacy, and post-execution tool-check corrections are unchanged. Configuration
+commands now reject missing or symlinked installed helpers, and early startup
+cancellation no longer deletes preexisting directories. Consultation runtime
+validation is otherwise unchanged. The exact candidate
 archive, its hash, the docs deployment, and the marketplace upload are finalized
 by the release owner; the upload-readiness gate verifies exact bytes before
 handoff. Marketplace upload remains owner-controlled.

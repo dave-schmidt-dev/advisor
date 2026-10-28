@@ -10,10 +10,13 @@ Terra role by its committed digest and retires it to
 `advisor-terra.toml.retired-v1.4.9` before installing the new role; edited or
 conflicting role files fail closed without mutation. The clean-host receipt
 predicate now requires `gpt-6.1-terra` for `advisor-terra` and `gpt-6.1-sol`
-for `advisor-sol`. Since 1.4.9 the configuration and launcher internals were
-also simplified without behavior change (shared settings update helper, single
-clock helpers, removal of unreachable writers and re-exports, and the unused
-settings schema file). Consultation transport and runtime validation are
+for `advisor-sol`. Two fixes since 1.4.9 also ship: configuration commands
+reject missing or symlinked installed helpers before running, and early
+startup cancellation now finishes local directory setup before cleanup and no
+longer deletes preexisting directories. The configuration and launcher
+internals were simplified without behavior change (shared settings update
+helper, single clock helpers, removal of unreachable writers and re-exports,
+and the unused settings schema file). Consultation runtime validation is
 otherwise unchanged.
 
 Candidate content digest: `6b7f0f194c6d907f6d71f58a2d8ca6e5bf1be315cae774f39cebdf9ba196f3a1`.

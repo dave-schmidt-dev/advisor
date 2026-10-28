@@ -54,7 +54,7 @@ if [ -n "$canary_token" ]; then
   role=advisor-compatibility-test
 elif [ -n "$role" ]; then
   case "$role" in
-    advisor-terra) tier=standard; model=gpt-5.6-terra; effort=high; deadline_seconds=300 ;;
+    advisor-terra) tier=standard; model=gpt-6.1-terra; effort=high; deadline_seconds=300 ;;
     advisor-sol) tier=specialist; model=gpt-6.1-sol; effort=high; deadline_seconds=300 ;;
     advisor-astra) tier=opt-in; model=gpt-6-astra; effort=high; deadline_seconds=300 ;;
     *) fail "unsupported role" ;;

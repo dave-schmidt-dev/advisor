@@ -198,7 +198,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
   expect(body).toContain('[standard]');
   expect(body).toContain('[specialist]');
   expect(body).toContain('gpt-6-astra');
-  expect(body).toContain('gpt-5.6-terra');
+  expect(body).toContain('gpt-6.1-terra');
   expect(body).toContain('gpt-6.1-sol');
   expect(body).toContain('next consultation');
   expect(body).toContain('advisor-astra');

@@ -14,8 +14,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix early startup cancellation cleanup without deleting preexisting directories; cancellation waits for local directory setup to finish.
 
 ### Changed
+- The automatic Standard default and fixed legacy `advisor-terra` alias now use
+  `gpt-6.1-terra` / high (previously `gpt-5.6-terra` / high). Specialist remains
+  `gpt-6.1-sol` / high, and explicit-only `advisor-astra` remains
+  `gpt-6-astra` / high.
+- The clean-host receipt scripts (`verify-clean-host.sh`, `run-clean-host-receipt.sh`)
+  accept `advisor-terra` with `gpt-6.1-terra` and `advisor-sol` with `gpt-6.1-sol`;
+  the Sol pair was still `gpt-6-sol` from before 1.4.7. The committed
+  `docs/clean-host-smoke-receipt.json` records the old Terra model and needs an
+  attended recapture before the next release.
 - `run-advisor.sh` defines the monotonic-clock and UTC-timestamp helpers once instead of nine inline Python heredocs; the timestamp now comes from `date -u`, in the same format. `run-advisor.sh` drops to 473 lines.
 - The three remaining settings mutators (`set_usage_journal`, `set_deadline`, `save_preset`) share one `_update_settings` lock/load/bump/validate/write helper; the revision and prior-backup sequence is unchanged.
+
+### Added
+- The installer safely upgrades the byte-exact Advisor 1.4.9 Terra role, preserving
+  it at `advisor-terra.toml.retired-v1.4.9`. Edited and conflicting role files fail
+  closed without mutation.
 
 ### Removed
 - Unused `save_catalog` writer and `MAX_EVENTS` constant, plus their `advisor_config` facade exports and Vulture whitelist lines. No caller existed in the plugin, tests, or other projects.

@@ -222,7 +222,7 @@ class AdvisorCliTests(unittest.TestCase):
                         launch = payload["launch"]
                         self.assertEqual(sorted(launch), sorted("config_path deadline_seconds effort model selection_revision selection_source source_revision tier transport_contract_version".split()))
                         self.assertEqual((launch["model"], launch["effort"], launch["deadline_seconds"], launch["selection_source"]),
-                                         ("gpt-5.6-terra", "high", 300, "live-config"))
+                                         ("gpt-6.1-terra", "high", 300, "live-config"))
                         self.assertEqual(launch["selection_revision"], launch["source_revision"])
                     if args[0] == "_consume-canary" and exit_code == 0:
                         launch = payload["launch"]
@@ -239,7 +239,7 @@ class AdvisorCliTests(unittest.TestCase):
         self.assertEqual(show.returncode, 0, show.stderr)
         self.assertEqual(len(show.stdout.splitlines()), 1)
         current = json.loads(show.stdout)
-        self.assertEqual(current["selections"]["standard"]["model"], "gpt-5.6-terra")
+        self.assertEqual(current["selections"]["standard"]["model"], "gpt-6.1-terra")
         self.assertTrue(current["selection_revision"].startswith("sha256:"))
         self.assertTrue(current["live_config"]["path"].endswith("advisor.toml"))
         doctor = self.run_cli("--json", "doctor")
@@ -260,7 +260,7 @@ class AdvisorCliTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             launch = json.loads(result.stdout)["launch"]
             self.assertEqual(
-                (launch["model"], launch["effort"]), ("gpt-5.6-terra", "high")
+                (launch["model"], launch["effort"]), ("gpt-6.1-terra", "high")
             )
             self.assertFalse((self.home / "advisor").exists())
             self.assertEqual(self.invocations(), [])
@@ -310,7 +310,7 @@ class AdvisorCliTests(unittest.TestCase):
         )
         self.assertEqual(preset.returncode, 0, preset.stderr)
         status = json.loads(self.run_cli("--json", "status").stdout)
-        self.assertEqual(status["selections"]["standard"]["model"], "gpt-5.6-terra")
+        self.assertEqual(status["selections"]["standard"]["model"], "gpt-6.1-terra")
 
     def test_canary_uses_at_most_two_attempts_and_records_only_success(self) -> None:
         self.add()
@@ -373,7 +373,7 @@ class AdvisorCliTests(unittest.TestCase):
         written = self.run_cli("--json", "_journal-record", json.dumps(record))
         self.assertEqual(written.returncode, 0, written.stderr)
         doctor = json.loads(self.run_cli("--json", "doctor").stdout)
-        self.assertEqual(doctor["live_config"]["pairs"]["standard"]["model"], "gpt-5.6-terra")
+        self.assertEqual(doctor["live_config"]["pairs"]["standard"]["model"], "gpt-6.1-terra")
         self.assertTrue(doctor["live_config"]["source_revision"].startswith("sha256:"))
         self.assertIsNone(doctor["stale_selections"])
         self.assertEqual(doctor["last_content_free_failure"]["outcome"], "failed")

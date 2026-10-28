@@ -23,7 +23,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 [ "$sandbox" = read-only ] && [ "$effort" = "model_reasoning_effort=\"${FAKE_EXPECTED_EFFORT:-high}\"" ] || exit 91
-[ "$model" = "${FAKE_EXPECTED_MODEL:-gpt-5.6-terra}" ] || exit 92
+[ "$model" = "${FAKE_EXPECTED_MODEL:-gpt-6.1-terra}" ] || exit 92
 case "$schema" in */plugins/advisor/advisor-response.schema.json) ;; *) exit 93 ;; esac
 case "$output" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/response.*.json) ;; *) exit 94 ;; esac
 case "$workdir" in "$CODEX_HOME"/.tmp/advisor-transport/run.*/workdir.*) ;; *) exit 95 ;; esac
@@ -172,9 +172,9 @@ PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=valid FAKE_PARENT
     fail "valid fake transport failed"
   }
 [ "$(wc -l <"$transport_out" | tr -d ' ')" -eq 1 ] || fail "transport stdout was not one JSON line"
-jq -e '.status=="completed" and .runtime.agent_role=="advisor-terra" and .runtime.model=="gpt-5.6-terra" and .runtime.effort=="high" and .runtime.sandbox_policy_type=="read-only" and .runtime.transport=="codex-exec" and .response=="ADVISOR RESPONSE\nRECOMMENDATION: neutral path\nWHY: reason with spacing\nSTRONGEST OBJECTION: objection\nCHANGE MY MIND: contrary evidence\nACCEPTANCE CHECKS: first check; second check\nRISKS: none\nFOLLOW-UP AREAS: none\n"' "$transport_out" >/dev/null || fail "valid transport JSON or canonical render mismatch"
+jq -e '.status=="completed" and .runtime.agent_role=="advisor-terra" and .runtime.model=="gpt-6.1-terra" and .runtime.effort=="high" and .runtime.sandbox_policy_type=="read-only" and .runtime.transport=="codex-exec" and .response=="ADVISOR RESPONSE\nRECOMMENDATION: neutral path\nWHY: reason with spacing\nSTRONGEST OBJECTION: objection\nCHANGE MY MIND: contrary evidence\nACCEPTANCE CHECKS: first check; second check\nRISKS: none\nFOLLOW-UP AREAS: none\n"' "$transport_out" >/dev/null || fail "valid transport JSON or canonical render mismatch"
 assert_transport_clean
-for progress_line in 'launching advisor-terra (gpt-5.6-terra, high, read-only)' 'inspecting persisted runtime evidence' 'consultation verified'; do
+for progress_line in 'launching advisor-terra (gpt-6.1-terra, high, read-only)' 'inspecting persisted runtime evidence' 'consultation verified'; do
   grep -Fq "$progress_line" "$transport_err" || fail "transport stderr progress missing: $progress_line"
 done
 

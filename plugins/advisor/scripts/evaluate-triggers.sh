@@ -43,7 +43,7 @@ select_advisor_role() {
 }
 
 model_for_role() {
-  case "$1" in advisor-terra) printf '%s\n' gpt-5.6-terra ;; advisor-sol) printf '%s\n' gpt-6.1-sol ;; *) return 1 ;; esac
+  case "$1" in advisor-terra) printf '%s\n' gpt-6.1-terra ;; advisor-sol) printf '%s\n' gpt-6.1-sol ;; *) return 1 ;; esac
 }
 
 require_ephemeral_unavailable_route() {
@@ -61,7 +61,7 @@ from pathlib import Path
 
 raw_path, evidence_path = map(Path, sys.argv[1:3])
 expected_role, expected_model = sys.argv[3:]
-valid_pairs = {"advisor-terra":"gpt-5.6-terra", "advisor-sol":"gpt-6.1-sol"}
+valid_pairs = {"advisor-terra":"gpt-6.1-terra", "advisor-sol":"gpt-6.1-sol"}
 if valid_pairs.get(expected_role) != expected_model:
     raise SystemExit("unsupported expected role/model pair")
 events = []
@@ -221,7 +221,7 @@ fixtures = json.loads(fixture_path.read_text(encoding="utf-8"))["cases"]
 expected = {c["id"]: c for c in fixtures}
 def selected_pair(risk):
     if risk == "standard":
-        return "advisor-terra", "gpt-5.6-terra"
+        return "advisor-terra", "gpt-6.1-terra"
     if risk == "specialist":
         return "advisor-sol", "gpt-6.1-sol"
     raise SystemExit("invalid fixture risk")

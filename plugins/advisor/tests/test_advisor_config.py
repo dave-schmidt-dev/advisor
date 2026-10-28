@@ -95,7 +95,7 @@ class AdvisorConfigTests(unittest.TestCase):
     def test_defaults_are_read_only_and_do_not_initialize_state(self) -> None:
         self.assertEqual(
             config.load_settings(self.paths)["selections"]["standard"],
-            {"model": "gpt-5.6-terra", "effort": "high"},
+            {"model": "gpt-6.1-terra", "effort": "high"},
         )
         self.assertFalse(self.paths.root.exists())
 
@@ -195,7 +195,7 @@ class AdvisorConfigTests(unittest.TestCase):
         )
         self.assertTrue(
             config.shipped_default_launch_eligible(
-                tier="standard", model="gpt-5.6-terra", effort="high"
+                tier="standard", model="gpt-6.1-terra", effort="high"
             )
         )
         self.assertFalse(
@@ -223,7 +223,7 @@ class AdvisorConfigTests(unittest.TestCase):
             specialist = config.resolve_selection("specialist", paths=self.paths)
             self.assertFalse(marker.exists())
         self.assertEqual(
-            (standard["model"], standard["effort"]), ("gpt-5.6-terra", "high")
+            (standard["model"], standard["effort"]), ("gpt-6.1-terra", "high")
         )
         self.assertEqual(
             (specialist["model"], specialist["effort"]), ("gpt-6.1-sol", "high")
@@ -284,7 +284,7 @@ class AdvisorConfigTests(unittest.TestCase):
         os.chmod(self.paths.catalog, 0o600)
         resolved = config.resolve_selection("standard", paths=self.paths)
         self.assertEqual(
-            resolved["model"], "gpt-5.6-terra",
+            resolved["model"], "gpt-6.1-terra",
             "normal tiers must ignore stale saved selections",
         )
         with self.assertRaises(config.ConfigError):
@@ -319,7 +319,7 @@ class AdvisorConfigTests(unittest.TestCase):
         candidate = Path(self.tmp.name) / "advisor.toml"
         target = Path(self.tmp.name) / "target.toml"
         target.write_text(
-            '[standard]\nmodel = "gpt-5.6-terra"\neffort = "high"\n'
+            '[standard]\nmodel = "gpt-6.1-terra"\neffort = "high"\n'
             '[specialist]\nmodel = "gpt-6.1-sol"\neffort = "high"\n',
             encoding="utf-8",
         )
@@ -344,7 +344,7 @@ class AdvisorConfigTests(unittest.TestCase):
     def test_live_config_caps_a_file_that_grows_after_open(self) -> None:
         candidate = Path(self.tmp.name) / "advisor.toml"
         candidate.write_text(
-            '[standard]\nmodel = "gpt-5.6-terra"\neffort = "high"\n'
+            '[standard]\nmodel = "gpt-6.1-terra"\neffort = "high"\n'
             '[specialist]\nmodel = "gpt-6.1-sol"\neffort = "high"\n',
             encoding="utf-8",
         )

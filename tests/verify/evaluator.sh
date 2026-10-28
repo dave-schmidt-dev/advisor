@@ -6,7 +6,7 @@ result,rerun_result,unnecessary_result,threshold_pass_result,threshold_fail_resu
 schemas=[]; n=0
 def trial(route,risk="standard"):
   selected_role="advisor-terra" if risk=="standard" else "advisor-sol"
-  selected_model="gpt-5.6-terra" if risk=="standard" else "gpt-6.1-sol"
+  selected_model="gpt-6.1-terra" if risk=="standard" else "gpt-6.1-sol"
   return {"route":route,"advisor_count":1 if route=="consult" else 0,"roles":[selected_role] if route=="consult" else [],"freshness":"distinct_receiver_thread" if route=="consult" else "none","model":selected_model if route=="consult" else "none","effort":"high" if route=="consult" else "none","sandbox":"read-only" if route=="consult" else "none","risk":risk,"selected_role":selected_role,"selected_model":selected_model}
 for name,flag in (("v1",False),("v2",True)):
   cases=[]
@@ -150,7 +150,7 @@ base=[{"type":"thread.started","thread_id":root_id},spawn(),message("consult","P
 write("valid-consult",base)
 started=copy.deepcopy(base[1]); started["type"]="item.started"; started["item"]["status"]="in_progress"
 write("valid-lifecycle",[base[0],started,base[1],base[2]])
-write("valid-terra",[{"type":"thread.started","thread_id":root_id},spawn("advisor-terra","gpt-5.6-terra"),message("consult")])
+write("valid-terra",[{"type":"thread.started","thread_id":root_id},spawn("advisor-terra","gpt-6.1-terra"),message("consult")])
 write("valid-skip",[{"type":"thread.started","thread_id":root_id},message("skip")])
 write("valid-unavailable",[{"type":"thread.started","thread_id":root_id},message("unavailable","ADVISOR DECISION\nroute: unavailable\n")])
 write("unavailable-call",[{"type":"thread.started","thread_id":root_id},message("unavailable","ADVISOR DECISION\nroute: unavailable\nADVISOR CALL\n")])
@@ -163,7 +163,7 @@ extra_spawn=copy.deepcopy(base[1]); extra_spawn["type"]="item.started"; extra_sp
 write("extra-uncompleted-spawn",[base[0],extra_spawn,base[1],base[2]])
 for name,changes in (
     ("wrong-role",{"receiver_agents":[{"agent_role":"advisor-terra","thread_id":child_id}]}),
-    ("wrong-model",{"model":"gpt-5.6-terra"}),
+    ("wrong-model",{"model":"gpt-6.1-terra"}),
     ("wrong-effort",{"reasoning_effort":"medium"}),
     ("root-equals-child",{"receiver_thread_ids":[root_id],"receiver_agents":[{"agent_role":"advisor-sol","thread_id":root_id}]}),
     ("noncompleted",{"status":"failed"}),
@@ -175,8 +175,8 @@ ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-consult.jsonl" ADVISOR_RUNTIME_EVI
 jq -e '.route=="consult" and .advisor_count==1 and .roles==["advisor-sol"] and .freshness=="distinct_receiver_thread" and .model=="gpt-6.1-sol" and .effort=="high" and .sandbox=="read-only"' "$tmp/valid-consult.json" >/dev/null || fail "valid Sol consult spawn evidence was not derived exactly"
 ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-lifecycle.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-lifecycle.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-6.1-sol sh "$evaluator"
 jq -e '.route=="consult" and .advisor_count==1 and .roles==["advisor-sol"]' "$tmp/valid-lifecycle.json" >/dev/null || fail "one logical spawn lifecycle was not accepted"
-ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-terra.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-terra.json" ADVISOR_EXPECTED_ROLE=advisor-terra ADVISOR_EXPECTED_MODEL=gpt-5.6-terra sh "$evaluator"
-jq -e '.role==null and .roles==["advisor-terra"] and .model=="gpt-5.6-terra" and .effort=="high"' "$tmp/valid-terra.json" >/dev/null || fail "valid Terra consult spawn evidence was not derived exactly"
+ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-terra.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-terra.json" ADVISOR_EXPECTED_ROLE=advisor-terra ADVISOR_EXPECTED_MODEL=gpt-6.1-terra sh "$evaluator"
+jq -e '.role==null and .roles==["advisor-terra"] and .model=="gpt-6.1-terra" and .effort=="high"' "$tmp/valid-terra.json" >/dev/null || fail "valid Terra consult spawn evidence was not derived exactly"
 ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-skip.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-skip.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-6.1-sol sh "$evaluator"
 jq -e '.route=="skip" and .advisor_count==0 and .roles==[]' "$tmp/valid-skip.json" >/dev/null || fail "valid skip/no-spawn evidence was not derived exactly"
 ADVISOR_PARSE_RUNTIME_EVIDENCE="$events/valid-unavailable.jsonl" ADVISOR_RUNTIME_EVIDENCE_OUT="$tmp/valid-unavailable.json" ADVISOR_EXPECTED_ROLE=advisor-sol ADVISOR_EXPECTED_MODEL=gpt-6.1-sol sh "$evaluator"
@@ -192,7 +192,7 @@ grep -Fq 'route=unavailable' "$evaluator" || fail "ephemeral evaluator does not 
 grep -Fq 'do not emit ADVISOR CALL, and do not spawn a child' "$evaluator" || fail "ephemeral evaluator permits a call or child spawn"
 
 for policy_case in \
-  'standard:advisor-terra gpt-5.6-terra' 'STANDARD:advisor-terra gpt-5.6-terra' \
+  'standard:advisor-terra gpt-6.1-terra' 'STANDARD:advisor-terra gpt-6.1-terra' \
   'specialist:advisor-sol gpt-6.1-sol' 'SPECIALIST:advisor-sol gpt-6.1-sol'; do
   risk=${policy_case%%:*}; wanted=${policy_case#*:}
   actual=$(ADVISOR_SELECT_FOR_RISK=$risk sh "$evaluator")

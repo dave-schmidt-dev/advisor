@@ -14,7 +14,8 @@ Advisor role to advisor.toml.retired-v1.0.1. Every path is preflighted before mu
 Known exact Advisor 1.1.0 and prior 1.3.0 role files are renamed to generation-specific
 retirement paths before the current roles are installed. The exact 1.4.5 and 1.4.6 Sol
 roles are retired to their own generation-specific recovery paths before the GPT-6.1
-Sol role is installed.
+Sol role is installed. The exact 1.4.9 Terra role is retired the same way before the
+GPT-6.1 Terra role is installed.
 The script never edits Codex configuration.
 EOF
 }
@@ -71,6 +72,7 @@ terra_v130_zero_retired=$terra_current.retired-v1.3.0-zero-tool
 sol_v130_zero_retired=$sol_current.retired-v1.3.0-zero-tool
 sol_v145_retired=$sol_current.retired-v1.4.5
 sol_v146_retired=$sol_current.retired-v1.4.6
+terra_v149_retired=$terra_current.retired-v1.4.9
 neutral_advisor=$target_dir/advisor.toml
 legacy_advisor=$target_dir/sol-advisor.toml
 luna=$target_dir/sol-advisor-luna-implementer.toml
@@ -104,6 +106,9 @@ sol_advisor_v145=8923bc56c5cd43db004bf1f2bfdabf3cee56dbcbe13434bb0b01cd5cdb523a7
 
 # Advisor 1.4.6's exact Sol role, committed before this migration.
 sol_advisor_v146=517f670937b2174dcd6467e39381b55d3ba133bd97c697c988bf77082dd1531d
+
+# Advisor 1.4.9's exact Terra role, committed before this migration.
+terra_advisor_v149=4b46bd1f354e17d0ed2eaa746fb3f838e2d5bee04ed44524b9557de1820b064e
 
 classify_current() {
   template=$1 current=$2 retired_v110=$3 digest_v110=$4 retired_v130=$5 digest_v130=$6 retired_v130_zero=$7 digest_v130_zero=$8
@@ -164,6 +169,21 @@ classify_sol_current() {
   printf '%s\n' "$state"
 }
 
+classify_terra_current() {
+  state=$(classify_current "$terra_template" "$terra_current" "$terra_current_retired" "$terra_advisor_v110" "$terra_v130_retired" "$terra_advisor_v130" "$terra_v130_zero_retired" "$terra_advisor_v130_zero")
+  if path_exists "$terra_v149_retired"; then
+    if [ -L "$terra_v149_retired" ] || [ ! -f "$terra_v149_retired" ]; then printf '%s\n' unsafe-retired; return
+    elif [ "$(digest "$terra_v149_retired")" != "$terra_advisor_v149" ]; then printf '%s\n' conflict-retired; return
+    fi
+  fi
+  if [ "$state" = conflict ] && [ -f "$terra_current" ] && [ ! -L "$terra_current" ] && [ "$(digest "$terra_current")" = "$terra_advisor_v149" ]; then
+    if path_exists "$terra_v149_retired"; then printf '%s\n' dual; else printf '%s\n' active-known-v149; fi
+    return
+  fi
+  if [ "$state" = missing ] && path_exists "$terra_v149_retired"; then printf '%s\n' retired-known-v149; return; fi
+  printf '%s\n' "$state"
+}
+
 classify_history() {
   active=$1 retired=$2
   shift 2
@@ -195,7 +215,7 @@ classify_opt_in() {
   fi
 }
 
-terra_current_state=$(classify_current "$terra_template" "$terra_current" "$terra_current_retired" "$terra_advisor_v110" "$terra_v130_retired" "$terra_advisor_v130" "$terra_v130_zero_retired" "$terra_advisor_v130_zero")
+terra_current_state=$(classify_terra_current)
 sol_current_state=$(classify_sol_current)
 astra_state=$(classify_opt_in "$astra_template" "$astra_current")
 luna_state=$(classify_history "$luna" "$luna_retired" "$luna_v020" "$luna_v050" "$luna_v060")
@@ -207,7 +227,7 @@ neutral_advisor_state=$(classify_history "$neutral_advisor" "$neutral_advisor_re
 if path_exists "$target_dir" && { [ -L "$target_dir" ] || [ ! -d "$target_dir" ]; }; then
   fail "target is not a real directory: $target_dir"
 fi
-case "$terra_current_state" in current|missing|active-known-v110|active-known-v130|active-known-v130-zero|retired-known) ;; *) fail "Terra advisor destination is $terra_current_state: $terra_current" ;; esac
+case "$terra_current_state" in current|missing|active-known-v110|active-known-v130|active-known-v130-zero|active-known-v149|retired-known|retired-known-v149) ;; *) fail "Terra advisor destination is $terra_current_state: $terra_current" ;; esac
 case "$sol_current_state" in current|missing|active-known-v110|active-known-v130|active-known-v130-zero|active-known-v145|active-known-v146|retired-known|retired-known-v145|retired-known-v146) ;; *) fail "Sol advisor destination is $sol_current_state: $sol_current" ;; esac
 case "$astra_state" in current|missing) ;; *) fail "Astra advisor destination is $astra_state: $astra_current" ;; esac
 for record in "Luna:$luna_state" "Terra:$terra_state" "reviewer:$reviewer_state" "legacy advisor:$legacy_advisor_state" "neutral advisor:$neutral_advisor_state"; do
@@ -230,7 +250,7 @@ fi
 [ -d "$target_dir" ] && [ ! -L "$target_dir" ] || fail "target changed after preflight"
 
 # Revalidate every path before the first mutation.
-[ "$(classify_current "$terra_template" "$terra_current" "$terra_current_retired" "$terra_advisor_v110" "$terra_v130_retired" "$terra_advisor_v130" "$terra_v130_zero_retired" "$terra_advisor_v130_zero")" = "$terra_current_state" ] || fail "Terra advisor state changed after preflight"
+[ "$(classify_terra_current)" = "$terra_current_state" ] || fail "Terra advisor state changed after preflight"
 [ "$(classify_sol_current)" = "$sol_current_state" ] || fail "Sol advisor state changed after preflight"
 [ "$(classify_opt_in "$astra_template" "$astra_current")" = "$astra_state" ] || fail "Astra advisor state changed after preflight"
 [ "$(classify_history "$luna" "$luna_retired" "$luna_v020" "$luna_v050" "$luna_v060")" = "$luna_state" ] || fail "Luna state changed after preflight"
@@ -268,10 +288,11 @@ retire_upgrade Terra "$terra_current" "$terra_v130_zero_retired" "$terra_current
 retire_upgrade Sol "$sol_current" "$sol_v130_zero_retired" "$sol_current_state" active-known-v130-zero "$sol_advisor_v130_zero"
 retire_upgrade Sol "$sol_current" "$sol_v145_retired" "$sol_current_state" active-known-v145 "$sol_advisor_v145"
 retire_upgrade Sol "$sol_current" "$sol_v146_retired" "$sol_current_state" active-known-v146 "$sol_advisor_v146"
+retire_upgrade Terra "$terra_current" "$terra_v149_retired" "$terra_current_state" active-known-v149 "$terra_advisor_v149"
 
 install_one() {
   label=$1 template=$2 current=$3 state=$4
-  case "$state" in missing|active-known-v110|active-known-v130|active-known-v130-zero|active-known-v145|active-known-v146|retired-known|retired-known-v145|retired-known-v146) install_required=1 ;; *) install_required=0 ;; esac
+  case "$state" in missing|active-known-v110|active-known-v130|active-known-v130-zero|active-known-v145|active-known-v146|active-known-v149|retired-known|retired-known-v145|retired-known-v146|retired-known-v149) install_required=1 ;; *) install_required=0 ;; esac
   if [ "$install_required" -eq 1 ]; then
     staged=$(mktemp "$target_dir/.advisor.XXXXXX") || fail "could not stage $label advisor role"
     trap 'rm -f "$staged"' 0 HUP INT TERM

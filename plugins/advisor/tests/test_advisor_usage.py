@@ -92,7 +92,7 @@ class UsageTests(unittest.TestCase):
             .isoformat()
             .replace("+00:00", "Z"),
             "tier": "standard",
-            "model": "gpt-5.6-terra",
+            "model": "gpt-6.1-terra",
             "effort": "high",
             "outcome": "accepted",
             "transport_contract_version": "1.4",
@@ -403,7 +403,7 @@ class UsageTests(unittest.TestCase):
             "parent_thread_id": PARENT,
             "agent_role": "advisor-tier-standard",
             "transport": "codex-exec",
-            "model": "gpt-5.6-terra",
+            "model": "gpt-6.1-terra",
             "effort": "high",
             "sandbox_policy_type": "read-only",
             "permission_profile_type": "managed",
@@ -415,7 +415,7 @@ class UsageTests(unittest.TestCase):
             "consultation_id": "123e4567-e89b-42d3-a456-426614174000",
             "selection": {
                 "tier": "standard",
-                "model": "gpt-5.6-terra",
+                "model": "gpt-6.1-terra",
                 "effort": "high",
                 "source": "saved",
                 "revision": 0,
@@ -547,7 +547,7 @@ class UsageTests(unittest.TestCase):
             {
                 "type": "turn_context",
                 "payload": {
-                    "model": "gpt-5.6-terra",
+                    "model": "gpt-6.1-terra",
                     "effort": "high",
                     "sandbox_policy": {"type": "read-only"},
                 },
@@ -566,7 +566,7 @@ class UsageTests(unittest.TestCase):
                 {
                     "type": "turn_context",
                     "payload": {
-                        "model": "gpt-5.6-terra",
+                        "model": "gpt-6.1-terra",
                         "effort": "high",
                         "sandbox_policy": "read-only",
                     },

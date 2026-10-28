@@ -16,7 +16,7 @@ For the fictional Beacon Archive, should the import format remain backward compa
 
 ## Expected outcome
 
-Advisor emits `ADVISOR DECISION` with `route: consult`; `ADVISOR CALL` records `tier: Standard`, `role: advisor-terra`, and `status: running`; and a verified `ADVISOR RESULT` records `status: completed`, `model: gpt-5.6-terra`, `effort: high`, `isolation: read-only`, and the root's disposition.
+Advisor emits `ADVISOR DECISION` with `route: consult`; `ADVISOR CALL` records `tier: Standard`, `role: advisor-terra`, and `status: running`; and a verified `ADVISOR RESULT` records `status: completed`, `model: gpt-6.1-terra`, `effort: high`, `isolation: read-only`, and the root's disposition.
 
 ## Why this is the expected outcome
 

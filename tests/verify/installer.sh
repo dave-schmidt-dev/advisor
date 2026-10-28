@@ -43,6 +43,10 @@ for source,(new,old) in replacements.items():
         current_pin='model = "gpt-6.1-sol"'
         if prior.count(current_pin)!=1: raise SystemExit("current Sol model fixture mismatch")
         prior=prior.replace(current_pin,'model = "gpt-5.6-sol"')
+    else:
+        current_pin='model = "gpt-6.1-terra"'
+        if prior.count(current_pin)!=1: raise SystemExit("current Terra model fixture mismatch")
+        prior=prior.replace(current_pin,'model = "gpt-5.6-terra"')
     target.joinpath(source.name).write_text(prior,encoding="utf-8")
 PY
 assert_v110_digest() {
@@ -105,6 +109,10 @@ for source in map(Path,sys.argv[1:3]):
         current_pin='model = "gpt-6.1-sol"'
         if prior.count(current_pin)!=1: raise SystemExit("current Sol model fixture mismatch")
         prior=prior.replace(current_pin,'model = "gpt-5.6-sol"')
+    else:
+        current_pin='model = "gpt-6.1-terra"'
+        if prior.count(current_pin)!=1: raise SystemExit("current Terra model fixture mismatch")
+        prior=prior.replace(current_pin,'model = "gpt-5.6-terra"')
     Path(sys.argv[3],source.name).write_text(prior,encoding="utf-8")
 PY
 assert_v110_digest "$v130/advisor-terra.toml" e939a9c7e96d2a74dde015838802d6a481d36520616464a192daff0412dccaba
@@ -236,6 +244,46 @@ for kind in v146-edited v146-collision; do
   after=$(snapshot "$target"); [ "$before" = "$after" ] || fail "$kind refusal mutated target"
 done
 pass "exact Advisor 1.4.6 Sol upgrade, retirement recovery, idempotency, and edited/collision refusal"
+
+# Upgrade the exact v1.4.9 Terra role, preserving it at a versioned recovery path.
+# Reconstruct its bytes from the migrated role and compare with the original
+# committed 1.4.9 digest so the fixture cannot define its own expected identity.
+v149=$tmp/advisor-v149; mkdir "$v149"
+sed 's/^model = "gpt-6\.1-terra"$/model = "gpt-5.6-terra"/' "$terra_role" >"$v149/advisor-terra.toml"
+v149_digest=4b46bd1f354e17d0ed2eaa746fb3f838e2d5bee04ed44524b9557de1820b064e
+actual=$(shasum -a 256 "$v149/advisor-terra.toml" | awk '{print $1}')
+[ "$actual" = "$v149_digest" ] || fail "Advisor 1.4.9 Terra fixture digest mismatch: $actual"
+before=$(snapshot "$v149")
+if sh "$installer" --target-dir "$v149" --check >/dev/null 2>&1; then fail "check accepted active Advisor 1.4.9 Terra role"; fi
+after=$(snapshot "$v149"); [ "$before" = "$after" ] || fail "check mutated active Advisor 1.4.9 Terra role"
+sh "$installer" --target-dir "$v149" >/dev/null
+cmp -s "$terra_role" "$v149/advisor-terra.toml" || fail "Advisor 1.4.9 Terra upgrade did not install current role exactly"
+actual=$(shasum -a 256 "$v149/advisor-terra.toml.retired-v1.4.9" | awk '{print $1}')
+[ "$actual" = "$v149_digest" ] || fail "Advisor 1.4.9 Terra retirement digest mismatch: $actual"
+sh "$installer" --target-dir "$v149" --check >/dev/null
+before=$(snapshot "$v149"); sh "$installer" --target-dir "$v149" >/dev/null; after=$(snapshot "$v149")
+[ "$before" = "$after" ] || fail "Advisor 1.4.9 Terra upgrade is not idempotent"
+
+v149_interrupted=$tmp/advisor-v149-interrupted; mkdir "$v149_interrupted"
+cp "$v149/advisor-terra.toml.retired-v1.4.9" "$v149_interrupted/advisor-terra.toml.retired-v1.4.9"
+sh "$installer" --target-dir "$v149_interrupted" >/dev/null
+cmp -s "$terra_role" "$v149_interrupted/advisor-terra.toml" || fail "retired-only Advisor 1.4.9 upgrade did not resume"
+sh "$installer" --target-dir "$v149_interrupted" --check >/dev/null
+before=$(snapshot "$v149_interrupted"); sh "$installer" --target-dir "$v149_interrupted" >/dev/null; after=$(snapshot "$v149_interrupted")
+[ "$before" = "$after" ] || fail "retired-only Advisor 1.4.9 state is not idempotent"
+
+for kind in v149-edited v149-collision; do
+  target=$tmp/refuse-$kind; mkdir "$target"
+  cp "$v149/advisor-terra.toml.retired-v1.4.9" "$target/advisor-terra.toml"
+  case "$kind" in
+    v149-edited) printf '\n# owner edit\n' >>"$target/advisor-terra.toml" ;;
+    v149-collision) printf 'unknown retirement collision\n' >"$target/advisor-terra.toml.retired-v1.4.9" ;;
+  esac
+  before=$(snapshot "$target")
+  if sh "$installer" --target-dir "$target" >/dev/null 2>&1; then fail "installer accepted $kind Terra state"; fi
+  after=$(snapshot "$target"); [ "$before" = "$after" ] || fail "$kind refusal mutated target"
+done
+pass "exact Advisor 1.4.9 Terra upgrade, retirement recovery, idempotency, and edited/collision refusal"
 
 # Exercise all three v0.6.0 historical role types using their original exact bytes.
 historical=$tmp/historical; mkdir "$historical"

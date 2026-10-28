@@ -135,7 +135,7 @@ ordinary `route: skip` path remains unchanged.
    emit the required unavailable decision and do not invoke the transport.
 2. Verify the installed plugin includes `run-advisor.sh` and both runtime inspectors.
 3. Select the tier from decision risk. Standard consultation uses
-   `--tier standard`, defaulting to GPT-5.6 Terra / high, for ordinary bounded
+   `--tier standard`, defaulting to GPT-6.1 Terra / high, for ordinary bounded
    material architecture, interface, data-model, and generic advisor requests.
    Specialist consultation uses `--tier specialist`, defaulting to GPT-6.1 Sol / high,
    only when targeted evidence still leaves unresolved a cross-module or system design,

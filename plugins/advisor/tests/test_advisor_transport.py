@@ -122,10 +122,10 @@ class AdvisorTransportTests(AdvisorTransportTestCase):
         self.assertEqual(
             [(row["model"], row["effort"]) for row in self.rows()],
             [
-                ("gpt-5.6-terra", "high"),
+                ("gpt-6.1-terra", "high"),
                 ("gpt-6.1-sol", "high"),
-                ("gpt-5.6-terra", "high"),
-                ("gpt-5.6-terra", "high"),
+                ("gpt-6.1-terra", "high"),
+                ("gpt-6.1-terra", "high"),
             ],
         )
 
@@ -150,7 +150,7 @@ class AdvisorTransportTests(AdvisorTransportTestCase):
         )
         self.assertEqual(
             config.load_settings(self.paths)["selections"]["standard"]["model"],
-            "gpt-5.6-terra",
+            "gpt-6.1-terra",
         )
         failed = self.run_transport(
             "--tier", "standard", "--preset", "future", case="wrong-model"
@@ -214,7 +214,7 @@ class AdvisorTransportTests(AdvisorTransportTestCase):
         self.assertNotEqual(mixed.returncode, 0)
         self.assertEqual(
             [(row["model"], row["effort"]) for row in self.rows()],
-            [("gpt-5.6-terra", "high")],
+            [("gpt-6.1-terra", "high")],
         )
 
     def test_cli_version_change_does_not_replace_live_tier_before_launch(self) -> None:
@@ -248,7 +248,7 @@ class AdvisorTransportTests(AdvisorTransportTestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(
             [(row["model"], row["effort"]) for row in self.rows()],
-            [("gpt-5.6-terra", "high")],
+            [("gpt-6.1-terra", "high")],
         )
 
     def test_pristine_defaults_launch_on_newer_cli_without_state_or_canary(self) -> None:
@@ -271,7 +271,7 @@ class AdvisorTransportTests(AdvisorTransportTestCase):
             timeout=5,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.rows()[0]["model"], "gpt-5.6-terra")
+        self.assertEqual(self.rows()[0]["model"], "gpt-6.1-terra")
         self.assertFalse(self.paths.root.exists())
 
     def test_default_runtime_mismatch_still_rejects_actual_consultation(self) -> None:
@@ -322,7 +322,7 @@ class AdvisorTransportTests(AdvisorTransportTestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(
             [(row["model"], row["effort"]) for row in self.rows()],
-            [("gpt-5.6-terra", "high"), ("gpt-5.6-terra", "high")],
+            [("gpt-6.1-terra", "high"), ("gpt-6.1-terra", "high")],
         )
         self.assertEqual(
             json.loads(result.stdout)["selection"]["source_revision"],

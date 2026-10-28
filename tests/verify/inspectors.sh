@@ -10,7 +10,7 @@ printf '%s\n' \
  '{"type":"turn_context","payload":{"model":"gpt-6.1-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >"$rollout"
 out=$(TMPDIR=/nonexistent-read-only-path sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6.1-sol --expected-parent "$root_id" "$id")
 printf '%s\n' "$out" | jq -e '.agent_role=="advisor-sol" and .model=="gpt-6.1-sol" and .effort=="high" and .sandbox_policy_type=="read-only" and .transport=="codex-exec" and (keys|sort)==["agent_role","effort","model","parent_thread_id","permission_profile_type","sandbox_policy_type","thread_id","transport"]' >/dev/null || fail "inspector allowlist/pins"
-if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-terra --expected-model gpt-5.6-terra --expected-parent "$root_id" "$id" >/dev/null 2>&1; then fail "inspector accepted a role/model pair other than the selected pair"; fi
+if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-terra --expected-model gpt-6.1-terra --expected-parent "$root_id" "$id" >/dev/null 2>&1; then fail "inspector accepted a role/model pair other than the selected pair"; fi
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6.1-sol --expected-parent "$id" "$id" >/dev/null 2>&1; then fail "inspector accepted the parent session as the advisor session"; fi
 printf '%s\n' "$out" | grep -Fq DO_NOT_LEAK && fail "inspector leaked payload"
 desktop_id=22222222-2222-7222-8222-222222222222
@@ -52,7 +52,7 @@ printf '%s\n' \
   '{"type":"turn_context","payload":{"model":"gpt-6.1-sol","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' \
   '{"type":"response_item","payload":{"type":"function_call","name":"repo_inspection"}}' >"$tool_rollout"
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6.1-sol --expected-parent "$root_id" "$tool_id" >/dev/null 2>&1; then fail "inspector accepted advisor tool use"; fi
-printf '%s\n' '{"type":"turn_context","payload":{"model":"gpt-5.6-terra","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >>"$rollout"
+printf '%s\n' '{"type":"turn_context","payload":{"model":"gpt-6.1-terra","effort":"high","sandbox_policy":{"type":"read-only"},"permission_profile":{"type":"managed"}}}' >>"$rollout"
 if sh "$inspector" --sessions-dir "$tmp/sessions" --expected-role advisor-sol --expected-model gpt-6.1-sol --expected-parent "$root_id" "$id" >/dev/null 2>&1; then fail "inspector accepted conflicting model"; fi
 wrong_effort_id=99999999-9999-7999-8999-999999999999
 printf '%s\n' \

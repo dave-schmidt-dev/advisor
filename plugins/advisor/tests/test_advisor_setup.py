@@ -207,7 +207,7 @@ class AdvisorSetupTests(AdvisorTransportTestCase):
             self.assertEqual(envelope["status"], "unavailable")
             self.assertEqual(envelope["outcome"], "cancelled")
             self.assertEqual(envelope["selection"]["tier"], "standard")
-            self.assertEqual(envelope["selection"]["model"], "gpt-5.6-terra")
+            self.assertEqual(envelope["selection"]["model"], "gpt-6.1-terra")
             self.assertIsNone(envelope["runtime"])
             self.assertIsNone(envelope["response"])
             transport_root = self.home / ".tmp" / "advisor-transport"

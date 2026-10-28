@@ -191,7 +191,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
   await page.goto('/');
   const body = (await bodyText(page)).toLowerCase();
 
-  expect(body).toContain('candidate documentation v1.4.9');
+  expect(body).toContain('candidate documentation v1.4.10');
   expect(body).toContain('automatic read-only advice');
   expect(body).toContain('smart defaults');
   expect(body).toContain('optional models');
@@ -221,7 +221,7 @@ test('claim surface matches the validated listing', async ({ page }) => {
 test('each route carries the candidate release metadata', async ({ page }) => {
   for (const { path } of PAGES) {
     await page.goto(path);
-    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.9');
+    await expect(page.locator('meta[name="advisor-release"]')).toHaveAttribute('content', '1.4.10');
   }
 });
 

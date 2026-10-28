@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.10] - 2026-10-27
+
 ### Fixed
 - Reject missing or symlinked installed configuration helpers before running configuration commands.
 - Honor custom exception files in staged file-size checks, using their staged contents.
@@ -118,3 +120,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.4.8]: https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.8
 
 [1.4.9]: https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.9
+
+[1.4.10]: https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.10

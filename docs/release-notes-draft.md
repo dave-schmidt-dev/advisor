@@ -1,5 +1,28 @@
 # Release record
 
+## Advisor 1.4.10 package record
+
+Version `1.4.10` moves the automatic Standard default and the fixed
+`advisor-terra` alias from `gpt-5.6-terra` / high to `gpt-6.1-terra` / high.
+Specialist remains `gpt-6.1-sol` / high, and explicit-only `advisor-astra`
+remains `gpt-6-astra` / high. The role installer recognizes the shipped 1.4.9
+Terra role by its committed digest and retires it to
+`advisor-terra.toml.retired-v1.4.9` before installing the new role; edited or
+conflicting role files fail closed without mutation. The clean-host receipt
+predicate now requires `gpt-6.1-terra` for `advisor-terra` and `gpt-6.1-sol`
+for `advisor-sol`. Since 1.4.9 the configuration and launcher internals were
+also simplified without behavior change (shared settings update helper, single
+clock helpers, removal of unreachable writers and re-exports, and the unused
+settings schema file). Consultation transport and runtime validation are
+otherwise unchanged.
+
+Candidate content digest: `6b7f0f194c6d907f6d71f58a2d8ca6e5bf1be315cae774f39cebdf9ba196f3a1`.
+
+Package: `Codex-Advisor-1.4.10.zip` (38 files), SHA-256
+`c58c7d6d9c26dc53f22f9a8cd4e9e788f7bcdc3a3018271a011c09f6fe2b37f1`. Deployment and GitHub publication are separate release steps;
+marketplace submission remains owner-controlled. No cleared platform checks are
+claimed here.
+
 ## Advisor 1.4.9 package record
 
 Version `1.4.9` is a license-distribution, support/privacy disclosure, and
@@ -40,7 +63,7 @@ traceback, with black-box regression coverage using a synthetic old-version
 Python. Consultation runtime behavior and model pins are otherwise
 unchanged.
 
-Candidate content digest: `7746f7836ce105ce459602fa64f3e2fe1f854b4e9facc7f6cf5a7d88719c92bf`.
+Historical 1.4.9 package digest: `7746f7836ce105ce459602fa64f3e2fe1f854b4e9facc7f6cf5a7d88719c92bf`.
 
 Package: `Codex-Advisor-1.4.9.zip` (37 files), SHA-256
 `b2a740d9c8bd1abf4d0f787c73a504ce32b194f2112f79f04575b316badf2fee`. Deployment and

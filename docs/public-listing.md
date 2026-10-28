@@ -10,7 +10,7 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | --- | --- |
 | **Plugin Name** | `advisor` |
 | **Display Name** | Codex Advisor |
-| **Version** | `1.4.9` |
+| **Version** | `1.4.10` |
 | **Category** | Developer Tools |
 | **Capabilities** | Interactive, Read |
 | **Author / Maintainer** | David Schmidt / Zero Delta LLC |
@@ -24,37 +24,18 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | **Geographic Availability** | United States |
 | **Pricing Model** | Free / Open Source (MIT); requires user's own Codex model access |
 
-**Candidate status:** Version 1.4.9 identifies the current local source candidate.
-It is a license-distribution, support/privacy disclosure, and review-remediation
-correction with no model-pin change. The plugin ships byte-exact copies of
-the root `LICENSE` and `NOTICE.md` at `plugins/advisor/LICENSE` and
-`plugins/advisor/NOTICE.md`, so the tracked plugin inventory automatically
-includes the required upstream copyright and permission notice, and the
-candidate inventory gate enforces exact root/plugin notice parity. The
-published privacy page distinguishes no automatic transmission of consultation
-packets or responses to Zero Delta from voluntary user sharing of redacted
-receipts, and adds the public GitHub issue support disclosure. The manifest and
-this listing replace the blanket "Zero Delta receives no packets" claim with
-the accurate no-automatic-relay/telemetry wording; optional user-shared support
-receipts are covered by the privacy policy. The Developer Tools category, the
-`interface.supportURL` at `https://zerodelta.dev/advisor/support/`, and the
-short and long descriptions remain synchronized with this listing. This round
-also corrects every preventive no-tools/tool-free claim in the manifest, this
-listing, the README, and the website to the actual contract: the consultation
-child is launched in a read-only sandbox and instructed to use zero tools, and
-the launcher validates the recorded runtime after execution and rejects the
-result on any observed tool call, which is a post-execution acceptance check
-rather than preventive tool isolation. The privacy page states that a
-prohibited tool call may read additional locally accessible data before
-rejection and that rejection cannot undo information already processed by
-OpenAI. Python 3.11 or newer (the standard-library `tomllib` dependency) is
-declared in the long description and the prerequisites above, and the
-consultation launcher now runs an explicit Python version preflight before
-helper imports, packet capture, or any provider launch. Model pins and
-consultation runtime behavior are otherwise unchanged. The exact
-candidate archive, its hash, the docs deployment, and the marketplace upload
-are finalized by the release owner; the upload-readiness gate verifies exact
-bytes before handoff. Marketplace upload remains owner-controlled.
+**Candidate status:** Version 1.4.10 identifies the current local source candidate.
+It moves the automatic Standard default and the fixed `advisor-terra` alias from
+`gpt-5.6-terra` / high to `gpt-6.1-terra` / high. Specialist remains
+`gpt-6.1-sol` / high, and explicit-only `advisor-astra` remains `gpt-6-astra` /
+high. The role installer retires the exact 1.4.9 Terra role to
+`advisor-terra.toml.retired-v1.4.9` before installing the new one; edited or
+conflicting role files fail closed without mutation. The 1.4.9 license, notice,
+privacy, and post-execution tool-check corrections are unchanged. Consultation
+transport and runtime validation are otherwise unchanged. The exact candidate
+archive, its hash, the docs deployment, and the marketplace upload are finalized
+by the release owner; the upload-readiness gate verifies exact bytes before
+handoff. Marketplace upload remains owner-controlled.
 
 **Historical website deployment status (1.4.7 snapshot):** The landing, support,
 privacy, and terms pages were deployed on 1 October 2026 for Advisor 1.4.7, and
@@ -145,11 +126,12 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 2. **Mechanical Implementation:** "Rename variable `old_path` to `source_path` across all helper functions in `utils.py`." (Skips consultation; deterministic mechanical edit).
 3. **Diff Review / No Delegation:** "Review the committed git diff for typos and formatting errors, and do not delegate to an advisor." (Skips consultation; owned by review workflow and explicit no-delegation).
 
-## Candidate Notes (v1.4.9)
+## Candidate Notes (v1.4.10)
 
+- Standard now defaults to GPT-6.1 Terra (`gpt-6.1-terra`) at high effort, replacing GPT-5.6 Terra; the installer recoverably retires the exact 1.4.9 Terra role.
 - The plugin ships byte-exact copies of the root `LICENSE` and `NOTICE.md`; the candidate inventory gate rejects a missing or tampered plugin notice copy.
 - Automatic read-only advice uses configurable Standard and Specialist sections in the live bundled `advisor.toml` file.
-- Terra/high and GPT-6.1 Sol/high remain the automatic defaults.
+- GPT-6.1 Terra/high and GPT-6.1 Sol/high are the automatic defaults.
 - Standard covers ordinary bounded material architecture, interface, data-model, and generic-advisor decisions.
 - Specialist applies only after targeted evidence leaves an eligible cross-system, compatibility/concurrency, competing-diagnosis, security/trust, recovery, irreversible-migration, or data-loss decision unresolved.
 - Project importance, security adjacency, and an ordinary architecture question alone remain Standard.
@@ -162,4 +144,4 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 - The optional content-free usage journal is off by default, stores operational metadata and aggregate counters only, prunes entries older than 30 days during later writes, and enforces a bounded count without a background deletion service.
 
 The 1.4.4 publication record above remains historical and is not replaced by this
-1.4.9 candidate.
+1.4.10 candidate.

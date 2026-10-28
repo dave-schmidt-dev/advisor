@@ -27,7 +27,7 @@ leaves factual, mechanical, and explicitly no-delegation work alone.
 - [Support](https://zerodelta.dev/advisor/support/)
 - [Privacy Policy](https://zerodelta.dev/advisor/privacy/)
 - [Terms of Service](https://zerodelta.dev/advisor/terms/)
-- [Public listing draft](docs/public-listing.md) and [1.4.7 site walkthrough](docs/site-walkthrough-1.4.7.md)
+- [Public listing draft](docs/public-listing.md) and [1.4.10 site walkthrough](docs/site-walkthrough-1.4.10.md)
 
 ## Development
 

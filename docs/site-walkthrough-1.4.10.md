@@ -1,7 +1,8 @@
 # Codex Advisor 1.4.10 website review record — 2026-10-27
 
 Candidate source: `site/` for `https://zerodelta.dev/advisor/`. This is the
-pre-deployment review record for the 1.4.10 version and Standard model change.
+current post-deployment review record for the 1.4.10 version and Standard model
+change.
 The 1.4.7 walkthrough (`git show 9191346:docs/site-walkthrough-1.4.7.md`) and the
 1.4.6 walkthrough it cites retain the detailed navigation and desktop/mobile
 presentation review; layout and styles are unchanged since then.
@@ -21,9 +22,9 @@ presentation review; layout and styles are unchanged since then.
 ## Verification and deployment
 
 The Playwright suite passes for the candidate, covering the landing copy, the
-`gpt-6.1-terra` pin, and all four route metadata values. The site is not yet
-deployed: deployment waits for owner review of this record, after which
-upload-readiness verification must confirm that all seven live site files
-byte-match the source.
+`gpt-6.1-terra` pin, and all four route metadata values. The owner reviewed
+this record on 27 October 2026, and the website was deployed the same day; all
+seven live site files byte-match the current source.
 
-This record does not claim deployment or marketplace publication.
+This record documents the deployed site copy and local verification. It does not
+claim marketplace publication.

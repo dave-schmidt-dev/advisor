@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.11] - 2026-11-17
+
 ### Changed
 - Specialist tier and fixed `advisor-sol` alias now use `gpt-6.2-sol` / high (previously `gpt-6.1-sol` / high).
 - Opt-in `advisor-astra` alias now uses `gpt-6.2-astra` / high (previously `gpt-6-astra` / high), remaining opt-in with no tier.
@@ -130,3 +132,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.4.9]: https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.9
 
 [1.4.10]: https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.10
+
+[1.4.11]: https://github.com/dave-schmidt-dev/advisor/releases/tag/v1.4.11

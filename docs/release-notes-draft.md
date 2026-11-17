@@ -1,5 +1,26 @@
 # Release record
 
+## Advisor 1.4.11 package record
+
+Version `1.4.11` moves the automatic Specialist default and the fixed
+`advisor-sol` alias from `gpt-6.1-sol` / high to `gpt-6.2-sol` / high, and the
+explicit-only `advisor-astra` role from `gpt-6-astra` / high to
+`gpt-6.2-astra` / high. Standard remains `gpt-6.1-terra` / high. The role
+installer recognizes the shipped 1.4.10 Sol and Astra roles by their committed
+digests and retires them to `advisor-sol.toml.retired-v1.4.10` and
+`advisor-astra.toml.retired-v1.4.10` before installing the new roles; edited or
+conflicting role files fail closed without mutation. The clean-host receipt
+predicate now requires `gpt-6.2-sol` for `advisor-sol`. The catalog's
+`tested_codex_cli` provenance stays `codex-cli 0.153.2`. Consultation transport
+and runtime validation are otherwise unchanged.
+
+Candidate content digest: `1119fda154b7a0f8b2483a15ea974ecb2f430788f3e120a7d30881b487474219`.
+
+Package: `Codex-Advisor-1.4.11.zip` (38 files), SHA-256
+`077568fc1dc8b91c0d03f01c46797b3ae19dbef81e06157df1273f8468cd12de`. Deployment and GitHub publication are
+separate release steps; marketplace submission remains owner-controlled. No
+cleared platform checks are claimed here.
+
 ## Advisor 1.4.10 package record
 
 Version `1.4.10` moves the automatic Standard default and the fixed
@@ -19,7 +40,7 @@ helper, single clock helpers, removal of unreachable writers and re-exports,
 and the unused settings schema file). Consultation runtime validation is
 otherwise unchanged.
 
-Candidate content digest: `6b7f0f194c6d907f6d71f58a2d8ca6e5bf1be315cae774f39cebdf9ba196f3a1`.
+Historical 1.4.10 package digest: `6b7f0f194c6d907f6d71f58a2d8ca6e5bf1be315cae774f39cebdf9ba196f3a1`.
 
 Package: `Codex-Advisor-1.4.10.zip` (38 files), SHA-256
 `c58c7d6d9c26dc53f22f9a8cd4e9e788f7bcdc3a3018271a011c09f6fe2b37f1`. Deployment and GitHub publication are separate release steps;

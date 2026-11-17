@@ -10,7 +10,7 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | --- | --- |
 | **Plugin Name** | `advisor` |
 | **Display Name** | Codex Advisor |
-| **Version** | `1.4.10` |
+| **Version** | `1.4.11` |
 | **Category** | Developer Tools |
 | **Capabilities** | Interactive, Read |
 | **Author / Maintainer** | David Schmidt / Zero Delta LLC |
@@ -24,20 +24,18 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | **Geographic Availability** | United States |
 | **Pricing Model** | Free / Open Source (MIT); requires user's own Codex model access |
 
-**Candidate status:** Version 1.4.10 identifies the current local source candidate.
-It moves the automatic Standard default and the fixed `advisor-terra` alias from
-`gpt-5.6-terra` / high to `gpt-6.1-terra` / high. Specialist remains
-`gpt-6.2-sol` / high, and explicit-only `advisor-astra` remains `gpt-6.2-astra` /
-high. The role installer retires the exact 1.4.9 Terra role to
-`advisor-terra.toml.retired-v1.4.9` before installing the new one; edited or
-conflicting role files fail closed without mutation. The 1.4.9 license, notice,
-privacy, and post-execution tool-check corrections are unchanged. Configuration
-commands now reject missing or symlinked installed helpers, and early startup
-cancellation no longer deletes preexisting directories. Consultation runtime
-validation is otherwise unchanged. The exact candidate
-archive, its hash, the docs deployment, and the marketplace upload are finalized
-by the release owner; the upload-readiness gate verifies exact bytes before
-handoff. Marketplace upload remains owner-controlled.
+**Candidate status:** Version 1.4.11 identifies the current local source candidate.
+It moves the automatic Specialist default and the fixed `advisor-sol` alias from
+`gpt-6.1-sol` / high to `gpt-6.2-sol` / high, and the explicit-only
+`advisor-astra` role from `gpt-6-astra` / high to `gpt-6.2-astra` / high.
+Standard remains `gpt-6.1-terra` / high. The role installer retires the exact
+1.4.10 Sol and Astra roles to `advisor-sol.toml.retired-v1.4.10` and
+`advisor-astra.toml.retired-v1.4.10` before installing the new ones; edited or
+conflicting role files fail closed without mutation. Consultation transport and
+runtime validation are otherwise unchanged. The exact candidate archive, its
+hash, the docs deployment, and the marketplace upload are finalized by the
+release owner; the upload-readiness gate verifies exact bytes before handoff.
+Marketplace upload remains owner-controlled.
 
 **Historical website deployment status (1.4.7 snapshot):** The landing, support,
 privacy, and terms pages were deployed on 1 October 2026 for Advisor 1.4.7, and
@@ -128,9 +126,9 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 2. **Mechanical Implementation:** "Rename variable `old_path` to `source_path` across all helper functions in `utils.py`." (Skips consultation; deterministic mechanical edit).
 3. **Diff Review / No Delegation:** "Review the committed git diff for typos and formatting errors, and do not delegate to an advisor." (Skips consultation; owned by review workflow and explicit no-delegation).
 
-## Candidate Notes (v1.4.10)
+## Candidate Notes (v1.4.11)
 
-- Standard now defaults to GPT-6.1 Terra (`gpt-6.1-terra`) at high effort, replacing GPT-5.6 Terra; the installer recoverably retires the exact 1.4.9 Terra role.
+- Specialist now defaults to GPT-6.2 Sol (`gpt-6.2-sol`) at high effort, and explicit-only `advisor-astra` uses GPT-6.2 Astra (`gpt-6.2-astra`) at high effort; the installer recoverably retires the exact 1.4.10 Sol and Astra roles.
 - The plugin ships byte-exact copies of the root `LICENSE` and `NOTICE.md`; the candidate inventory gate rejects a missing or tampered plugin notice copy.
 - Automatic read-only advice uses configurable Standard and Specialist sections in the live bundled `advisor.toml` file.
 - GPT-6.1 Terra/high and GPT-6.2 Sol/high are the automatic defaults.
@@ -146,4 +144,4 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 - The optional content-free usage journal is off by default, stores operational metadata and aggregate counters only, prunes entries older than 30 days during later writes, and enforces a bounded count without a background deletion service.
 
 The 1.4.4 publication record above remains historical and is not replaced by this
-1.4.10 candidate.
+1.4.11 candidate.

@@ -22,8 +22,10 @@ desktop/mobile presentation review; layout and styles are unchanged since then.
 
 The Playwright suite passes for the candidate, covering the landing copy, the
 model pins, and all four route metadata values. The owner approved release and
-publication of 1.4.11 on 17 November 2026. Deployment status is recorded below
-after the deploy.
+publication of 1.4.11 on 17 November 2026, and the website was deployed the
+same day; all seven live site files byte-match the current source, and
+`public-release/verify-upload-ready.sh` reported UPLOAD READY for
+`Codex-Advisor-1.4.11.zip`.
 
 This record documents the site copy and local verification. It does not claim
 marketplace publication.

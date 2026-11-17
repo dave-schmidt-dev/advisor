@@ -67,7 +67,7 @@ The bundled installed `advisor.toml` is live configuration for normal `--tier`
 consultations. It contains exactly `[standard]` and `[specialist]`, each with `model`
 and `effort`; edit it in place and the next consultation uses the pair. No catalog,
 discovery, canary, saved state, or file copy is a prerequisite. Any syntactically valid
-future selector is permitted subject to account/runtime support; `gpt-6-astra` for
+future selector is permitted subject to account/runtime support; `gpt-6.2-astra` for
 Specialist opts into higher usage. Plugin updates or reinstalling can replace edits.
 The helper's `show` and `doctor` report the actual pairs, installed path, and SHA-256
 source revision. Catalogs, presets, and canaries are isolated advanced tools; `set`
@@ -94,7 +94,7 @@ unavailable without changing state; it is not a live model canary.
    default for ordinary bounded material architecture, interface, data-model, and
    explicit generic advisor requests.
    Specialist consultation uses `--tier specialist`. Its live file model and effort
-   default to GPT-6.1 Sol / `high` with the same zero-setup launch permission, only when
+   default to GPT-6.2 Sol / `high` with the same zero-setup launch permission, only when
    targeted evidence still leaves unresolved a cross-module or system design,
    compatibility or concurrency boundary, competing diagnosis, an unresolved security or trust boundary, recovery, an irreversible migration or data-loss decision, or a credible unresolved High-severity disagreement. Security adjacency or project importance alone, or an ordinary architecture question alone, does not qualify. A borderline choice uses Standard. The parent model and sandbox are irrelevant to selection.
 3. Resolve the selected tier through the installed helper. Before invoking the
@@ -302,9 +302,9 @@ See [operations](references/operations.md) for installation, runtime evidence, a
 evaluation details.
 
 Legacy cached integrations may use `--role advisor-terra` or `--role advisor-sol`.
-Those compatibility routes remain fixed to Terra/high and GPT-6.1 Sol/high and do not follow
+Those compatibility routes remain fixed to Terra/high and GPT-6.2 Sol/high and do not follow
 `advisor.toml`. They cannot be combined with a tier or preset. New calls use the tier
 interface above; raw model and effort flags are never accepted by the wrapper.
-The explicit `--role advisor-astra` route is a separate fixed opt-in to gpt-6-astra/high.
+The explicit `--role advisor-astra` route is a separate fixed opt-in to gpt-6.2-astra/high.
 It is never selected by Standard/Specialist defaults, trigger selection, fallback, or
 audit tier counts, and cannot be combined with a tier or preset.

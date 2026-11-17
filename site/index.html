@@ -55,10 +55,10 @@ model = "gpt-6.1-terra"
 effort = "high"
 
 [specialist]
-model = "gpt-6.1-sol"
+model = "gpt-6.2-sol"
 effort = "high"
 
-# advisor-astra is a separate explicit-only role pinned to gpt-6-astra/high.
+# advisor-astra is a separate explicit-only role pinned to gpt-6.2-astra/high.
 </code></pre>
     <p><code>advisor-astra</code> is reserved for explicit requests on the most complex uses. It is never selected automatically, uses more of your Codex allowance, and remains subject to account and runtime availability. Editing the bundled <code>advisor.toml</code> in place applies to the next consultation for Standard or Specialist. Plugin updates may replace edits to the bundled file.</p>
     <p>Standard covers ordinary bounded architecture, interface, data-model, and generic-advisor decisions. Specialist applies only when targeted evidence still leaves a cross-system, compatibility/concurrency, competing-diagnosis, security/trust, recovery, irreversible-migration, or data-loss decision unresolved. Project importance, security adjacency, or an ordinary architecture question alone stays Standard.</p>
@@ -77,8 +77,8 @@ effort = "high"
         <div><span>Runs in</span><strong>Codex CLI and desktop on macOS or Linux</strong></div>
         <div><span>Does not use</span><strong>No MCP server, no hosted service, no telemetry</strong></div>
         <div><span>Standard</span><strong>GPT-6.1 Terra · <code>gpt-6.1-terra</code> · high</strong></div>
-        <div><span>Specialist</span><strong>GPT-6.1 Sol · <code>gpt-6.1-sol</code> · high</strong></div>
-        <div><span>Explicit-only</span><strong><code>advisor-astra</code> · <code>gpt-6-astra</code> · high</strong></div>
+        <div><span>Specialist</span><strong>GPT-6.2 Sol · <code>gpt-6.2-sol</code> · high</strong></div>
+        <div><span>Explicit-only</span><strong><code>advisor-astra</code> · <code>gpt-6.2-astra</code> · high</strong></div>
     </div>
 </section>
 <section aria-labelledby="resources">

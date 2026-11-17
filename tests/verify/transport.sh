@@ -180,13 +180,13 @@ done
 
 astra_transport_out=$tmp/astra-transport-out.json
 astra_transport_err=$tmp/astra-transport-err.txt
-PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=valid FAKE_EXPECTED_MODEL=gpt-6-astra FAKE_PARENT_ID="$transport_parent" \
+PATH="$fake_bin:$PATH" CODEX_HOME="$fake_home" FAKE_CODEX_CASE=valid FAKE_EXPECTED_MODEL=gpt-6.2-astra FAKE_PARENT_ID="$transport_parent" \
   sh "$transport" --role advisor-astra --parent-thread "$transport_parent" <"$valid_packet" >"$astra_transport_out" 2>"$astra_transport_err" || {
     sed -n '1,20p' "$astra_transport_err" >&2
     fail "valid fake Astra transport failed"
   }
-jq -e '.status=="completed" and .selection.tier=="opt-in" and .selection.model=="gpt-6-astra" and .selection.effort=="high" and .selection.source=="explicit-fixed" and .runtime.model=="gpt-6-astra" and .runtime.effort=="high" and .runtime.sandbox_policy_type=="read-only"' "$astra_transport_out" >/dev/null || fail "explicit Astra alias did not remain fixed and isolated"
-if grep -Eq 'tier=(standard|specialist); model=gpt-6-astra|role=advisor-tier-(standard|specialist).*gpt-6-astra' "$transport"; then fail "Astra leaked into a normal tier route"; fi
+jq -e '.status=="completed" and .selection.tier=="opt-in" and .selection.model=="gpt-6.2-astra" and .selection.effort=="high" and .selection.source=="explicit-fixed" and .runtime.model=="gpt-6.2-astra" and .runtime.effort=="high" and .runtime.sandbox_policy_type=="read-only"' "$astra_transport_out" >/dev/null || fail "explicit Astra alias did not remain fixed and isolated"
+if grep -Eq 'tier=(standard|specialist); model=gpt-6.2-astra|role=advisor-tier-(standard|specialist).*gpt-6.2-astra' "$transport"; then fail "Astra leaked into a normal tier route"; fi
 pass "explicit Astra/high fixed alias is isolated from Standard/Specialist defaults"
 
 heartbeat_err=$tmp/heartbeat-err.txt

@@ -6,13 +6,13 @@ the installed skill. Repository-root documentation is not part of the ZIP.
 ## Defaults and evidence
 
 `advisor.toml` has exactly `[standard]` and `[specialist]` sections, each with `model`
-and `effort`. Defaults are `gpt-6.1-terra` / `high` and `gpt-6.1-sol` / `high`.
+and `effort`. Defaults are `gpt-6.1-terra` / `high` and `gpt-6.2-sol` / `high`.
 Edit the installed file in place; changes apply to the next `--tier` consultation and
 are frozen with a SHA-256 content revision for retries. No local state, discovery,
 catalog registration, canary, or file copy is needed. Allowed efforts are `none`,
 `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, and `ultra`. Future syntactically
 valid model selectors are allowed subject to account/runtime support. Setting
-`specialist.model = "gpt-6-astra"` opts into its higher usage. Plugin updates or a
+`specialist.model = "gpt-6.2-astra"` opts into its higher usage. Plugin updates or a
 reinstall can replace the edited file.
 
 This grants only permission to attempt the real consultation: the child must still

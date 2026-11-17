@@ -197,9 +197,9 @@ test('claim surface matches the validated listing', async ({ page }) => {
   expect(body).toContain('optional models');
   expect(body).toContain('[standard]');
   expect(body).toContain('[specialist]');
-  expect(body).toContain('gpt-6-astra');
+  expect(body).toContain('gpt-6.2-astra');
   expect(body).toContain('gpt-6.1-terra');
-  expect(body).toContain('gpt-6.1-sol');
+  expect(body).toContain('gpt-6.2-sol');
   expect(body).toContain('next consultation');
   expect(body).toContain('advisor-astra');
   expect(body).toContain('separate explicit-only');
@@ -394,7 +394,7 @@ test('terms describe configured model responsibility and preserve legal terms', 
   expect(terms).toContain('Python 3.11 or newer');
   expect(terms).toContain('models and effort configured in the bundled');
   expect(terms).toContain('Automatic Standard remains Terra/high');
-  expect(terms).toContain('automatic Specialist remains GPT-6.1 Sol/high');
+  expect(terms).toContain('automatic Specialist remains GPT-6.2 Sol/high');
   expect(terms).toContain('advisor-astra');
   expect(terms).toContain('explicit-only');
   expect(terms).toContain('never selected automatically');

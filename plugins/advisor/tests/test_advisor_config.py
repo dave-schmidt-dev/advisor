@@ -200,7 +200,7 @@ class AdvisorConfigTests(unittest.TestCase):
         )
         self.assertFalse(
             config.shipped_default_launch_eligible(
-                tier="standard", model="gpt-6-astra", effort="high"
+                tier="standard", model="gpt-6.2-astra", effort="high"
             )
         )
 
@@ -226,7 +226,7 @@ class AdvisorConfigTests(unittest.TestCase):
             (standard["model"], standard["effort"]), ("gpt-6.1-terra", "high")
         )
         self.assertEqual(
-            (specialist["model"], specialist["effort"]), ("gpt-6.1-sol", "high")
+            (specialist["model"], specialist["effort"]), ("gpt-6.2-sol", "high")
         )
         self.assertFalse(self.paths.root.exists())
 
@@ -256,7 +256,7 @@ class AdvisorConfigTests(unittest.TestCase):
     def test_shipped_catalog_rejects_malformed_defaults_and_baselines(self) -> None:
         shipped = config.load_shipped_models()
         malformed = json.loads(json.dumps(shipped))
-        malformed["defaults"]["standard"]["model"] = "gpt-6-astra"
+        malformed["defaults"]["standard"]["model"] = "gpt-6.2-astra"
         with self.assertRaises(config.ConfigError):
             config.validate_shipped_models(malformed)
         malformed = json.loads(json.dumps(shipped))
@@ -295,7 +295,7 @@ class AdvisorConfigTests(unittest.TestCase):
         with mock.patch.object(sys.modules["advisor_settings"], "live_config_path", return_value=candidate):
             candidate.write_text(
                 "[standard]\nmodel = \"future/provider-2049\"\neffort = \"max\"\n"
-                "[specialist]\nmodel = \"gpt-6-astra\"\neffort = \"high\"\n"
+                "[specialist]\nmodel = \"gpt-6.2-astra\"\neffort = \"high\"\n"
             )
             live = config.load_live_config()
             self.assertEqual(live["pairs"]["standard"], {"model": "future/provider-2049", "effort": "max"})
@@ -320,7 +320,7 @@ class AdvisorConfigTests(unittest.TestCase):
         target = Path(self.tmp.name) / "target.toml"
         target.write_text(
             '[standard]\nmodel = "gpt-6.1-terra"\neffort = "high"\n'
-            '[specialist]\nmodel = "gpt-6.1-sol"\neffort = "high"\n',
+            '[specialist]\nmodel = "gpt-6.2-sol"\neffort = "high"\n',
             encoding="utf-8",
         )
         candidate.write_bytes(target.read_bytes())
@@ -345,7 +345,7 @@ class AdvisorConfigTests(unittest.TestCase):
         candidate = Path(self.tmp.name) / "advisor.toml"
         candidate.write_text(
             '[standard]\nmodel = "gpt-6.1-terra"\neffort = "high"\n'
-            '[specialist]\nmodel = "gpt-6.1-sol"\neffort = "high"\n',
+            '[specialist]\nmodel = "gpt-6.2-sol"\neffort = "high"\n',
             encoding="utf-8",
         )
         delivered = 0
@@ -535,7 +535,7 @@ class AdvisorConfigTests(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(result.returncode, 0)
         self.assertIn(
-            "gpt-6-astra", [item["model"] for item in payload["shipped"]["models"]]
+            "gpt-6.2-astra", [item["model"] for item in payload["shipped"]["models"]]
         )
         self.assertEqual(payload["catalog"]["candidates"][0]["model"], "future/model")
 

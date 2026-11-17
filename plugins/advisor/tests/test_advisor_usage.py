@@ -127,14 +127,14 @@ class UsageTests(unittest.TestCase):
     def test_astra_opt_in_journal_record_is_written_durably(self):
         self.enable()
         record = self.record("323e4567-e89b-42d3-a456-426614174000")
-        record.update({"tier": "opt-in", "model": "gpt-6-astra"})
+        record.update({"tier": "opt-in", "model": "gpt-6.2-astra"})
 
         self.assertTrue(config.write_usage_journal(record, paths=self.paths))
 
         path = self.paths.journal / f"{record['consultation_id']}.json"
         self.assertTrue(path.is_file())
         persisted = config.validate_journal_record(config.read_json(path))
-        self.assertEqual((persisted["tier"], persisted["model"]), ("opt-in", "gpt-6-astra"))
+        self.assertEqual((persisted["tier"], persisted["model"]), ("opt-in", "gpt-6.2-astra"))
 
     def test_journal_strict_retention_concurrency_and_write_failure(self):
         bad = self.record()

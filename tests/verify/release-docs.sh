@@ -18,7 +18,7 @@ for document in "$readme" "$model_doc" "$walkthrough" "$operations"; do
   grep -Fqi 'Codex home' "$document" || fail "configuration state location missing: $document"
 done
 for phrase in \
-  'gpt-6-astra' 'catalog presence is documentation' 'not an entitlement' \
+  'gpt-6.2-astra' 'catalog presence is documentation' 'not an entitlement' \
   'models test MODEL --effort EFFORT --authorize-usage --parent-thread THREAD_ID' \
   '0.153.2' 'safe-unavailable' 'no background deletion service' \
   'prunes records older than 30 days' 'transport contract' 'does not trigger a consultation' \

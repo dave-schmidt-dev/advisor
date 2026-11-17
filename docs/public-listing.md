@@ -27,7 +27,7 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 **Candidate status:** Version 1.4.10 identifies the current local source candidate.
 It moves the automatic Standard default and the fixed `advisor-terra` alias from
 `gpt-5.6-terra` / high to `gpt-6.1-terra` / high. Specialist remains
-`gpt-6.1-sol` / high, and explicit-only `advisor-astra` remains `gpt-6-astra` /
+`gpt-6.2-sol` / high, and explicit-only `advisor-astra` remains `gpt-6.2-astra` /
 high. The role installer retires the exact 1.4.9 Terra role to
 `advisor-terra.toml.retired-v1.4.9` before installing the new one; edited or
 conflicting role files fail closed without mutation. The 1.4.9 license, notice,
@@ -72,7 +72,7 @@ Codex Advisor helps software developers review architecture, API interfaces, dat
 
 Advisor sends bounded technical context to OpenAI for inference through your authenticated account and allowance; Zero Delta runs no relay or telemetry backend and does not automatically receive consultation packets or responses. Redacted receipts you voluntarily share through support channels are covered by the privacy policy. The consultation child is launched in a read-only sandbox and instructed to use zero tools; after execution the launcher inspects the recorded runtime and rejects the result if it observes any tool call, which is a post-execution acceptance check, not preventive tool-free isolation. The local launcher writes temporary files and Codex session records. The root agent owns implementation and final decisions; Advisor does not implement, deploy, or perform final review.
 
-Requires Python 3.11+, a local Codex host, jq, a supported POSIX shell, and a persisted session. Standard uses Terra/high, Specialist uses GPT-6.1 Sol/high, and explicit-only Astra/high is available for the most complex uses.
+Requires Python 3.11+, a local Codex host, jq, a supported POSIX shell, and a persisted session. Standard uses Terra/high, Specialist uses GPT-6.2 Sol/high, and explicit-only Astra/high is available for the most complex uses.
 
 ## Surface and Host Compatibility
 
@@ -108,7 +108,7 @@ When any prerequisite is absent, the system safely records `route: unavailable` 
 
 Execution uses the user's authenticated Codex account. Normal tier consultations use the models and effort configured in the bundled `advisor.toml`:
 - Standard defaults to Terra with high reasoning effort.
-- Specialist defaults to GPT-6.1 Sol with high reasoning effort.
+- Specialist defaults to GPT-6.2 Sol with high reasoning effort.
 - `advisor-astra` is a separate explicit-only Astra/high role; automatic selection never invokes it.
 - Astra uses more of the user's Codex allowance and remains subject to account and runtime availability.
 - Future model selectors are subject to account access and runtime support. Invalid TOML or an unsupported model reports an error; there is no silent fallback.
@@ -133,7 +133,7 @@ Execution uses the user's authenticated Codex account. Normal tier consultations
 - Standard now defaults to GPT-6.1 Terra (`gpt-6.1-terra`) at high effort, replacing GPT-5.6 Terra; the installer recoverably retires the exact 1.4.9 Terra role.
 - The plugin ships byte-exact copies of the root `LICENSE` and `NOTICE.md`; the candidate inventory gate rejects a missing or tampered plugin notice copy.
 - Automatic read-only advice uses configurable Standard and Specialist sections in the live bundled `advisor.toml` file.
-- GPT-6.1 Terra/high and GPT-6.1 Sol/high are the automatic defaults.
+- GPT-6.1 Terra/high and GPT-6.2 Sol/high are the automatic defaults.
 - Standard covers ordinary bounded material architecture, interface, data-model, and generic-advisor decisions.
 - Specialist applies only after targeted evidence leaves an eligible cross-system, compatibility/concurrency, competing-diagnosis, security/trust, recovery, irreversible-migration, or data-loss decision unresolved.
 - Project importance, security adjacency, and an ordinary architecture question alone remain Standard.

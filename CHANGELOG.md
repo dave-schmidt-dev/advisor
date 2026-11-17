@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Specialist tier and fixed `advisor-sol` alias now use `gpt-6.2-sol` / high (previously `gpt-6.1-sol` / high).
+- Opt-in `advisor-astra` alias now uses `gpt-6.2-astra` / high (previously `gpt-6-astra` / high), remaining opt-in with no tier.
+- The clean-host receipt scripts accept `advisor-sol` with `gpt-6.2-sol`.
+
+### Added
+- The installer safely upgrades the byte-exact Advisor 1.4.10 Sol and Astra roles, preserving them at `advisor-sol.toml.retired-v1.4.10` and `advisor-astra.toml.retired-v1.4.10`. Edited and conflicting role files fail closed without mutation.
+
 ## [1.4.10] - 2026-10-27
 
 ### Fixed

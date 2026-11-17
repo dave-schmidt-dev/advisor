@@ -26,16 +26,16 @@ catalog registration, canary, or copying. Future syntactically valid selectors a
 permitted subject to account/runtime support; Specialist Astra is higher usage. A
 retry reuses the frozen record and never migrates, falls back, or automatically selects
 a newer model. Plugin updates or reinstall may replace edits. Legacy `--role
-advisor-terra` and `--role advisor-sol` remain fixed Terra/high and GPT-6.1 Sol/high routes
+advisor-terra` and `--role advisor-sol` remain fixed Terra/high and GPT-6.2 Sol/high routes
 and do not follow the live file. The explicit `--role advisor-astra` alias is a separate
-opt-in fixed `gpt-6-astra` / high route; it is never selected by either tier, trigger
+opt-in fixed `gpt-6.2-astra` / high route; it is never selected by either tier, trigger
 selection, or fallback. Its content-free journal tier is `opt-in`, and audit role
 aggregates include `advisor-astra`, while `consultations.selected_roles` remains
 exactly `{standard, specialist}`. Explicit model
 refresh starts an owned `codex app-server --ignore-user-config --ignore-rules`
 process with the existing Codex home and requests only initialize, initialized, and
 paginated `model/list` with `includeHidden: true`; it neither reads/copies auth nor
-starts inference. Terra/high for Standard and GPT-6.1 Sol/high for Specialist are the validated
+starts inference. Terra/high for Standard and GPT-6.2 Sol/high for Specialist are the validated
 shipped defaults and may be attempted with no state, discovery, or canary. This is
 launch permission only, never compatibility proof; each actual child still passes the
 existing exact runtime identity, effort, read-only, zero-tool, and response checks.
@@ -44,7 +44,7 @@ app-server lacks either isolation flag, discovery returns unavailable without la
 or changing saved state; discovery never blocks the built-in defaults. The observed
 `0.153.2` has this safe-unavailable condition, so local model discovery and real
 inference are not claimed passed. `models add MODEL` is the offline manual-selector
-path. The shipped catalog, including optional `gpt-6-astra`, is documentation rather
+path. The shipped catalog, including optional `gpt-6.2-astra`, is documentation rather
 than entitlement; advanced presets require an explicit successful exact
 model/effort/transport compatibility record but cannot override normal tiers.
 `models test MODEL --effort EFFORT
@@ -137,7 +137,7 @@ ordinary `route: skip` path remains unchanged.
 3. Select the tier from decision risk. Standard consultation uses
    `--tier standard`, defaulting to GPT-6.1 Terra / high, for ordinary bounded
    material architecture, interface, data-model, and generic advisor requests.
-   Specialist consultation uses `--tier specialist`, defaulting to GPT-6.1 Sol / high,
+   Specialist consultation uses `--tier specialist`, defaulting to GPT-6.2 Sol / high,
    only when targeted evidence still leaves unresolved a cross-module or system design,
    compatibility or concurrency boundary, competing diagnosis, security or trust
    boundary, recovery, irreversible migration or data-loss decision, or credible
@@ -430,7 +430,7 @@ The repository verifier must prove:
    consult and skip boundaries.
 4. Retired `solo`, `delegate`, `audit`, `full`, Luna, Terra, and final-review
    contracts are absent from active plugin content.
-5. The advisor roles pin the exact Terra/high, GPT-6.1 Sol/high, and opt-in Astra/high pairs, request read-only
+5. The advisor roles pin the exact Terra/high, GPT-6.2 Sol/high, and opt-in Astra/high pairs, request read-only
    sandboxing, and forbid tools, file inspection, web fetches, and independent
    research; static fixtures prove decision-risk role selection and exact spawn evidence.
 6. The installer is fail-closed, idempotent, supports an isolated target, and

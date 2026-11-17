@@ -98,8 +98,8 @@ if case == "hang":
 
 if case == "mutate-retry" and attempt == 1:
     Path(os.environ["ADVISOR_LIVE_CONFIG"]).write_text(
-        '[standard]\nmodel = "gpt-6.1-sol"\neffort = "ultra"\n\n'
-        '[specialist]\nmodel = "gpt-6-astra"\neffort = "max"\n'
+        '[standard]\nmodel = "gpt-6.2-sol"\neffort = "ultra"\n\n'
+        '[specialist]\nmodel = "gpt-6.2-astra"\neffort = "max"\n'
     )
 
 child = f"{attempt:08x}-1111-7111-8111-{attempt:012x}"

@@ -24,7 +24,7 @@ Codex Advisor is a skills-only plugin that provides disciplined, read-only secon
 | **Geographic Availability** | United States |
 | **Pricing Model** | Free / Open Source (MIT); requires user's own Codex model access |
 
-**Candidate status:** Version 1.4.11 identifies the current local source candidate.
+**Publication status:** Advisor 1.4.11 is published in the OpenAI Plugins Directory (owner confirmation 2026-11-18, independently confirmed by an unauthenticated read of the listing showing version 1.4.11 and the GPT-6.2 Sol description). Version 1.4.11 also identifies the current local source candidate.
 It moves the automatic Specialist default and the fixed `advisor-sol` alias from
 `gpt-6.1-sol` / high to `gpt-6.2-sol` / high, and the explicit-only
 `advisor-astra` role from `gpt-6-astra` / high to `gpt-6.2-astra` / high.

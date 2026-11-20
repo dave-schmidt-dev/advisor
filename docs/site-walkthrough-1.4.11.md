@@ -29,3 +29,24 @@ same day; all seven live site files byte-match the current source, and
 
 This record documents the site copy and local verification. It does not claim
 marketplace publication.
+
+## Post-release candidate: unified Zero Delta shell (2026-11-20, not deployed)
+
+The source now differs from the deployed 1.4.11 pages; the byte-match statement
+above describes 17 November only. Copy is unchanged. Presentation changes:
+
+- Every route links `/assets/site-shell.css` before `assets/style.css`. One
+  bordered frame with a rounded bottom holds the hero or document header, the
+  content and the footer, below the shared header.
+- The footer is the shared Zero Delta footer, identical to zerodelta.dev:
+  "© 2026 Zero Delta LLC · Virginia" with Home, Advisor, Privacy, Terms and
+  Contact (`mailto:dave@zdelta.dev`). Support and Source stay reachable from the
+  landing hero and Resources section and from the document text.
+- Document eyebrows (Help, Legal) use the shared section label with the cyan
+  prompt; document titles use the same heading scale as the landing hero.
+  Steps and Compatibility tiles use the shared card surface; Resources links use
+  the shared button.
+- One 560px breakpoint and one inset: brand, heading, first section heading and
+  footer text align at 1280, 561, 560, 520, 481, 480 and 390px (previously the
+  header kept a 34px inset between 481 and 560px while content used 18px).
+- `npm --prefix web-tests test`: 64 passed (desktop and iPhone 13).

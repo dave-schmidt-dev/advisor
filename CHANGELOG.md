@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Site pages adopt the full shared Zero Delta shell: tokens, one bordered frame, the shared footer (copyright line plus Home, Advisor, Privacy, Terms and Contact), headings, section labels, cards, buttons, focus rings, the 560px breakpoint and reduced motion now come from `/assets/site-shell.css`, linked before `assets/style.css`. Header, content and footer share one inset at every width. Document eyebrows use the shared section label; Resources links use the shared button.
+- Site Playwright coverage splits shared-shell checks into `web-tests/tests/shell.spec.js` and adds shared-footer and single-inset checks.
 - Site pages use the shared Zero Delta header (logo mark, sticky pinned bar, nav underline) from `https://zerodelta.dev/assets/site-shell.css`, owned by the zero-delta-dev repository; the duplicated header CSS was removed from `site/assets/style.css`.
 
 ## [1.4.11] - 2026-11-17

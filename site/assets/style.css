@@ -1,151 +1,17 @@
-/* Codex Advisor — shared stylesheet.
-   Design tokens intentionally mirror zerodelta.dev so the subdomain reads as
-   one system with the parent site. */
-
-:root {
-    --bg: #0d1117;
-    --panel: #0f141c;
-    --panel-soft: rgba(255, 255, 255, 0.03);
-    --text: #f5f7fb;
-    --muted: #9aa6b2;
-    --soft: #6c7a89;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.14);
-    --accent: #00e5ff;
-    --accent-dim: rgba(0, 229, 255, 0.12);
-    --success: #2dd4bf;
-    --warn: #f5b342;
-    --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-    --radius-lg: 28px;
-    --radius-md: 18px;
-    --radius-sm: 12px;
-    --mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", "Menlo", "Consolas", monospace;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-html {
-    scroll-behavior: smooth;
-}
-
-body {
-    min-height: 100vh;
-    font-family: var(--mono);
-    font-size: 15px;
-    color: var(--text);
-    line-height: 1.7;
-    background: var(--bg);
-    display: grid;
-    grid-template-columns: minmax(0, 860px);
-    align-content: start;
-    justify-content: center;
-    padding: 40px 18px;
-    -webkit-font-smoothing: antialiased;
-}
-
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 32px 32px;
-    pointer-events: none;
-    opacity: 0.28;
-    z-index: -1;
-}
-
-a {
-    color: var(--accent);
-    text-decoration: none;
-}
-
-a:hover,
-a:focus-visible {
-    text-decoration: underline;
-}
-
-.skip-link {
-    position: absolute;
-    left: -999px;
-    top: 8px;
-    padding: 8px 10px;
-    background: var(--bg);
-    border: 1px solid var(--border-strong);
-    border-radius: 6px;
-    font-size: 0.9rem;
-    z-index: 100;
-}
-
-.skip-link:focus-visible {
-    left: 8px;
-}
-
-.wrap {
-    width: 100%;
-    max-width: none;
-    padding: 0 34px;
-}
-
-/* The global header, brand, logo mark and nav come from the shared
-   https://zerodelta.dev/assets/site-shell.css owned by zero-delta-dev. */
+/* Codex Advisor — page styles.
+   Tokens, base, the outer frame, header, footer, headings, section labels,
+   status pill, cards, buttons, links, focus rings, the compact breakpoint and
+   reduced motion all come from the shared Zero Delta shell at
+   https://zerodelta.dev/assets/site-shell.css (owned by zero-delta-dev), which
+   every page links before this file. Only documentation components the parent
+   site does not use live here. */
 
 /* ── Hero ── */
-.hero {
-    padding: 28px 0 30px;
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
-}
-
-.status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--text);
-    background: rgba(45, 212, 191, 0.1);
-    border: 1px solid rgba(45, 212, 191, 0.25);
-}
-
-.status-pill::before {
-    content: "";
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 12px rgba(45, 212, 191, 0.7);
-}
-
-h1 {
-    margin-top: 14px;
-    font-size: clamp(1.7rem, 5.2vw, 2.35rem);
-    font-weight: 700;
-    letter-spacing: -0.04em;
-    line-height: 1.12;
-}
-
-h1::before {
-    content: "> ";
-    color: var(--accent);
-    font-weight: 400;
-}
-
 .subhead {
     margin-top: 14px;
     max-width: 62ch;
     color: var(--muted);
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 
 .cta-row {
@@ -155,44 +21,22 @@ h1::before {
     margin-top: 22px;
 }
 
-.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-strong);
-    font-size: 0.85rem;
-    color: var(--text);
-    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+/* ── Document header ── */
+.doc-head .section-label {
+    margin-bottom: 10px;
 }
 
-.btn:hover,
-.btn:focus-visible {
-    text-decoration: none;
-    border-color: rgba(0, 229, 255, 0.4);
-    background: var(--panel-soft);
-    transform: translateY(-1px);
+.doc-meta {
+    margin-top: 14px;
+    font-size: 0.8rem;
+    color: var(--soft);
 }
 
-.btn-primary {
-    border-color: rgba(0, 229, 255, 0.35);
-    background: var(--accent-dim);
-    color: var(--accent);
+.doc-meta div {
+    margin: 2px 0;
 }
 
-.btn-primary:hover,
-.btn-primary:focus-visible {
-    background: rgba(0, 229, 255, 0.2);
-}
-
-/* ── Documentation inside the shared panel ── */
-main {
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    background: var(--panel);
-}
-
+/* ── Documentation body ── */
 main section {
     padding: 30px 0;
     border-bottom: 1px solid var(--border);
@@ -202,25 +46,7 @@ main section:last-of-type {
     border-bottom: 0;
 }
 
-h2 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: baseline;
-    gap: 9px;
-}
-
-h2::before {
-    content: ">";
-    color: var(--accent);
-    font-weight: 400;
-}
-
 h3 {
-    font-size: 0.95rem;
-    font-weight: 700;
     margin: 26px 0 6px;
 }
 
@@ -236,18 +62,15 @@ li strong {
     font-weight: 700;
 }
 
-ul, ol {
+main ul,
+main ol {
     max-width: 74ch;
     margin: 10px 0 10px 20px;
     color: var(--muted);
 }
 
-li {
+main li {
     margin: 5px 0;
-}
-
-.lead {
-    color: var(--text);
 }
 
 .steps {
@@ -255,17 +78,14 @@ li {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     margin: 18px 0 0;
+    max-width: none;
     list-style: none;
     counter-reset: step;
 }
 
-.steps li {
+main .steps li {
     counter-increment: step;
     margin: 0;
-    padding: 16px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    color: var(--muted);
 }
 
 .steps li::before {
@@ -294,10 +114,8 @@ li {
     margin-top: 18px;
 }
 
-.fact-grid > div {
+.fact-grid > .card {
     padding: 14px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
 }
 
 .fact-grid span,
@@ -325,69 +143,17 @@ li {
     margin-top: 16px;
 }
 
-.resource-links a {
-    padding: 9px 13px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--muted);
-}
-
-.resource-links a:hover,
-.resource-links a:focus-visible {
-    color: var(--accent);
-    text-decoration: none;
-    border-color: rgba(0, 229, 255, 0.35);
-}
-
-/* ── Cards ── */
-.cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.card {
-    padding: 16px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--panel);
-}
-
-.card h3 {
-    margin: 0 0 6px;
-    color: var(--text);
-}
-
-.card p {
-    margin: 0;
-    font-size: 0.88rem;
-}
-
-.card-label {
-    display: block;
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 8px;
-}
-
 /* ── Code ── */
 pre {
     margin: 16px 0;
     padding: 16px;
     overflow-x: auto;
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: #080b10;
+    border-radius: var(--radius-sm);
+    background: var(--code-bg);
     font-size: 0.8rem;
     line-height: 1.7;
     color: var(--text);
-}
-
-pre .c {
-    color: var(--soft);
 }
 
 code {
@@ -405,42 +171,6 @@ pre code {
     font-size: inherit;
 }
 
-/* ── Tables ── */
-.table-scroll {
-    overflow-x: auto;
-    margin: 18px 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.84rem;
-}
-
-th, td {
-    padding: 11px 14px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    vertical-align: top;
-    color: var(--muted);
-}
-
-th {
-    color: var(--text);
-    font-weight: 700;
-    white-space: nowrap;
-    background: var(--panel-soft);
-}
-
-tbody tr:last-child td {
-    border-bottom: 0;
-}
-
-.yes { color: var(--success); }
-.no { color: var(--warn); }
-
 /* ── Callout ── */
 .callout {
     margin: 18px 0;
@@ -456,76 +186,8 @@ tbody tr:last-child td {
     font-size: 0.88rem;
 }
 
-/* ── Doc page header ── */
-.doc-head {
-    padding: 26px 0 22px;
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
-}
-
-.doc-head h1 {
-    margin-top: 8px;
-    font-size: clamp(1.5rem, 4.4vw, 2rem);
-}
-
-.doc-meta {
-    margin-top: 14px;
-    font-size: 0.8rem;
-    color: var(--soft);
-}
-
-.doc-meta div {
-    margin: 2px 0;
-}
-
-.eyebrow {
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--soft);
-}
-
-/* ── Footer ── */
-.site-footer {
-    margin-top: 0;
-    padding: 24px 0 30px;
-    border: 1px solid var(--border);
-    border-top: 0;
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-    background: var(--panel);
-    box-shadow: var(--shadow);
-    color: var(--soft);
-    font-size: 0.78rem;
-}
-
-.site-footer .wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 22px;
-    justify-content: space-between;
-}
-
-.site-footer a {
-    color: var(--muted);
-}
-
-.footer-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-
+/* Same 560px compact breakpoint as the shared shell. */
 @media (max-width: 560px) {
-    body { padding: 18px 12px; }
-    .wrap { padding: 0 18px; }
-    .hero { padding: 22px 0 26px; }
     main section { padding: 26px 0; }
     .steps, .fact-grid { grid-template-columns: 1fr; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
-    .btn { transition: none; }
 }

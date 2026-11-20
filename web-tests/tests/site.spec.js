@@ -4,45 +4,10 @@
 // things that actually break on a static site: a page fails to load, an asset
 // 404s, an internal link rots, the claim surface drifts from the validated
 // listing, or the layout overflows on a phone.
-const fs = require('node:fs');
-const nodePath = require('node:path');
 const { test, expect } = require('@playwright/test');
+const { PAGES, SHELL_FILES, useZeroDeltaShell } = require('./site-fixtures');
 
-// The global header comes from the Zero Delta site shell, published by the
-// zero-delta-dev repository at https://zerodelta.dev/assets/. The test server
-// only serves ../site, so serve these exact root-absolute shell files from the
-// sibling zero-delta-dev checkout (or ZERO_DELTA_SHELL_DIR).
-const SHELL_DIR = process.env.ZERO_DELTA_SHELL_DIR
-  || nodePath.resolve(__dirname, '../../../zero-delta-dev/assets');
-const SHELL_FILES = {
-  '/assets/site-shell.css': ['site-shell.css', 'text/css'],
-  '/assets/zd-mark.png': ['zd-mark.png', 'image/png'],
-};
-
-test.beforeEach(async ({ page }) => {
-  for (const [file] of Object.values(SHELL_FILES)) {
-    if (!fs.existsSync(nodePath.join(SHELL_DIR, file))) {
-      throw new Error(
-        `Zero Delta shell file missing: ${nodePath.join(SHELL_DIR, file)}. ` +
-        'Check out zero-delta-dev beside this repository or set ZERO_DELTA_SHELL_DIR.'
-      );
-    }
-  }
-  await page.route(
-    (url) => Object.hasOwn(SHELL_FILES, url.pathname),
-    async (route) => {
-      const [file, contentType] = SHELL_FILES[new URL(route.request().url()).pathname];
-      await route.fulfill({ path: nodePath.join(SHELL_DIR, file), contentType });
-    }
-  );
-});
-
-const PAGES = [
-  { path: '/', title: /Codex Advisor/, heading: /Codex Advisor/ },
-  { path: '/privacy/', title: /Privacy Policy/, heading: /Privacy Policy/ },
-  { path: '/terms/', title: /Terms of Service/, heading: /Terms of Service/ },
-  { path: '/support/', title: /Support/, heading: /Support & Troubleshooting/ },
-];
+useZeroDeltaShell();
 
 /** Collect console errors and failed network requests for one navigation. */
 function watchFailures(page) {
@@ -154,22 +119,6 @@ test('the site tree is relocatable', async ({ page }) => {
   }
 });
 
-test('every page uses the shared global navigation', async ({ page }) => {
-  const expected = [
-    ['Home', 'https://zerodelta.dev/'],
-    ['Advisor', 'https://zerodelta.dev/advisor/'],
-  ];
-
-  for (const { path } of PAGES) {
-    await page.goto(path);
-    const links = await page.locator('.global-nav a').evaluateAll((items) =>
-      items.map((item) => [item.textContent.trim(), item.href])
-    );
-    expect(links).toEqual(expected);
-    const current = await page.locator('.global-nav a[aria-current="page"]').allTextContents();
-    expect(current).toEqual(path === '/' ? ['Advisor'] : []);
-  }
-});
 
 test('canonical URLs point at the deployed path', async ({ page }) => {
   for (const { path } of PAGES) {
@@ -183,54 +132,6 @@ test('canonical URLs point at the deployed path', async ({ page }) => {
   }
 });
 
-test('shared Zero Delta visual system', async ({ page }) => {
-  await page.goto('/');
-
-  const chrome = await page.locator('.global-header').evaluate((header) => {
-    const heading = document.querySelector('h2');
-    const headerStyle = getComputedStyle(header);
-    return {
-      background: headerStyle.backgroundColor,
-      topRadius: headerStyle.borderTopLeftRadius,
-      prefix: heading ? getComputedStyle(heading, '::before').content : '',
-    };
-  });
-
-  expect(chrome.background).toBe('rgba(15, 20, 28, 0.88)');
-  expect(chrome.topRadius).toBe('28px');
-  expect(chrome.prefix).toContain('>');
-
-  const brandPromptMargin = await page.locator('.global-brand').evaluate((brand) =>
-    parseFloat(getComputedStyle(brand, '::before').marginRight)
-  );
-  expect(brandPromptMargin).toBeGreaterThanOrEqual(4);
-});
-
-test('shared header is pinned and shows the Zero Delta logo mark', async ({ page }) => {
-  for (const { path } of PAGES) {
-    await page.goto(path);
-    const header = page.locator('header.global-header');
-    await expect(header).toHaveCSS('position', 'sticky');
-    expect(
-      await page.locator('.global-brand .brand-mark').evaluate(
-        (image) => image.complete && image.naturalWidth > 0
-      ),
-      `logo mark on ${path}`
-    ).toBe(true);
-  }
-});
-
-test('landing hero aligns with the shared brand edge', async ({ page }) => {
-  await page.goto('/');
-
-  await expect(page.locator('.product-mark')).toHaveCount(0);
-  const positions = await page.evaluate(() => ({
-    heading: document.querySelector('.hero h1').getBoundingClientRect().x,
-    brand: document.querySelector('.global-brand').getBoundingClientRect().x,
-  }));
-
-  expect(positions.heading).toBe(positions.brand);
-});
 
 test('claim surface matches the validated listing', async ({ page }) => {
   // These claims are load-checked against docs/public-listing.md. Drift here

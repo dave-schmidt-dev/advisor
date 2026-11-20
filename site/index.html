@@ -13,8 +13,8 @@
 <meta property="og:url" content="https://zerodelta.dev/advisor/">
 <link rel="canonical" href="https://zerodelta.dev/advisor/">
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/style.css">
 <link rel="stylesheet" href="/assets/site-shell.css">
+<link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 <a class="skip-link" href="#content">Skip to content</a>
@@ -27,6 +27,7 @@
         </nav>
     </div>
 </header>
+<div class="site-frame">
 <div class="hero">
     <div class="wrap">
         <span class="status-pill">Open source &middot; Candidate documentation v1.4.11</span>
@@ -42,9 +43,9 @@
 <section aria-labelledby="what">
     <h2 id="what">What it does</h2>
     <ol class="steps">
-        <li><strong>Finds the decision.</strong><span>Ordinary architecture and interfaces, or evidence-unresolved system boundaries, recovery, trust, and competing diagnoses.</span></li>
-        <li><strong>Challenges it read-only.</strong><span>The advisor gets a bounded packet in a read-only sandbox and is instructed to use zero tools.</span></li>
-        <li><strong>Returns the call.</strong><span>Your main agent accepts, changes, or rejects the recommendation.</span></li>
+        <li class="card"><strong>Finds the decision.</strong><span>Ordinary architecture and interfaces, or evidence-unresolved system boundaries, recovery, trust, and competing diagnoses.</span></li>
+        <li class="card"><strong>Challenges it read-only.</strong><span>The advisor gets a bounded packet in a read-only sandbox and is instructed to use zero tools.</span></li>
+        <li class="card"><strong>Returns the call.</strong><span>Your main agent accepts, changes, or rejects the recommendation.</span></li>
     </ol>
     <div class="callout"><p>The consultation child runs read-only with post-execution runtime validation: the launcher inspects the recorded runtime after execution and rejects the result on any observed tool call. Direct invocation of installed advisor profiles is unsupported.</p></div>
 </section>
@@ -75,23 +76,32 @@ effort = "high"
     <h2 id="compat">Compatibility</h2>
     <p>Consultations send bounded packets through your own authenticated Codex/OpenAI account; Zero Delta operates no relay, hosted backend, or intermediary service.</p>
     <div class="fact-grid">
-        <div><span>Runs in</span><strong>Codex CLI and desktop on macOS or Linux</strong></div>
-        <div><span>Does not use</span><strong>No MCP server, no hosted service, no telemetry</strong></div>
-        <div><span>Standard</span><strong>GPT-6.1 Terra · <code>gpt-6.1-terra</code> · high</strong></div>
-        <div><span>Specialist</span><strong>GPT-6.2 Sol · <code>gpt-6.2-sol</code> · high</strong></div>
-        <div><span>Explicit-only</span><strong><code>advisor-astra</code> · <code>gpt-6.2-astra</code> · high</strong></div>
+        <div class="card"><span>Runs in</span><strong>Codex CLI and desktop on macOS or Linux</strong></div>
+        <div class="card"><span>Does not use</span><strong>No MCP server, no hosted service, no telemetry</strong></div>
+        <div class="card"><span>Standard</span><strong>GPT-6.1 Terra · <code>gpt-6.1-terra</code> · high</strong></div>
+        <div class="card"><span>Specialist</span><strong>GPT-6.2 Sol · <code>gpt-6.2-sol</code> · high</strong></div>
+        <div class="card"><span>Explicit-only</span><strong><code>advisor-astra</code> · <code>gpt-6.2-astra</code> · high</strong></div>
     </div>
 </section>
 <section aria-labelledby="resources">
     <h2 id="resources">Resources</h2>
     <div class="resource-links">
-        <a href="support/">Support</a><a href="privacy/">Privacy</a><a href="terms/">Terms</a><a href="https://github.com/dave-schmidt-dev/advisor/issues">Issues</a>
+        <a class="btn" href="support/">Support</a><a class="btn" href="privacy/">Privacy</a><a class="btn" href="terms/">Terms</a><a class="btn" href="https://github.com/dave-schmidt-dev/advisor/issues">Issues</a>
     </div>
 </section>
 </div></main>
-<footer class="site-footer"><div class="wrap">
-    <div>Codex Advisor &middot; MIT</div>
-    <div class="footer-links"><a href="https://zerodelta.dev/">Zero Delta LLC</a><a href="https://github.com/dave-schmidt-dev/advisor">Source</a></div>
-</div></footer>
+<footer class="site-footer">
+    <div class="wrap">
+        <p class="footer-legal">&copy; 2026 Zero Delta LLC &middot; Virginia</p>
+        <nav class="footer-links" aria-label="Footer">
+            <a href="https://zerodelta.dev/">Home</a>
+            <a href="https://zerodelta.dev/advisor/">Advisor</a>
+            <a href="https://zerodelta.dev/advisor/privacy/">Privacy</a>
+            <a href="https://zerodelta.dev/advisor/terms/">Terms</a>
+            <a href="mailto:dave@zdelta.dev">Contact</a>
+        </nav>
+    </div>
+</footer>
+</div>
 </body>
 </html>

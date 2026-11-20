@@ -30,12 +30,15 @@ test('shared Zero Delta visual system', async ({ page }) => {
     const headerStyle = getComputedStyle(header);
     return {
       background: headerStyle.backgroundColor,
+      backdrop: headerStyle.backdropFilter,
       topRadius: headerStyle.borderTopLeftRadius,
       prefix: heading ? getComputedStyle(heading, '::before').content : '',
     };
   });
 
-  expect(chrome.background).toBe('rgba(15, 20, 28, 0.88)');
+  // Opaque, never frosted: WebKit shows page text through a translucent header.
+  expect(chrome.background).toBe('rgb(15, 20, 28)');
+  expect(chrome.backdrop).toBe('none');
   expect(chrome.topRadius).toBe('28px');
   expect(chrome.prefix).toContain('>');
 

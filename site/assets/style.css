@@ -27,6 +27,7 @@
 }
 
 .doc-meta {
+    font-family: var(--mono);
     margin-top: 14px;
     font-size: 0.8rem;
     color: var(--soft);
@@ -89,6 +90,7 @@ main .steps li {
 }
 
 .steps li::before {
+    font-family: var(--mono);
     content: "0" counter(step);
     display: block;
     margin-bottom: 8px;
@@ -124,6 +126,7 @@ main .steps li {
 }
 
 .fact-grid span {
+    font-family: var(--mono);
     margin-bottom: 5px;
     color: var(--soft);
     font-size: 0.68rem;
@@ -186,8 +189,8 @@ pre code {
     font-size: 0.88rem;
 }
 
-/* Same 560px compact breakpoint as the shared shell. */
-@media (max-width: 560px) {
+/* Same 680px compact breakpoint as the shared shell. */
+@media (max-width: 680px) {
     main section { padding: 26px 0; }
     .steps, .fact-grid { grid-template-columns: 1fr; }
 }

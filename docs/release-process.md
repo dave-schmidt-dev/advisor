@@ -6,7 +6,11 @@
    public listing text is the marketplace copy.
 2. Run local tests and review, then prepare the dated candidate-current
    screen-by-screen walkthrough. The owner reviews it before deployment.
-3. Deploy the site with `./deploy-site.sh`, then verify that the public pages,
+3. Deploy the site with `./deploy-site.sh`. If the shared shell in zero-delta-dev
+   (`assets/site-shell.css`, `assets/zd-mark.png`) changed, run its `./deploy.sh`
+   first: `cd ~/Documents/Projects/zero-delta-dev && ./deploy.sh && cd ../advisor && ./deploy-site.sh`.
+   Claude Code's auto-mode safety check has blocked agent-run deploys, so the owner may
+   need to run them or allow `Bash(./deploy.sh)` and `Bash(./deploy-site.sh)`. Then verify that the public pages,
    sitemap, and deployable assets match the local bytes. The gate uses an explicit
    inventory, so add each new deployable site file to the gate before release.
 4. Commit and push the exact source for the target version.

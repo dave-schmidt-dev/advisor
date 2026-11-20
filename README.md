@@ -47,7 +47,13 @@ sh plugins/advisor/scripts/verify.sh --static
 - `pre-commit` runs Ruff linting (`ruff-check`), Vulture dead-code detection (`vulture`), and `file-size` (`python3 scripts/check_file_size.py --staged`).
 - `pre-push` runs `file-size-all` (`python3 scripts/check_file_size.py --all`), `repo-tests` (`python3 -m unittest discover -s tests -p 'test_*.py'`), and the full verification suites: `advisor-verify` (`sh plugins/advisor/scripts/verify.sh`), `upload-readiness-tests` (`python3 -m unittest public-release/test_upload_readiness.py`), and `site-playwright` (`npm --prefix web-tests test`).
 - `.file-size-exceptions` records a reason for each existing file over the 800-line limit; files above 500 lines receive a warning.
-- `web-tests` needs `npm --prefix web-tests ci` once. Every page links the shared Zero Delta shell at root-absolute `/assets/site-shell.css` before `assets/style.css`, and uses `/assets/zd-mark.png`. The shell supplies the tokens, frame, header, shared footer, headings, cards, buttons, links, focus rings, the 680px breakpoint and reduced motion; `site/assets/style.css` keeps only documentation components. The tests (`web-tests/tests/site.spec.js` for content, `shell.spec.js` for the shared header, footer and inset, fixtures in `site-fixtures.js`) serve those two files from a sibling `../zero-delta-dev/assets` checkout (override with `ZERO_DELTA_SHELL_DIR`). On the live site, deploy zero-delta-dev first and then this site right after: the shell change restyles live Advisor pages as soon as it is published.
+- `web-tests` needs `npm --prefix web-tests ci` once. Every page links the shared Zero Delta shell at root-absolute `/assets/site-shell.css` before `assets/style.css`, and uses `/assets/zd-mark.png`. The shell supplies the tokens, frame, header, shared footer, headings, cards, buttons, links, focus rings, the 680px breakpoint and reduced motion; `site/assets/style.css` keeps only documentation components. The tests (`web-tests/tests/site.spec.js` for content, `shell.spec.js` for the shared header, footer and inset, fixtures in `site-fixtures.js`) serve those two files from a sibling `../zero-delta-dev/assets` checkout (override with `ZERO_DELTA_SHELL_DIR`). On the live site, deploy zero-delta-dev first and then this site right after: the shell change restyles live Advisor pages as soon as it is published. Both in one step:
+
+  ```sh
+  cd ~/Documents/Projects/zero-delta-dev && ./deploy.sh && cd ../advisor && ./deploy-site.sh
+  ```
+
+  Claude Code's auto-mode safety check has blocked agent-run deploys. Run the commands yourself, or add the allow rules `Bash(./deploy.sh)` and `Bash(./deploy-site.sh)`.
 
 The implementation contract is in the [plugin skill](plugins/advisor/skills/consultation/SKILL.md),
 [SPEC.md](SPEC.md), and [INVARIANTS.md](INVARIANTS.md).

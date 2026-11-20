@@ -4,7 +4,38 @@
 // things that actually break on a static site: a page fails to load, an asset
 // 404s, an internal link rots, the claim surface drifts from the validated
 // listing, or the layout overflows on a phone.
+const fs = require('node:fs');
+const nodePath = require('node:path');
 const { test, expect } = require('@playwright/test');
+
+// The global header comes from the Zero Delta site shell, published by the
+// zero-delta-dev repository at https://zerodelta.dev/assets/. The test server
+// only serves ../site, so serve these exact root-absolute shell files from the
+// sibling zero-delta-dev checkout (or ZERO_DELTA_SHELL_DIR).
+const SHELL_DIR = process.env.ZERO_DELTA_SHELL_DIR
+  || nodePath.resolve(__dirname, '../../../zero-delta-dev/assets');
+const SHELL_FILES = {
+  '/assets/site-shell.css': ['site-shell.css', 'text/css'],
+  '/assets/zd-mark.png': ['zd-mark.png', 'image/png'],
+};
+
+test.beforeEach(async ({ page }) => {
+  for (const [file] of Object.values(SHELL_FILES)) {
+    if (!fs.existsSync(nodePath.join(SHELL_DIR, file))) {
+      throw new Error(
+        `Zero Delta shell file missing: ${nodePath.join(SHELL_DIR, file)}. ` +
+        'Check out zero-delta-dev beside this repository or set ZERO_DELTA_SHELL_DIR.'
+      );
+    }
+  }
+  await page.route(
+    (url) => Object.hasOwn(SHELL_FILES, url.pathname),
+    async (route) => {
+      const [file, contentType] = SHELL_FILES[new URL(route.request().url()).pathname];
+      await route.fulfill({ path: nodePath.join(SHELL_DIR, file), contentType });
+    }
+  );
+});
 
 const PAGES = [
   { path: '/', title: /Codex Advisor/, heading: /Codex Advisor/ },
@@ -40,7 +71,7 @@ for (const { path, title, heading } of PAGES) {
 
     await expect(page).toHaveTitle(title);
     await expect(page.locator('h1')).toHaveText(heading);
-    await expect(page.locator('header.site-header')).toBeVisible();
+    await expect(page.locator('header.global-header')).toBeVisible();
     await expect(page.locator('footer.site-footer')).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath('page.png'), fullPage: true });
     expect(failures).toEqual([]);
@@ -104,7 +135,8 @@ test('every internal link resolves', async ({ page, request }) => {
 
 test('the site tree is relocatable', async ({ page }) => {
   // The site is deployed under /advisor/, not at a domain root, so no link or
-  // asset reference may be root-absolute.
+  // asset reference may be root-absolute. The only exceptions are the shared
+  // Zero Delta shell files, which the parent site publishes at /assets/.
   for (const { path } of PAGES) {
     await page.goto(path);
     const refs = await page.evaluate(() =>
@@ -113,6 +145,7 @@ test('the site tree is relocatable', async ({ page }) => {
       )
     );
     for (const ref of refs) {
+      if (Object.hasOwn(SHELL_FILES, ref)) continue;
       expect(
         ref.startsWith('/'),
         `root-absolute reference on ${path}: ${ref}`
@@ -129,11 +162,11 @@ test('every page uses the shared global navigation', async ({ page }) => {
 
   for (const { path } of PAGES) {
     await page.goto(path);
-    const links = await page.locator('.site-nav a').evaluateAll((items) =>
+    const links = await page.locator('.global-nav a').evaluateAll((items) =>
       items.map((item) => [item.textContent.trim(), item.href])
     );
     expect(links).toEqual(expected);
-    const current = await page.locator('.site-nav a[aria-current="page"]').allTextContents();
+    const current = await page.locator('.global-nav a[aria-current="page"]').allTextContents();
     expect(current).toEqual(path === '/' ? ['Advisor'] : []);
   }
 });
@@ -153,7 +186,7 @@ test('canonical URLs point at the deployed path', async ({ page }) => {
 test('shared Zero Delta visual system', async ({ page }) => {
   await page.goto('/');
 
-  const chrome = await page.locator('.site-header').evaluate((header) => {
+  const chrome = await page.locator('.global-header').evaluate((header) => {
     const heading = document.querySelector('h2');
     const headerStyle = getComputedStyle(header);
     return {
@@ -163,7 +196,7 @@ test('shared Zero Delta visual system', async ({ page }) => {
     };
   });
 
-  expect(chrome.background).toBe('rgb(15, 20, 28)');
+  expect(chrome.background).toBe('rgba(15, 20, 28, 0.88)');
   expect(chrome.topRadius).toBe('28px');
   expect(chrome.prefix).toContain('>');
 
@@ -171,6 +204,20 @@ test('shared Zero Delta visual system', async ({ page }) => {
     parseFloat(getComputedStyle(brand, '::before').marginRight)
   );
   expect(brandPromptMargin).toBeGreaterThanOrEqual(4);
+});
+
+test('shared header is pinned and shows the Zero Delta logo mark', async ({ page }) => {
+  for (const { path } of PAGES) {
+    await page.goto(path);
+    const header = page.locator('header.global-header');
+    await expect(header).toHaveCSS('position', 'sticky');
+    expect(
+      await page.locator('.global-brand .brand-mark').evaluate(
+        (image) => image.complete && image.naturalWidth > 0
+      ),
+      `logo mark on ${path}`
+    ).toBe(true);
+  }
 });
 
 test('landing hero aligns with the shared brand edge', async ({ page }) => {

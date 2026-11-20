@@ -47,7 +47,7 @@ sh plugins/advisor/scripts/verify.sh --static
 - `pre-commit` runs Ruff linting (`ruff-check`), Vulture dead-code detection (`vulture`), and `file-size` (`python3 scripts/check_file_size.py --staged`).
 - `pre-push` runs `file-size-all` (`python3 scripts/check_file_size.py --all`), `repo-tests` (`python3 -m unittest discover -s tests -p 'test_*.py'`), and the full verification suites: `advisor-verify` (`sh plugins/advisor/scripts/verify.sh`), `upload-readiness-tests` (`python3 -m unittest public-release/test_upload_readiness.py`), and `site-playwright` (`npm --prefix web-tests test`).
 - `.file-size-exceptions` records a reason for each existing file over the 800-line limit; files above 500 lines receive a warning.
-- `web-tests` needs `npm --prefix web-tests ci` once.
+- `web-tests` needs `npm --prefix web-tests ci` once. The site header links the shared Zero Delta shell at root-absolute `/assets/site-shell.css` and `/assets/zd-mark.png`; the tests serve those two files from a sibling `../zero-delta-dev/assets` checkout (override with `ZERO_DELTA_SHELL_DIR`). On the live site, deploy zero-delta-dev first so `/assets/` exists.
 
 The implementation contract is in the [plugin skill](plugins/advisor/skills/consultation/SKILL.md),
 [SPEC.md](SPEC.md), and [INVARIANTS.md](INVARIANTS.md).

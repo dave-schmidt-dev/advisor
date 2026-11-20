@@ -92,75 +92,8 @@ a:focus-visible {
     padding: 0 34px;
 }
 
-/* ── Shared Zero Delta terminal panel ── */
-.site-header {
-    border: 1px solid var(--border);
-    border-bottom: 0;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    background: var(--panel);
-    box-shadow: var(--shadow);
-}
-
-.site-header .wrap {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    min-height: 64px;
-    flex-wrap: wrap;
-}
-
-.global-brand {
-    display: inline-flex;
-    align-items: center;
-    color: var(--text);
-    font-weight: 700;
-    font-size: 0.82rem;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-}
-
-.global-brand::before {
-    content: ">";
-    color: var(--accent);
-    font-weight: 400;
-    margin-right: 0.45em;
-}
-
-.global-brand:hover,
-.global-brand:focus-visible {
-    text-decoration: none;
-    color: var(--accent);
-}
-
-.site-nav {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-
-.site-nav a {
-    color: var(--muted);
-}
-
-.site-nav a:hover,
-.site-nav a:focus-visible {
-    color: var(--accent);
-}
-
-.site-nav a:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 4px;
-    border-radius: 2px;
-}
-
-.site-nav a[aria-current="page"] {
-    color: var(--text);
-    text-decoration: none;
-}
+/* The global header, brand, logo mark and nav come from the shared
+   https://zerodelta.dev/assets/site-shell.css owned by zero-delta-dev. */
 
 /* ── Hero ── */
 .hero {
@@ -587,10 +520,8 @@ tbody tr:last-child td {
 @media (max-width: 560px) {
     body { padding: 18px 12px; }
     .wrap { padding: 0 18px; }
-    .site-header .wrap { min-height: 58px; align-items: flex-start; flex-direction: column; justify-content: center; padding-top: 14px; padding-bottom: 14px; }
     .hero { padding: 22px 0 26px; }
     main section { padding: 26px 0; }
-    .site-nav { gap: 10px; font-size: 0.7rem; }
     .steps, .fact-grid { grid-template-columns: 1fr; }
 }
 

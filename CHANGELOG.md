@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Site pages use the shared Zero Delta header (logo mark, sticky pinned bar, nav underline) from `https://zerodelta.dev/assets/site-shell.css`, owned by the zero-delta-dev repository; the duplicated header CSS was removed from `site/assets/style.css`.
+
 ## [1.4.11] - 2026-11-17
 
 ### Changed
